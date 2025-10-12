@@ -183,8 +183,9 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
         }
         .step-card-with-fee {
             border: 2px solid black;
-            min-height: 180px;
+            min-height: 200px;
             page-break-inside: avoid;
+            position: relative;
         }
         .step-header {
             background-color: #f5f5f5;
@@ -221,8 +222,22 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             position: relative;
         }
         .step-content-with-fee {
-            padding: 8px 8px 35px 8px;
+            padding: 8px 8px 45px 8px;
             position: relative;
+            min-height: 140px;
+        }
+        .fee-badge {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            color: black;
+            background-color: #f5f5f5;
+            padding: 6px 10px;
+            border: 2px solid black;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .professional-name {
             font-size: 11px;
@@ -387,7 +402,8 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             }
             .step-card-with-fee {
                 page-break-inside: avoid;
-                min-height: 180px;
+                min-height: 200px;
+                position: relative;
             }
             .instructions {
                 page-break-inside: avoid;
@@ -403,7 +419,14 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 padding: 8px;
             }
             .step-content-with-fee {
-                padding: 8px 8px 35px 8px;
+                padding: 8px 8px 45px 8px;
+                position: relative;
+                min-height: 140px;
+            }
+            .fee-badge {
+                position: absolute;
+                bottom: 8px;
+                right: 8px;
             }
             .professional-info {
                 font-size: 11px;
@@ -520,10 +543,8 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                               // Buscar taxa vinculada a este tipo de profissional
                               const linkedFee = processData.selected_fees.find(fee => fee.linked_professional_type === step.type);
                               return linkedFee ? `
-                                <div style="position: absolute; bottom: 6px; right: 6px;">
-                                  <div style="font-size: 13px; font-weight: bold; color: black; background-color: #f5f5f5; padding: 3px 6px; border: 1px solid black; border-radius: 3px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
-                                    <strong>R$ ${linkedFee.amount.toFixed(2)}</strong>
-                                  </div>
+                                <div class="fee-badge">
+                                  <strong>R$ ${linkedFee.amount.toFixed(2)}</strong>
                                 </div>
                               ` : '';
                             })()}
