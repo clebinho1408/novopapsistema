@@ -42,6 +42,39 @@ export default function StepProcess() {
     fetchProcesses();
   }, []);
 
+  useEffect(() => {
+    if (fees.length === 0) return;
+    
+    const emissaoCNHFee = fees.find(f => f.name === 'Emissão da CNH');
+    const transferenciaFee = fees.find(f => f.name === 'Transferência');
+    
+    if (!emissaoCNHFee || !transferenciaFee) return;
+    
+    setFormData(prev => {
+      let newSelectedFees = [...prev.selected_fees];
+      
+      if (prev.client_name === 'Renovação') {
+        if (!newSelectedFees.includes(emissaoCNHFee.id)) {
+          newSelectedFees.push(emissaoCNHFee.id);
+        }
+        newSelectedFees = newSelectedFees.filter(id => id !== transferenciaFee.id);
+      } else if (prev.client_name === 'Renovação + Transferência') {
+        if (!newSelectedFees.includes(emissaoCNHFee.id)) {
+          newSelectedFees.push(emissaoCNHFee.id);
+        }
+        if (!newSelectedFees.includes(transferenciaFee.id)) {
+          newSelectedFees.push(transferenciaFee.id);
+        }
+      } else {
+        newSelectedFees = newSelectedFees.filter(id => 
+          id !== emissaoCNHFee.id && id !== transferenciaFee.id
+        );
+      }
+      
+      return { ...prev, selected_fees: newSelectedFees };
+    });
+  }, [formData.client_name, fees]);
+
   const fetchData = async () => {
     try {
       const [citiesRes, stepsRes, feesRes, profRes] = await Promise.all([
@@ -407,14 +440,16 @@ export default function StepProcess() {
                       ))}
                     </select>
                     <div className="mt-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Nome do Cliente (opcional)</label>
-                      <input
-                        type="text"
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Serviço (opcional)</label>
+                      <select
                         value={formData.client_name}
                         onChange={(e) => setFormData(prev => ({ ...prev, client_name: e.target.value }))}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Nome do cliente"
-                      />
+                      >
+                        <option value="">Selecione um serviço</option>
+                        <option value="Renovação">Renovação</option>
+                        <option value="Renovação + Transferência">Renovação + Transferência</option>
+                      </select>
                     </div>
                   </div>
                 )}
@@ -561,7 +596,7 @@ export default function StepProcess() {
                         <h3 className="font-medium text-gray-900 mb-2">Informações Gerais</h3>
                         <div className="bg-gray-50 p-4 rounded-lg">
                           <p><strong>Cidade:</strong> {getSelectedCity()?.name}</p>
-                          {formData.client_name && <p><strong>Cliente:</strong> {formData.client_name}</p>}
+                          {formData.client_name && <p><strong>Serviço:</strong> {formData.client_name}</p>}
                           <p><strong>Total:</strong> R$ {calculateTotal().toFixed(2)}</p>
                         </div>
                       </div>
