@@ -3,7 +3,6 @@ import { cors } from "hono/cors";
 import { getCookie, setCookie } from "hono/cookie";
 import { zValidator } from "@hono/zod-validator";
 import bcrypt from "bcryptjs";
-import { Resend } from 'resend';
 import {
   CreateCityRequestSchema,
   CreateProfessionalRequestSchema,
@@ -1649,95 +1648,6 @@ app.post("/api/instructions", systemAuthMiddleware, async (c) => {
   } catch (error) {
     console.error('Error saving instructions:', error);
     return c.json({ error: "Erro ao salvar instruções" }, 500);
-  }
-});
-
-// Helper function to get Resend client
-async function getResendClient(c: any) {
-  try {
-    const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
-    
-    // Try to get token from environment
-    let xReplitToken = null;
-    
-    if (process.env.REPL_IDENTITY) {
-      xReplitToken = 'repl ' + process.env.REPL_IDENTITY;
-    } else if (process.env.WEB_REPL_RENEWAL) {
-      xReplitToken = 'depl ' + process.env.WEB_REPL_RENEWAL;
-    } else if (process.env.REPLIT_DEPLOYMENT) {
-      // In deployment, try to get from deployment token
-      xReplitToken = 'depl ' + process.env.REPLIT_DEPLOYMENT;
-    }
-
-    if (!hostname || !xReplitToken) {
-      throw new Error('Configuração Resend incompleta. Por favor, configure a integração Resend.');
-    }
-
-    const connectionSettings = await fetch(
-      'https://' + hostname + '/api/v2/connection?include_secrets=true&connector_names=resend',
-      {
-        headers: {
-          'Accept': 'application/json',
-          'X_REPLIT_TOKEN': xReplitToken
-        }
-      }
-    ).then(res => {
-      if (!res.ok) {
-        throw new Error('Falha ao buscar configurações Resend');
-      }
-      return res.json();
-    }).then(data => data.items?.[0]);
-
-    // Check for API key in secrets (correct location) or settings (fallback)
-    const apiKey = connectionSettings?.secrets?.api_key || connectionSettings?.settings?.api_key;
-    
-    if (!connectionSettings || !apiKey) {
-      throw new Error('Resend não está configurado. Por favor, configure a integração Resend.');
-    }
-    
-    if (!connectionSettings.settings?.from_email) {
-      throw new Error('Email de origem não configurado na integração Resend.');
-    }
-    
-    return {
-      client: new Resend(apiKey),
-      fromEmail: connectionSettings.settings.from_email
-    };
-  } catch (error) {
-    console.error('Error getting Resend client:', error);
-    throw error;
-  }
-}
-
-// Send email endpoint
-app.post("/api/send-email", systemAuthMiddleware, async (c) => {
-  try {
-    const body = await c.req.json();
-    const { to, subject, html } = body;
-
-    if (!to || !subject || !html) {
-      return c.json({ error: "Email, assunto e conteúdo são obrigatórios" }, 400);
-    }
-
-    const { client, fromEmail } = await getResendClient(c);
-    
-    const { data, error } = await client.emails.send({
-      from: fromEmail,
-      to: [to],
-      subject: subject,
-      html: html,
-    });
-
-    if (error) {
-      console.error('Resend error:', error);
-      return c.json({ error: "Erro ao enviar email: " + (error.message || JSON.stringify(error)) }, 500);
-    }
-
-    return c.json({ success: true, data });
-  } catch (error: any) {
-    console.error('Error sending email:', error);
-    const errorMessage = error.message || 'Erro desconhecido ao enviar email';
-    return c.json({ error: errorMessage }, 500);
   }
 });
 
