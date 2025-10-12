@@ -843,6 +843,19 @@ app.delete("/api/fees/:id", systemAuthMiddleware, async (c) => {
 
   const feeId = c.req.param("id");
 
+  // Verificar se a taxa é obrigatória (não pode ser excluída)
+  const fee = await c.env.DB.prepare(
+    "SELECT name FROM fees WHERE id = ? AND agency_id = ?"
+  ).bind(feeId, user.agency_id).first();
+
+  if (!fee) {
+    return c.json({ error: "Taxa não encontrada" }, 404);
+  }
+
+  if ((fee as any).name === 'Emissão da CNH' || (fee as any).name === 'Transferência') {
+    return c.json({ error: "Esta taxa não pode ser excluída" }, 400);
+  }
+
   await c.env.DB.prepare(
     "UPDATE fees SET is_active = 0 WHERE id = ? AND agency_id = ?"
   ).bind(feeId, user.agency_id).run();

@@ -345,12 +345,14 @@ function FeesConfiguration({ fees, onUpdate }: { fees: Fee[], onUpdate: () => vo
                 >
                   <Edit className="w-4 h-4" />
                 </button>
-                <button 
-                  onClick={() => handleDeleteFee(fee.id)}
-                  className="p-1 text-gray-400 hover:text-red-600"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                {fee.name !== 'Emissão da CNH' && fee.name !== 'Transferência' && (
+                  <button 
+                    onClick={() => handleDeleteFee(fee.id)}
+                    className="p-1 text-gray-400 hover:text-red-600"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             </div>
           ))}
