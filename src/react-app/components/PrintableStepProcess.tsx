@@ -425,20 +425,12 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
         }
         @media print {
             html, body { 
-                height: 100%;
                 margin: 0;
                 padding: 0;
                 font-size: 13px;
             }
-            body {
-                display: flex;
-                flex-direction: column;
-            }
             .container { 
                 max-width: none;
-                display: flex;
-                flex-direction: column;
-                min-height: 100vh;
                 margin: 5mm;
             }
             .step-card {
@@ -481,19 +473,8 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 font-size: 12px;
             }
             .footer {
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                margin: 5mm;
-                padding-top: 6px;
-                border-top: 1px solid black;
-                text-align: center;
-                background: white;
-            }
-            /* Add space at the bottom to prevent content overlap with fixed footer */
-            .instructions {
-                margin-bottom: 60px;
+                margin-top: 8px;
+                page-break-inside: avoid;
             }
         }
         @page {
