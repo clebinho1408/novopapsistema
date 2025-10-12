@@ -43,6 +43,6 @@ localPort = 38613
 externalPort = 3001
 
 [deployment]
-deploymentTarget = "vm"
-build = ["npm", "install", "--legacy-peer-deps"]
-run = ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5000"]
+deploymentTarget = "autoscale"
+build = ["sh", "-c", "npm install --legacy-peer-deps && npm run build"]
+run = ["npm", "run", "preview"]

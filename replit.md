@@ -87,10 +87,11 @@ The application uses the following main tables:
 - ✅ Fixed deployment issues:
   - Removed react-quill (incompatible with React 19), using quill directly
   - Updated @vitejs/plugin-react to v5.0.4 (vite 7.x compatible)
-  - Changed deployment target to VM with dev server (always running)
+  - Deployment target: Autoscale (Cloud Run) with production build
   - All dependencies now compatible with React 19
-  - Build command: npm install --legacy-peer-deps
-  - Run command: npm run dev (serves app on port 5000)
+  - Build command: npm install --legacy-peer-deps && npm run build
+  - Run command: npm run preview (serves production build on port 5000)
+  - Added preview script to package.json for production deployment
 - Configured Vite to bind to 0.0.0.0:5000 for Replit environment
 - Updated CORS configuration to support Replit proxy domains
 - Set up development workflow
@@ -109,8 +110,13 @@ The application uses a custom session-based authentication system:
 - Multi-tenant isolation enforced at database level
 
 ## Deployment
-The application is configured for Cloudflare Workers deployment:
-- Build command: `npm run build`
-- Deployment target: autoscale
+The application is configured for production deployment:
+- Deployment target: Autoscale (Cloud Run)
+- Build command: `npm install --legacy-peer-deps && npm run build`
+- Run command: `npm run preview` (serves production build)
+- Build process:
+  1. Generates Cloudflare Worker types (`wrangler types`)
+  2. Compiles TypeScript
+  3. Builds Vite production bundle
 - Uses Cloudflare D1 for database
 - Uses Cloudflare R2 for file storage
