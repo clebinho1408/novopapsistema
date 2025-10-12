@@ -1,0 +1,1 @@
+ALTER TABLE professionals DROP COLUMN attendance_type;

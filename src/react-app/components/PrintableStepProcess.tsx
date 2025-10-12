@@ -1,0 +1,1237 @@
+import { X, Printer, Mail } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import type { ProcessStep, Professional, Fee, City } from '@/shared/types';
+
+interface PrintableStepProcessProps {
+  isOpen: boolean;
+  onClose: () => void;
+  processData: {
+    client_name?: string;
+    city: City;
+    selected_steps: ProcessStep[];
+    all_steps: ProcessStep[]; // Todas as etapas disponíveis
+    selected_professionals: Record<string, Professional>;
+    selected_fees: Fee[];
+    total_amount: number;
+    show_toxicologico_message?: boolean;
+  };
+}
+
+export default function PrintableStepProcess({ isOpen, onClose, processData }: PrintableStepProcessProps) {
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [generalInstructions, setGeneralInstructions] = useState<string>('');
+  const [emailModal, setEmailModal] = useState({ isOpen: false, email: '' });
+
+  useEffect(() => {
+    if (isOpen) {
+      checkAgencyLogo();
+      fetchInstructions();
+    }
+  }, [isOpen]);
+
+  const checkAgencyLogo = async () => {
+    try {
+      const response = await fetch('/api/agencies/logo', { credentials: 'include' });
+      const data = await response.json();
+      
+      if (data.has_logo) {
+        setLogoUrl(`/api/files/${encodeURIComponent(data.logo_key)}`);
+      }
+    } catch (error) {
+      console.error('Error checking logo:', error);
+    }
+  };
+
+  const fetchInstructions = async () => {
+    try {
+      const response = await fetch('/api/instructions', { credentials: 'include' });
+      const data = await response.json();
+      setGeneralInstructions(data.general_instructions || '');
+    } catch (error) {
+      console.error('Error fetching instructions:', error);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  const handlePrint = () => {
+    // Create a new window with only the print content
+    const printContent = generatePrintHTML();
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      
+      // Wait for content to load, then print
+      printWindow.onload = () => {
+        setTimeout(() => {
+          printWindow.print();
+          printWindow.close();
+        }, 100);
+      };
+    }
+  };
+
+  const handleSendEmail = async () => {
+    if (!emailModal.email) {
+      alert('Por favor, informe o email do destinatário.');
+      return;
+    }
+
+    // Buscar nome da agência
+    let agencyName = 'Agência';
+    try {
+      const response = await fetch('/api/agencies/info', { credentials: 'include' });
+      const agencyData = await response.json();
+      agencyName = agencyData.name || 'Agência';
+    } catch (error) {
+      console.error('Error fetching agency name:', error);
+    }
+
+    // Gerar o conteúdo do email em texto simples
+    const emailContent = generateEmailContent();
+    const subject = `Agência Regional - ${agencyName}`;
+    
+    // Criar o link do Gmail Compose diretamente
+    const gmailLink = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(emailModal.email)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailContent)}`;
+    
+    // Abrir o Gmail
+    window.open(gmailLink, '_blank');
+    
+    // Fechar o modal
+    setEmailModal({ isOpen: false, email: '' });
+    
+    alert('Abrindo o Gmail com o conteúdo pré-carregado!');
+  };
+
+  const generatePrintHTML = () => {
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Passo a Passo - ${processData.client_name || 'Cliente'}</title>
+    <meta charset="UTF-8">
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 10px; 
+            padding: 0; 
+            background: white;
+            color: black;
+            line-height: 1.2;
+        }
+        .container {
+            max-width: none;
+            margin: 0;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid black;
+        }
+        .logo-section {
+            display: flex;
+            align-items: center;
+        }
+        .logo {
+            width: 32px;
+            height: 32px;
+            background-color: black;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .logo-text h1 {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 0;
+        }
+        .logo-text p {
+            font-size: 14px;
+            margin: 0;
+        }
+        .header-info {
+            text-align: right;
+        }
+        .header-info h2 {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 0;
+        }
+        .header-info p {
+            font-size: 13px;
+            margin: 3px 0 0 0;
+        }
+        .steps-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .step-card {
+            border: 2px solid black;
+            min-height: 160px;
+            page-break-inside: avoid;
+        }
+        .step-card-with-fee {
+            border: 2px solid black;
+            min-height: 180px;
+            page-break-inside: avoid;
+        }
+        .step-header {
+            background-color: #f5f5f5;
+            padding: 6px;
+            border-bottom: 2px solid black;
+            display: flex;
+            align-items: center;
+        }
+        .step-icon {
+            font-size: 32px;
+            margin-right: 8px;
+        }
+        .step-number-and-title {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .step-number-text {
+            font-size: 16px;
+            font-weight: bold;
+            margin: 0;
+            text-align: center;
+        }
+        .step-title {
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            text-align: center;
+            margin-top: 2px;
+        }
+        .step-content {
+            padding: 8px;
+            position: relative;
+        }
+        .step-content-with-fee {
+            padding: 8px 8px 35px 8px;
+            position: relative;
+        }
+        .professional-name {
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        .professional-info {
+            font-size: 10px;
+            margin-bottom: 3px;
+        }
+        .schedule-info {
+            margin-top: 6px;
+        }
+        .schedule-label {
+            font-size: 10px;
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+        .fee-section h4 {
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin: 0 0 8px 0;
+        }
+        .fee-item {
+            font-size: 12px;
+            margin-bottom: 3px;
+        }
+        .fee-total {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid black;
+        }
+        .fee-total-text {
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .total-and-prova-container {
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+            margin: 12px 0;
+            justify-content: space-between;
+        }
+        .total-amount-card {
+            position: relative;
+            display: flex;
+            justify-content: flex-end;
+            flex-shrink: 0;
+            margin-left: auto;
+        }
+        .total-amount-box {
+            background-color: #f5f5f5;
+            border: 2px solid black;
+            padding: 8px 12px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .total-amount-text {
+            font-size: 14px;
+            font-weight: bold;
+            color: black;
+            margin: 0;
+        }
+        .prova-card {
+            border: 2px solid black;
+            min-height: 100px;
+            width: 380px;
+            flex-shrink: 0;
+        }
+        .prova-header {
+            background-color: #f5f5f5;
+            padding: 4px 6px;
+            border-bottom: 2px solid black;
+            display: flex;
+            align-items: center;
+        }
+        .prova-header .step-icon {
+            font-size: 20px;
+            margin-right: 6px;
+        }
+        .prova-title {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .prova-title .step-number-text {
+            font-size: 12px;
+            font-weight: bold;
+            margin: 0;
+            text-align: center;
+        }
+        .prova-title .step-title {
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            text-align: center;
+            margin-top: 1px;
+        }
+        .prova-content {
+            padding: 4px 6px;
+        }
+        .prova-content .professional-name {
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 3px;
+        }
+        .prova-content .schedule-info {
+            margin-top: 3px;
+        }
+        .prova-content .schedule-label {
+            font-size: 9px;
+            font-weight: bold;
+            margin-bottom: 1px;
+        }
+        .prova-content .professional-info {
+            font-size: 9px;
+            margin-bottom: 2px;
+        }
+        .instructions {
+            border-top: 2px solid black;
+            padding-top: 12px;
+            page-break-inside: avoid;
+        }
+        .instructions h3 {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .instructions-content {
+            font-size: 12px;
+            line-height: 1.4;
+            color: #333;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        .footer {
+            margin-top: 8px;
+            padding-top: 6px;
+            border-top: 1px solid black;
+            text-align: center;
+        }
+        .footer p {
+            font-size: 10px;
+            margin: 0;
+        }
+        @media print {
+            body { 
+                margin: 5mm; 
+                padding: 0; 
+                font-size: 13px;
+            }
+            .container { 
+                max-width: none; 
+            }
+            .step-card {
+                page-break-inside: avoid;
+                min-height: 160px;
+            }
+            .step-card-with-fee {
+                page-break-inside: avoid;
+                min-height: 180px;
+            }
+            .instructions {
+                page-break-inside: avoid;
+            }
+            .header {
+                margin-bottom: 10px;
+            }
+            .steps-grid {
+                gap: 10px;
+                margin-bottom: 10px;
+            }
+            .step-content {
+                padding: 8px;
+            }
+            .step-content-with-fee {
+                padding: 8px 8px 35px 8px;
+            }
+            .professional-info {
+                font-size: 11px;
+                margin-bottom: 4px;
+            }
+            .professional-name {
+                font-size: 12px;
+            }
+        }
+        @page {
+            margin: 5mm;
+            size: A4;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo-section">
+                ${logoUrl ? `
+                    <img src="${logoUrl}" alt="Logo da Agência" style="max-height: 60px; max-width: 120px; margin-right: 10px;" />
+                ` : ''}
+                <div class="logo-text">
+                    <h1 style="font-size: 28px; font-weight: bold; margin: 0;">SIGA O PASSO A PASSO</h1>
+                    ${processData.client_name ? `<p style="font-size: 16px; margin: 4px 0 0 0;">Cliente: ${processData.client_name}</p>` : ''}
+                </div>
+            </div>
+        </div>
+
+        <!-- Steps Grid -->
+        <div class="steps-grid">
+            ${(() => {
+              const filteredSteps = (processData.all_steps || processData.selected_steps).filter(step => step.type !== 'prova');
+              let stepCounter = 0;
+              
+              return filteredSteps.filter((step) => {
+                const isSelected = processData.selected_steps.find(s => s.id === step.id);
+                const professional = isSelected ? processData.selected_professionals[step.id.toString()] : null;
+                
+                // Para taxas, verificar se há taxas não vinculadas selecionadas
+                const hasTaxesSelected = step.type === 'taxa' && isSelected && 
+                  processData.selected_fees.filter(fee => !fee.linked_professional_type).length > 0;
+                
+                // Só incluir se há dados para exibir
+                return professional || hasTaxesSelected;
+              }).map((step) => {
+                const isSelected = processData.selected_steps.find(s => s.id === step.id);
+                const professional = isSelected ? processData.selected_professionals[step.id.toString()] : null;
+                
+                stepCounter++;
+                const stepNumber = stepCounter;
+                const stepIcon = getStepIcon(step.type);
+              
+              // Check if this step has a linked fee to determine card height
+              const linkedFee = processData.selected_fees.find(fee => fee.linked_professional_type === step.type);
+              const cardClass = linkedFee && professional ? "step-card-with-fee" : "step-card";
+              const contentClass = linkedFee && professional ? "step-content-with-fee" : "step-content";
+              
+              return `
+                <div class="${cardClass}">
+                    <div class="step-header">
+                        <div class="step-icon">${stepIcon}</div>
+                        <div class="step-number-and-title">
+                            <p class="step-number-text"><strong>(${stepNumber}°) PASSO</strong></p>
+                            <div class="step-title">
+                                <strong>${step.name}</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="${contentClass}">
+                        ${professional ? `
+                            <div class="professional-name"><strong>${professional.name}</strong></div>
+                            ${professional.address || professional.city_name ? `<div class="professional-info">${professional.address ? `${professional.address}${professional.city_name ? ` - ${professional.city_name}` : ''}` : professional.city_name || ''}</div>` : ''}
+                            ${professional.attendance_type ? `
+                                <div class="schedule-info">
+                                    <div class="schedule-label"><strong>${professional.attendance_type}:</strong></div>
+                                    ${professional.phone ? `
+                                        <div class="professional-info" style="font-size: 12px;"><strong>${professional.phone}</strong> - Somente mensagem WhatsApp</div>
+                                    ` : ''}
+                                </div>
+                            ` : ''}
+                            ${professional.email ? `
+                                <div class="professional-info" style="margin-top: 4px;"><strong>Email:</strong> ${professional.email}</div>
+                            ` : ''}
+                            ${(() => {
+                              let workingInfo = '';
+                              if (professional.working_days) {
+                                try {
+                                  const days = JSON.parse(professional.working_days);
+                                  const dayLabels = {
+                                    'monday': 'Seg',
+                                    'tuesday': 'Ter',
+                                    'wednesday': 'Qua',
+                                    'thursday': 'Qui',
+                                    'friday': 'Sex',
+                                    'saturday': 'Sáb',
+                                    'sunday': 'Dom'
+                                  };
+                                  const daysList = days.map((day: string) => dayLabels[day as keyof typeof dayLabels] || day).join(', ');
+                                  workingInfo += `<div class="professional-info" style="margin-top: 8px;"><strong>Dias:</strong> ${daysList}</div>`;
+                                } catch (e) {
+                                  // If parsing fails, show raw value
+                                  workingInfo += `<div class="professional-info" style="margin-top: 8px;"><strong>Dias:</strong> ${professional.working_days}</div>`;
+                                }
+                              }
+                              if (professional.working_hours) {
+                                workingInfo += `<div class="professional-info" style="margin-top: 2px;"><strong>Horário:</strong> ${professional.working_hours}</div>`;
+                              }
+                              return workingInfo;
+                            })()}
+                            ${professional.observations ? `<div class="professional-info" style="margin-top: 12px;">${professional.observations}</div>` : ''}
+                            ${(() => {
+                              // Buscar taxa vinculada a este tipo de profissional
+                              const linkedFee = processData.selected_fees.find(fee => fee.linked_professional_type === step.type);
+                              return linkedFee ? `
+                                <div style="position: absolute; bottom: 6px; right: 6px;">
+                                  <div style="font-size: 13px; font-weight: bold; color: black; background-color: #f5f5f5; padding: 3px 6px; border: 1px solid black; border-radius: 3px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
+                                    <strong>R$ ${linkedFee.amount.toFixed(2)}</strong>
+                                  </div>
+                                </div>
+                              ` : '';
+                            })()}
+                            ${step.type === 'medico' && processData.show_toxicologico_message ? `
+                              <div style="margin-top: 12px; text-align: center;">
+                                <div style="font-size: 14px; font-weight: bold; color: black;">
+                                  <strong>*** LEVAR O TOXICOLÓGICO ***</strong>
+                                </div>
+                              </div>
+                            ` : ''}
+                        ` : step.type === 'taxa' ? `
+                            <div class="fee-section">
+                                <h4><strong>TAXAS A PAGAR:</strong></h4>
+                                ${processData.selected_fees.filter(fee => {
+                                  // Apenas incluir taxas que NÃO têm vínculo com profissionais
+                                  return !fee.linked_professional_type;
+                                }).map(fee => `
+                                    <div class="fee-item"><strong>${fee.name}: R$ ${fee.amount.toFixed(2)}</strong></div>
+                                `).join('')}
+                            </div>
+                        ` : `
+                            <div style="display: flex; align-items: center; justify-content: center; height: 80px;">
+                                <div style="font-size: 60px; font-weight: bold; color: black; line-height: 1;">✕</div>
+                            </div>
+                        `}
+                    </div>
+                </div>
+              `;
+              }).join('');
+            })()}
+        </div>
+
+        <!-- Total Amount Card and Prova Card Container -->
+        <div class="total-and-prova-container">
+            ${(() => {
+              const allSteps = processData.all_steps || processData.selected_steps;
+              const provaStep = allSteps.find(step => step.type === 'prova');
+              const isSelected = provaStep ? processData.selected_steps.find(s => s.id === provaStep.id) : false;
+              const professional = (isSelected && provaStep) ? processData.selected_professionals[provaStep.id.toString()] : null;
+              
+              if (!provaStep || !isSelected || !professional) {
+                return `
+                  <div style="width: 100%; display: flex; justify-content: flex-end;">
+                    <div class="total-amount-box">
+                      <div class="total-amount-text"><strong>VALOR TOTAL: R$ ${processData.total_amount.toFixed(2)}</strong></div>
+                    </div>
+                  </div>
+                `;
+              }
+              
+              // Calcular o número do passo baseado nos passos anteriores que têm dados
+              let stepNumber = 0;
+              const filteredSteps = allSteps.filter(s => s.type !== 'prova');
+              filteredSteps.forEach(step => {
+                const stepSelected = processData.selected_steps.find(s => s.id === step.id);
+                const stepProfessional = stepSelected ? processData.selected_professionals[step.id.toString()] : null;
+                const stepHasTaxes = step.type === 'taxa' && stepSelected && 
+                  processData.selected_fees.filter(fee => !fee.linked_professional_type).length > 0;
+                if (stepProfessional || stepHasTaxes) {
+                  stepNumber++;
+                }
+              });
+              stepNumber++; // Incrementar para o passo atual (prova)
+              
+              return `
+                <div class="prova-card">
+                    <div class="prova-header">
+                        <div class="step-icon">📝</div>
+                        <div class="prova-title">
+                            <p class="step-number-text"><strong>(${stepNumber}°) PASSO</strong></p>
+                            <div class="step-title"><strong>PROVA</strong></div>
+                        </div>
+                    </div>
+                    <div class="prova-content">
+                        <div class="professional-name"><strong>${professional.name}</strong></div>
+                        ${professional.attendance_type ? `
+                            <div class="schedule-info">
+                                <div class="schedule-label"><strong>${professional.attendance_type}:</strong></div>
+                                ${professional.phone ? `
+                                    <div class="professional-info" style="font-size: 11px;"><strong>${professional.phone}</strong> - Somente mensagem WhatsApp</div>
+                                ` : ''}
+                            </div>
+                        ` : ''}
+                        ${professional.email ? `
+                            <div class="professional-info"><strong>Email:</strong> ${professional.email}</div>
+                        ` : ''}
+                    </div>
+                </div>
+                <div class="total-amount-card">
+                    <div class="total-amount-box">
+                        <div class="total-amount-text"><strong>VALOR TOTAL: R$ ${processData.total_amount.toFixed(2)}</strong></div>
+                    </div>
+                </div>
+              `;
+            })()}
+        </div>
+
+        <!-- General Instructions -->
+        ${generalInstructions ? `
+        <div class="instructions">
+            <div class="instructions-content">
+                ${(() => {
+                  // Remove HTML tags and convert to plain text for print version
+                  const plainTextInstructions = generalInstructions
+                    .replace(/<br\s*\/?>/gi, '\n') // Replace <br> tags with newlines temporarily
+                    .replace(/<[^>]*>/g, ' ') // Remove HTML tags and replace with space
+                    .replace(/&nbsp;/g, ' ') // Replace &nbsp; with spaces
+                    .replace(/&amp;/g, '&')  // Replace &amp; with &
+                    .replace(/&lt;/g, '<')   // Replace &lt; with <
+                    .replace(/&gt;/g, '>')   // Replace &gt; with >
+                    .replace(/&quot;/g, '"') // Replace &quot; with "
+                    .replace(/\s*\n\s*/g, ' ') // Replace newlines (with optional spaces) with single space
+                    .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+                    .trim()
+                    .replace(/\s*;\s*/g, ';<br><br>'); // Add double line break after semicolon for better separation
+                  return plainTextInstructions;
+                })()}
+            </div>
+        </div>
+        ` : ''}
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>Documento gerado pelo PAP - Sistema - ${new Date().toLocaleDateString('pt-BR')}</p>
+        </div>
+    </div>
+</body>
+</html>`;
+  };
+
+  const getStepIcon = (type: string) => {
+    switch (type) {
+      case 'foto':
+        return '📷';
+      case 'taxa':
+        return '💰';
+      case 'medico':
+        return '👨‍⚕️';
+      case 'psicologo':
+        return '🧠';
+      case 'prova':
+        return '📝';
+      case 'toxicologico':
+        return '🧪';
+      default:
+        return '📋';
+    }
+  };
+
+  const generateEmailContent = () => {
+    let content = `PASSO A PASSO\n`;
+    if (processData.client_name) {
+      content += `Cliente: ${processData.client_name}\n`;
+    }
+    content += `\n======================================\n\n`;
+
+    // Filtrar etapas (excluindo prova para processar separadamente)
+    const filteredSteps = (processData.all_steps || processData.selected_steps).filter((step: any) => step.type !== 'prova');
+    let stepCounter = 0;
+
+    // Apenas incluir steps que têm dados (profissionais selecionados ou taxas)
+    filteredSteps.forEach((step: any) => {
+      const isSelected = processData.selected_steps.find((s: any) => s.id === step.id);
+      const professional = isSelected ? processData.selected_professionals[step.id.toString()] : null;
+      
+      // Para taxas, verificar se há taxas não vinculadas selecionadas
+      const hasTaxesSelected = step.type === 'taxa' && isSelected && 
+        processData.selected_fees.filter((fee: any) => !fee.linked_professional_type).length > 0;
+      
+      const hasData = professional || hasTaxesSelected;
+      
+      // Só incluir no email se tiver dados
+      if (!hasData) return;
+      
+      stepCounter++;
+
+      content += `${getStepIcon(step.type)} ${step.name.toUpperCase()}\n`;
+      content += `(${stepCounter}° PASSO)\n`;
+      content += `${'-'.repeat(40)}\n`;
+
+      if (professional) {
+        content += `${professional.name}\n`;
+        
+        if (professional.address || professional.city_name) {
+          const location = professional.address 
+            ? `${professional.address}${professional.city_name ? ` - ${professional.city_name}` : ''}`
+            : professional.city_name || '';
+          content += `ENDEREÇO: ${location}\n`;
+        }
+        
+        if (professional.attendance_type) {
+          content += `\n${professional.attendance_type}:\n`;
+          if (professional.phone) {
+            content += `TELEFONE: ${professional.phone} - Somente mensagem WhatsApp\n`;
+          }
+        }
+        
+        if (professional.email) {
+          content += `EMAIL: ${professional.email}\n`;
+        }
+        
+        if (professional.working_days) {
+          try {
+            const days = JSON.parse(professional.working_days);
+            const dayLabels: Record<string, string> = {
+              'monday': 'Seg',
+              'tuesday': 'Ter', 
+              'wednesday': 'Qua',
+              'thursday': 'Qui',
+              'friday': 'Sex',
+              'saturday': 'Sáb',
+              'sunday': 'Dom'
+            };
+            const daysList = days.map((day: string) => dayLabels[day] || day).join(', ');
+            content += `DIAS: ${daysList}\n`;
+          } catch {
+            content += `DIAS: ${professional.working_days}\n`;
+          }
+        }
+        
+        if (professional.working_hours) {
+          content += `HORÁRIO: ${professional.working_hours}\n`;
+        }
+        
+        if (professional.observations) {
+          content += `OBSERVAÇÕES: ${professional.observations}\n`;
+        }
+        
+        // Taxa vinculada
+        const linkedFee = processData.selected_fees.find((fee: any) => fee.linked_professional_type === step.type);
+        if (linkedFee) {
+          content += `VALOR: R$ ${linkedFee.amount.toFixed(2)}\n`;
+        }
+        
+        // Mensagem toxicológico
+        if (step.type === 'medico' && processData.show_toxicologico_message) {
+          content += `\n>> LEVAR O TOXICOLÓGICO <<\n`;
+        }
+        
+      } else if (step.type === 'taxa') {
+        content += `TAXAS A PAGAR:\n`;
+        processData.selected_fees.filter((fee: any) => !fee.linked_professional_type).forEach((fee: any) => {
+          content += `• ${fee.name}: R$ ${fee.amount.toFixed(2)}\n`;
+        });
+        
+        const manualFeesTotal = processData.selected_fees
+          .filter((fee: any) => !fee.linked_professional_type)
+          .reduce((total: number, fee: any) => total + fee.amount, 0);
+        
+        if (manualFeesTotal > 0) {
+          content += `TOTAL: R$ ${manualFeesTotal.toFixed(2)}\n`;
+        }
+      }
+      
+      content += `\n`;
+    });
+
+    // Processar etapa de prova separadamente
+    const allSteps = processData.all_steps || processData.selected_steps;
+    const provaStep = allSteps.find((step: any) => step.type === 'prova');
+    if (provaStep) {
+      const isSelected = processData.selected_steps.find((s: any) => s.id === provaStep.id);
+      const professional = isSelected ? processData.selected_professionals[provaStep.id.toString()] : null;
+      
+      if (professional) {
+        // Calcular o número do passo
+        let provaStepNumber = filteredSteps.filter((step: any) => {
+          const stepSelected = processData.selected_steps.find((s: any) => s.id === step.id);
+          const stepProfessional = stepSelected ? processData.selected_professionals[step.id.toString()] : null;
+          const stepHasTaxes = step.type === 'taxa' && stepSelected && 
+            processData.selected_fees.filter((fee: any) => !fee.linked_professional_type).length > 0;
+          return stepProfessional || stepHasTaxes;
+        }).length + 1;
+        
+        content += `📝 PROVA\n`;
+        content += `(${provaStepNumber}° PASSO)\n`;
+        content += `${'-'.repeat(40)}\n`;
+        content += `LOCAL: ${professional.name}\n`;
+        
+        if (professional.attendance_type) {
+          content += `${professional.attendance_type}:\n`;
+          if (professional.phone) {
+            content += `TELEFONE: ${professional.phone} - Somente mensagem WhatsApp\n`;
+          }
+        }
+        
+        if (professional.email) {
+          content += `EMAIL: ${professional.email}\n`;
+        }
+        
+        content += `\n`;
+      }
+    }
+
+    // Valor total
+    content += `======================================\n`;
+    content += `VALOR TOTAL: R$ ${processData.total_amount.toFixed(2)}\n`;
+    content += `======================================\n\n`;
+
+    // Instruções gerais
+    if (generalInstructions) {
+      content += `INSTRUÇÕES GERAIS:\n`;
+      content += `${'-'.repeat(40)}\n`;
+      
+      // Use the same logic as the print version to remove HTML tags and format
+      const plainTextInstructions = generalInstructions
+        .replace(/<[^>]*>/g, '') // Remove HTML tags
+        .replace(/&nbsp;/g, ' ') // Replace &nbsp; with spaces
+        .replace(/&amp;/g, '&')  // Replace &amp; with &
+        .replace(/&lt;/g, '<')   // Replace &lt; with <
+        .replace(/&gt;/g, '>')   // Replace &gt; with >
+        .replace(/&quot;/g, '"') // Replace &quot; with "
+        .replace(/\s+/g, ' ')    // Replace multiple spaces/line breaks with single space
+        .trim()
+        .replace(/;/g, ';\n\n'); // Add line break and blank line after each semicolon
+      
+      content += `${plainTextInstructions}\n\n`;
+    }
+
+    // Rodapé
+    content += `Documento gerado pelo PAP - Sistema - ${new Date().toLocaleDateString('pt-BR')}\n`;
+
+    return content;
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-screen overflow-auto">
+        {/* Header Controls */}
+        <div className="flex justify-between items-center p-4 border-b border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-900">Passo a Passo - Visualização</h2>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setEmailModal({ isOpen: true, email: '' })}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              <Mail className="w-4 h-4" />
+              <span>Enviar por Email</span>
+            </button>
+            <button
+              onClick={handlePrint}
+              className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+            >
+              <Printer className="w-4 h-4" />
+              <span>Imprimir</span>
+            </button>
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+          {/* Preview Content */}
+        <div className="p-8">
+          <div className="max-w-none">
+            {/* Header */}
+            <div className="flex items-center mb-8 pb-4 border-b-2 border-black">
+              <div className="flex items-center space-x-4">
+                {logoUrl && (
+                  <img 
+                    src={logoUrl} 
+                    alt="Logo da Agência" 
+                    className="max-h-16 max-w-32 object-contain"
+                  />
+                )}
+                <div>
+                  <h1 className="text-3xl font-bold">SIGA O PASSO A PASSO</h1>
+                  {processData.client_name && (
+                    <p className="text-lg mt-1">Cliente: {processData.client_name}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Steps Grid */}
+            <div className="grid grid-cols-2 gap-6 mb-8">
+              {(() => {
+                const filteredSteps = (processData.all_steps || processData.selected_steps).filter(step => step.type !== 'prova');
+                let stepCounter = 0;
+                
+                return filteredSteps.map((step) => {
+                  const isSelected = processData.selected_steps.find(s => s.id === step.id);
+                  const professional = isSelected ? processData.selected_professionals[step.id.toString()] : null;
+                  
+                  // Para taxas, verificar se há taxas não vinculadas selecionadas
+                  // Para taxas, verificar se há taxas não vinculadas selecionadas
+                  const hasTaxesSelected = step.type === 'taxa' && isSelected && 
+                    processData.selected_fees.filter(fee => !fee.linked_professional_type).length > 0;
+                  
+                  // Incrementar contador apenas se há dados para exibir
+                  const hasData = professional || hasTaxesSelected;
+                  if (hasData) {
+                    stepCounter++;
+                  }
+                  
+                  const stepNumber = stepCounter;
+                
+                return (
+                  <div key={step.id} className={`border-2 border-black ${(() => {
+                    // Buscar taxa vinculada a este tipo de profissional para ajustar altura
+                    const linkedFee = processData.selected_fees.find(fee => fee.linked_professional_type === step.type);
+                    return linkedFee && professional ? 'min-h-[220px]' : 'min-h-[200px]';
+                  })()}`}>
+                    {/* Step Header */}
+                    <div className="bg-gray-100 p-3 border-b-2 border-black">
+                      <div className="flex items-center space-x-4">
+                        <div className="text-4xl">
+                          {getStepIcon(step.type)}
+                        </div>
+                        <div className="flex-1 text-center">
+                          {hasData && (
+                            <div className="text-lg font-bold">({stepNumber}°) PASSO</div>
+                          )}
+                          <h3 className="font-bold text-base uppercase mt-1">
+                            {step.name}
+                          </h3>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Step Content */}
+                    <div className={`p-3 relative ${(() => {
+                      // Buscar taxa vinculada a este tipo de profissional para ajustar padding
+                      const linkedFee = processData.selected_fees.find(fee => fee.linked_professional_type === step.type);
+                      return linkedFee && professional ? 'pb-10' : '';
+                    })()}`}>
+                      {professional ? (
+                        <div className="space-y-2">
+                          <h4 className="font-bold text-sm uppercase">
+                            {professional.name}
+                          </h4>
+                          
+                          {(professional.address || professional.city_name) && (
+                            <p className="text-xs">
+                              {professional.address}{professional.address && professional.city_name ? ' - ' : ''}{professional.city_name}
+                            </p>
+                          )}
+                          
+                          {professional.attendance_type && (
+                            <div className="mt-3">
+                              <p className="text-xs font-bold">{professional.attendance_type}:</p>
+                              {professional.phone && (
+                                <p className="text-sm">
+                                  {professional.phone} - Somente mensagem WhatsApp
+                                </p>
+                              )}
+                            </div>
+                          )}
+                          
+                          {professional.email && (
+                            <div className="mt-2">
+                              <p className="text-xs">
+                                <strong>Email:</strong> {professional.email}
+                              </p>
+                            </div>
+                          )}
+                          
+                          {(professional.working_days || professional.working_hours) && (
+                            <div className="mt-3 space-y-1">
+                              {professional.working_days && (
+                                <p className="text-xs">
+                                  <strong>Dias:</strong> {(() => {
+                                    try {
+                                      const days = JSON.parse(professional.working_days);
+                                      const dayLabels: Record<string, string> = {
+                                        'monday': 'Seg',
+                                        'tuesday': 'Ter',
+                                        'wednesday': 'Qua',
+                                        'thursday': 'Qui',
+                                        'friday': 'Sex',
+                                        'saturday': 'Sáb',
+                                        'sunday': 'Dom'
+                                      };
+                                      return days.map((day: string) => dayLabels[day as keyof typeof dayLabels] || day).join(', ');
+                                    } catch {
+                                      return professional.working_days;
+                                    }
+                                  })()}
+                                </p>
+                              )}
+                              {professional.working_hours && (
+                                <p className="text-xs">
+                                  <strong>Horário:</strong> {professional.working_hours}
+                                </p>
+                              )}
+                            </div>
+                          )}
+                          
+                          {professional.observations && (
+                            <div className="mt-3">
+                              <p className="text-xs">
+                                {professional.observations}
+                              </p>
+                            </div>
+                          )}
+                          
+                          {(() => {
+                            // Buscar taxa vinculada a este tipo de profissional
+                            const linkedFee = processData.selected_fees.find(fee => fee.linked_professional_type === step.type);
+                            return linkedFee ? (
+                              <div className="absolute bottom-1 right-1">
+                                <div className="bg-gray-100 border border-black px-2 py-1 rounded text-xs font-bold shadow-sm">
+                                  R$ {linkedFee.amount.toFixed(2)}
+                                </div>
+                              </div>
+                            ) : null;
+                          })()}
+                          
+                          {/* Toxicológico message for medical exam */}
+                          {step.type === 'medico' && processData.show_toxicologico_message && (
+                            <div className="mt-3 text-center">
+                              <p className="text-xs font-bold text-black">
+                                LEVAR O TOXICOLÓGICO
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      ) : step.type === 'taxa' && isSelected ? (
+                        <div className="space-y-2">
+                          <h4 className="font-bold text-sm uppercase">
+                            TAXAS A PAGAR:
+                          </h4>
+                          {processData.selected_fees.filter(fee => {
+                            // Apenas incluir taxas que NÃO têm vínculo com profissionais
+                            return !fee.linked_professional_type;
+                          }).map(fee => (
+                            <div key={fee.id} className="text-xs">
+                              {fee.name}: R$ {fee.amount.toFixed(2)}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center h-16">
+                          <div className="text-6xl font-bold text-black">✕</div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+                });
+              })()}
+            </div>
+
+            {/* Total Amount Card and Prova Card Container */}
+            <div className="flex items-start gap-2 mb-6 justify-between">
+              {(() => {
+                const allSteps = processData.all_steps || processData.selected_steps;
+                const provaStep = allSteps.find(step => step.type === 'prova');
+                const isSelected = provaStep ? processData.selected_steps.find(s => s.id === provaStep.id) : false;
+                
+                if (!provaStep || !isSelected) {
+                  return (
+                    <div className="w-full flex justify-end">
+                      <div className="bg-gray-100 border-2 border-black p-3 rounded-lg text-center">
+                        <div className="text-sm font-bold text-black">
+                          <strong>VALOR TOTAL: R$ {processData.total_amount.toFixed(2)}</strong>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+                
+                const professional = isSelected ? processData.selected_professionals[provaStep.id.toString()] : null;
+                
+                // Calcular o número do passo baseado nos passos anteriores que têm dados
+                let stepNumber = 0;
+                const filteredSteps = allSteps.filter(s => s.type !== 'prova');
+                filteredSteps.forEach(step => {
+                  const stepSelected = processData.selected_steps.find(s => s.id === step.id);
+                  const stepProfessional = stepSelected ? processData.selected_professionals[step.id.toString()] : null;
+                  const stepHasTaxes = step.type === 'taxa' && stepSelected && 
+                    processData.selected_fees.filter(fee => !fee.linked_professional_type).length > 0;
+                  if (stepProfessional || stepHasTaxes) {
+                    stepNumber++;
+                  }
+                });
+                stepNumber++; // Incrementar para o passo atual (prova)
+                
+                return (
+                  <>
+                    <div className="border-2 border-black w-96 h-24 flex-shrink-0">
+                      {/* Prova Header */}
+                      <div className="bg-gray-100 px-2 py-1 border-b-2 border-black flex items-center h-8">
+                        <div className="text-xl mr-2">📝</div>
+                        <div className="flex-1 text-center">
+                          {professional && (
+                            <div className="text-xs font-bold">({stepNumber}°) PASSO - PROVA</div>
+                          )}
+                          {!professional && (
+                            <div className="text-xs font-bold">PROVA</div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Prova Content */}
+                      <div className="p-2 h-16 flex flex-col justify-center">
+                        {professional ? (
+                          <div className="space-y-1">
+                            <h4 className="font-bold text-xs uppercase">
+                              {professional.name}
+                            </h4>
+                            {professional.attendance_type && (
+                              <div className="text-xs">
+                                <span className="font-bold">{professional.attendance_type}:</span>
+                                {professional.phone && ` ${professional.phone}`}
+                              </div>
+                            )}
+                            {professional.email && (
+                              <div className="text-xs mt-1">
+                                {professional.email}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center h-12">
+                            <div className="text-4xl font-bold text-black">✕</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="flex-shrink-0 ml-auto">
+                      <div className="bg-gray-100 border-2 border-black p-3 rounded-lg text-center">
+                        <div className="text-sm font-bold text-black">
+                          VALOR TOTAL: R$ {processData.total_amount.toFixed(2)}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+
+            {/* General Instructions */}
+            {generalInstructions && (
+              <div className="border-t-2 border-black pt-6">
+                <div className="text-sm leading-relaxed">
+                  <div dangerouslySetInnerHTML={{ 
+                    __html: generalInstructions
+                      .replace(/;/g, ';<br>') // Add line break after each semicolon
+                      .replace(/\n/g, '<br>') 
+                  }} />
+                </div>
+              </div>
+            )}
+
+            {/* Footer */}
+            <div className="mt-8 pt-4 border-t border-black text-center">
+              <p className="text-xs">
+                Documento gerado pelo PAP - Sistema - {new Date().toLocaleDateString('pt-BR')}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Email Modal */}
+      {emailModal.isOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div className="flex justify-between items-center p-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Enviar por Email</h3>
+              <button
+                onClick={() => setEmailModal({ isOpen: false, email: '' })}
+                className="p-2 text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4">
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email do destinatário
+                </label>
+                <input
+                  type="email"
+                  value={emailModal.email}
+                  onChange={(e) => setEmailModal(prev => ({ ...prev, email: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="exemplo@email.com"
+                />
+                <p className="text-sm text-gray-600 mt-2">
+                  Isso abrirá seu cliente de email padrão (Gmail, Outlook, etc.) com o conteúdo já carregado.
+                </p>
+              </div>
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setEmailModal({ isOpen: false, email: '' })}
+                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleSendEmail}
+                  disabled={!emailModal.email}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                >
+                  <Mail className="w-4 h-4" />
+                  <span>Abrir no Gmail</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -1,0 +1,1 @@
+UPDATE process_steps SET is_active = 0 WHERE type = 'toxicologico';

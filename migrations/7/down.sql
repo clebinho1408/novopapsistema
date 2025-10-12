@@ -1,0 +1,1 @@
+ALTER TABLE step_processes DROP COLUMN show_toxicologico_message;

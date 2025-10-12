@@ -1,0 +1,1 @@
+ALTER TABLE professionals ADD COLUMN attendance_type TEXT DEFAULT 'AGENDAMENTO' CHECK (attendance_type IN ('AGENDAMENTO', 'POR ORDEM DE CHEGADA'));

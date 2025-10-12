@@ -1,0 +1,1 @@
+ALTER TABLE step_processes ADD COLUMN show_toxicologico_message BOOLEAN DEFAULT 0;
