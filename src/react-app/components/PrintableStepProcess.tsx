@@ -305,7 +305,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
         }
         .prova-card {
             border: 2px solid black;
-            min-height: 100px;
+            min-height: 128px;
             width: 380px;
             flex-shrink: 0;
         }
@@ -327,13 +327,13 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             align-items: center;
         }
         .prova-title .step-number-text {
-            font-size: 12px;
+            font-size: 14px;
             font-weight: bold;
             margin: 0;
             text-align: center;
         }
         .prova-title .step-title {
-            font-size: 12px;
+            font-size: 14px;
             font-weight: bold;
             text-transform: uppercase;
             text-align: center;
@@ -343,7 +343,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             padding: 4px 6px;
         }
         .prova-content .professional-name {
-            font-size: 10px;
+            font-size: 12px;
             font-weight: bold;
             text-transform: uppercase;
             margin-bottom: 3px;
@@ -352,12 +352,12 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             margin-top: 3px;
         }
         .prova-content .schedule-label {
-            font-size: 9px;
+            font-size: 11px;
             font-weight: bold;
             margin-bottom: 1px;
         }
         .prova-content .professional-info {
-            font-size: 9px;
+            font-size: 11px;
             margin-bottom: 2px;
         }
         .instructions {
@@ -1144,35 +1144,35 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 
                 return (
                   <>
-                    <div className="border-2 border-black w-96 h-24 flex-shrink-0">
+                    <div className="border-2 border-black w-96 h-32 flex-shrink-0">
                       {/* Prova Header */}
                       <div className="bg-gray-100 px-2 py-1 border-b-2 border-black flex items-center h-8">
                         <div className="text-xl mr-2">📝</div>
                         <div className="flex-1 text-center">
                           {professional && (
-                            <div className="text-xs font-bold">({stepNumber}°) PASSO - PROVA</div>
+                            <div className="text-sm font-bold">({stepNumber}°) PASSO - PROVA</div>
                           )}
                           {!professional && (
-                            <div className="text-xs font-bold">PROVA</div>
+                            <div className="text-sm font-bold">PROVA</div>
                           )}
                         </div>
                       </div>
 
                       {/* Prova Content */}
-                      <div className="p-2 h-16 flex flex-col justify-center">
+                      <div className="p-2 h-24 flex flex-col justify-center">
                         {professional ? (
                           <div className="space-y-1">
-                            <h4 className="font-bold text-xs uppercase">
+                            <h4 className="font-bold text-sm uppercase">
                               {professional.name}
                             </h4>
                             {professional.attendance_type && (
-                              <div className="text-xs">
+                              <div className="text-sm">
                                 <span className="font-bold">{professional.attendance_type}:</span>
                                 {professional.phone && ` ${professional.phone}`}
                               </div>
                             )}
                             {professional.email && (
-                              <div className="text-xs mt-1">
+                              <div className="text-sm mt-1">
                                 {professional.email}
                               </div>
                             )}
