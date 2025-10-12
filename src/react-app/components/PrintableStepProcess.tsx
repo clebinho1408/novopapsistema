@@ -79,30 +79,47 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
       return;
     }
 
-    // Buscar nome da agência
-    let agencyName = 'Agência';
     try {
-      const response = await fetch('/api/agencies/info', { credentials: 'include' });
-      const agencyData = await response.json();
-      agencyName = agencyData.name || 'Agência';
-    } catch (error) {
-      console.error('Error fetching agency name:', error);
-    }
+      // Buscar nome da agência
+      let agencyName = 'Agência';
+      try {
+        const response = await fetch('/api/agencies/info', { credentials: 'include' });
+        const agencyData = await response.json();
+        agencyName = agencyData.name || 'Agência';
+      } catch (error) {
+        console.error('Error fetching agency name:', error);
+      }
 
-    // Gerar o conteúdo do email em texto simples
-    const emailContent = generateEmailContent();
-    const subject = `Agência Regional - ${agencyName}`;
-    
-    // Criar o link do Gmail Compose diretamente
-    const gmailLink = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(emailModal.email)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailContent)}`;
-    
-    // Abrir o Gmail
-    window.open(gmailLink, '_blank');
-    
-    // Fechar o modal
-    setEmailModal({ isOpen: false, email: '' });
-    
-    alert('Abrindo o Gmail com o conteúdo pré-carregado!');
+      // Gerar o conteúdo do email em HTML
+      const emailHTML = generateEmailHTML();
+      const subject = `Passo a Passo - ${agencyName}`;
+      
+      // Enviar email via API
+      const response = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          to: emailModal.email,
+          subject: subject,
+          html: emailHTML
+        })
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert('Email enviado com sucesso!');
+        setEmailModal({ isOpen: false, email: '' });
+      } else {
+        alert(`Erro ao enviar email: ${result.error || 'Erro desconhecido'}`);
+      }
+    } catch (error) {
+      console.error('Error sending email:', error);
+      alert('Erro ao enviar email. Por favor, tente novamente.');
+    }
   };
 
   const generatePrintHTML = () => {
@@ -699,6 +716,208 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
       default:
         return '📋';
     }
+  };
+
+  const generateEmailHTML = () => {
+    let html = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #f5f5f5; padding: 15px; border-bottom: 2px solid #000; margin-bottom: 20px; }
+        .header h1 { margin: 0; font-size: 24px; }
+        .step { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .step-title { font-size: 18px; font-weight: bold; color: #000; margin-bottom: 10px; }
+        .step-number { font-weight: bold; color: #555; }
+        .info-label { font-weight: bold; color: #000; }
+        .divider { border-top: 1px solid #ddd; margin: 15px 0; }
+        .total { background-color: #f5f5f5; padding: 15px; text-align: center; font-size: 18px; font-weight: bold; margin: 20px 0; }
+        .footer { margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd; text-align: center; color: #666; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>PASSO A PASSO</h1>
+            ${processData.client_name ? `<p><span class="info-label">Cliente:</span> ${processData.client_name}</p>` : ''}
+        </div>
+`;
+
+    // Filtrar etapas (excluindo prova para processar separadamente)
+    const filteredSteps = (processData.all_steps || processData.selected_steps).filter((step: any) => step.type !== 'prova');
+    let stepCounter = 0;
+
+    // Apenas incluir steps que têm dados (profissionais selecionados ou taxas)
+    filteredSteps.forEach((step: any) => {
+      const isSelected = processData.selected_steps.find((s: any) => s.id === step.id);
+      const professional = isSelected ? processData.selected_professionals[step.id.toString()] : null;
+      
+      // Para taxas, verificar se há taxas não vinculadas selecionadas
+      const hasTaxesSelected = step.type === 'taxa' && isSelected && 
+        processData.selected_fees.filter((fee: any) => !fee.linked_professional_type).length > 0;
+      
+      const hasData = professional || hasTaxesSelected;
+      
+      // Só incluir no email se tiver dados
+      if (!hasData) return;
+      
+      stepCounter++;
+
+      html += `
+        <div class="step">
+            <div class="step-title">${getStepIcon(step.type)} ${step.name.toUpperCase()}</div>
+            <div class="step-number">(${stepCounter}° PASSO)</div>
+            <div class="divider"></div>
+`;
+
+      if (professional) {
+        html += `<p><strong>${professional.name}</strong></p>`;
+        
+        if (professional.address || professional.city_name) {
+          const location = professional.address 
+            ? `${professional.address}${professional.city_name ? ` - ${professional.city_name}` : ''}`
+            : professional.city_name || '';
+          html += `<p><span class="info-label">ENDEREÇO:</span> ${location}</p>`;
+        }
+        
+        if (professional.attendance_type) {
+          html += `<p><span class="info-label">${professional.attendance_type}:</span></p>`;
+          if (professional.phone) {
+            html += `<p><span class="info-label">TELEFONE:</span> ${professional.phone} - Somente mensagem WhatsApp</p>`;
+          }
+        }
+        
+        if (professional.email) {
+          html += `<p><span class="info-label">EMAIL:</span> ${professional.email}</p>`;
+        }
+        
+        if (professional.working_days) {
+          try {
+            const days = JSON.parse(professional.working_days);
+            const dayLabels: Record<string, string> = {
+              'monday': 'Seg',
+              'tuesday': 'Ter', 
+              'wednesday': 'Qua',
+              'thursday': 'Qui',
+              'friday': 'Sex',
+              'saturday': 'Sáb',
+              'sunday': 'Dom'
+            };
+            const daysList = days.map((day: string) => dayLabels[day] || day).join(', ');
+            html += `<p><span class="info-label">DIAS:</span> ${daysList}</p>`;
+          } catch {
+            html += `<p><span class="info-label">DIAS:</span> ${professional.working_days}</p>`;
+          }
+        }
+        
+        if (professional.working_hours) {
+          html += `<p><span class="info-label">HORÁRIO:</span> ${professional.working_hours}</p>`;
+        }
+        
+        if (professional.observations) {
+          html += `<p><span class="info-label">OBSERVAÇÕES:</span> ${professional.observations}</p>`;
+        }
+        
+        // Taxa vinculada
+        const linkedFee = processData.selected_fees.find((fee: any) => fee.linked_professional_type === step.type);
+        if (linkedFee) {
+          html += `<p><span class="info-label">VALOR: R$ ${linkedFee.amount.toFixed(2)}</span></p>`;
+        }
+        
+        // Mensagem toxicológico
+        if (step.type === 'medico' && processData.show_toxicologico_message) {
+          html += `<p style="background-color: #fff3cd; padding: 10px; border-radius: 5px;"><strong>>> LEVAR O TOXICOLÓGICO <<</strong></p>`;
+        }
+        
+      } else if (step.type === 'taxa') {
+        html += `<p><span class="info-label">TAXAS A PAGAR:</span></p><ul>`;
+        processData.selected_fees.filter((fee: any) => !fee.linked_professional_type).forEach((fee: any) => {
+          html += `<li>${fee.name}: <strong>R$ ${fee.amount.toFixed(2)}</strong></li>`;
+        });
+        html += `</ul>`;
+        
+        const manualFeesTotal = processData.selected_fees
+          .filter((fee: any) => !fee.linked_professional_type)
+          .reduce((total: number, fee: any) => total + fee.amount, 0);
+        
+        if (manualFeesTotal > 0) {
+          html += `<p><span class="info-label">TOTAL: R$ ${manualFeesTotal.toFixed(2)}</span></p>`;
+        }
+      }
+      
+      html += `</div>`;
+    });
+
+    // Processar etapa de prova separadamente
+    const allSteps = processData.all_steps || processData.selected_steps;
+    const provaStep = allSteps.find((step: any) => step.type === 'prova');
+    if (provaStep) {
+      const isSelected = processData.selected_steps.find((s: any) => s.id === provaStep.id);
+      const professional = isSelected ? processData.selected_professionals[provaStep.id.toString()] : null;
+      
+      if (professional) {
+        // Calcular o número do passo
+        let provaStepNumber = filteredSteps.filter((step: any) => {
+          const stepSelected = processData.selected_steps.find((s: any) => s.id === step.id);
+          const stepProfessional = stepSelected ? processData.selected_professionals[step.id.toString()] : null;
+          const stepHasTaxes = step.type === 'taxa' && stepSelected && 
+            processData.selected_fees.filter((fee: any) => !fee.linked_professional_type).length > 0;
+          return stepProfessional || stepHasTaxes;
+        }).length + 1;
+        
+        html += `
+        <div class="step">
+            <div class="step-title">📝 PROVA</div>
+            <div class="step-number">(${provaStepNumber}° PASSO)</div>
+            <div class="divider"></div>
+            <p><span class="info-label">LOCAL:</span> ${professional.name}</p>
+`;
+        
+        if (professional.attendance_type) {
+          html += `<p><span class="info-label">${professional.attendance_type}:</span></p>`;
+          if (professional.phone) {
+            html += `<p><span class="info-label">TELEFONE:</span> ${professional.phone} - Somente mensagem WhatsApp</p>`;
+          }
+        }
+        
+        if (professional.email) {
+          html += `<p><span class="info-label">EMAIL:</span> ${professional.email}</p>`;
+        }
+        
+        html += `</div>`;
+      }
+    }
+
+    // Valor total
+    html += `
+        <div class="total">
+            VALOR TOTAL: R$ ${processData.total_amount.toFixed(2)}
+        </div>
+`;
+
+    // Instruções gerais
+    if (generalInstructions) {
+      html += `
+        <div style="margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px;">
+            <h3 style="margin-top: 0;">INSTRUÇÕES GERAIS:</h3>
+            <div>${generalInstructions}</div>
+        </div>
+`;
+    }
+
+    // Rodapé
+    html += `
+        <div class="footer">
+            <p>Documento gerado pelo PAP - Sistema - ${new Date().toLocaleDateString('pt-BR')}</p>
+        </div>
+    </div>
+</body>
+</html>`;
+
+    return html;
   };
 
   const generateEmailContent = () => {
