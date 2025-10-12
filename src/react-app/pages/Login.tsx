@@ -1,45 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router';
-import { ClipboardList, Eye, EyeOff, Building2 } from 'lucide-react';
-
-interface Agency {
-  id: number;
-  name: string;
-}
+import { ClipboardList, Eye, EyeOff } from 'lucide-react';
 
 export default function Login() {
   const navigate = useNavigate();
-  const [agencies, setAgencies] = useState<Agency[]>([]);
   const [formData, setFormData] = useState({
     email: '',
-    password: '',
-    agency_id: ''
+    password: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    fetchAgencies();
-  }, []);
-
-  const fetchAgencies = async () => {
-    try {
-      const response = await fetch('/api/public/agencies', {
-        cache: 'no-cache',
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
-      });
-      const data = await response.json();
-      console.log('Fetched agencies:', data); // Debug log
-      setAgencies(data);
-    } catch (error) {
-      console.error('Error fetching agencies:', error);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,41 +67,6 @@ export default function Login() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  <Building2 className="w-4 h-4 inline mr-2" />
-                  Agência *
-                </label>
-                <button
-                  type="button"
-                  onClick={fetchAgencies}
-                  className="text-xs text-blue-600 hover:text-blue-700"
-                >
-                  Recarregar
-                </button>
-              </div>
-              <select
-                name="agency_id"
-                value={formData.agency_id}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">
-                  {agencies.length === 0 ? 'Nenhuma agência encontrada' : 'Selecione uma agência'}
-                </option>
-                {agencies.map(agency => (
-                  <option key={agency.id} value={agency.id.toString()}>{agency.name}</option>
-                ))}
-              </select>
-              {agencies.length === 0 && (
-                <p className="text-xs text-gray-500 mt-1">
-                  Não há agências cadastradas. Clique em "Primeira vez? Criar agência" para começar.
-                </p>
-              )}
-            </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
               <input

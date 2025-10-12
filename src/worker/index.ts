@@ -22,18 +22,18 @@ app.use("*", cors({
       "http://localhost:5000",
       "https://localhost:5000",
     ];
-    
+
     if (!origin) return allowedOrigins[0];
-    
+
     const replitDomain = process.env.REPLIT_DEV_DOMAIN || process.env.REPLIT_DOMAINS;
     if (replitDomain) {
       allowedOrigins.push(`https://${replitDomain}`);
       allowedOrigins.push(`http://${replitDomain}`);
     }
-    
+
     if (allowedOrigins.includes(origin)) return origin;
     if (origin.includes('.replit.dev')) return origin;
-    
+
     return allowedOrigins[0];
   },
   credentials: true,
@@ -47,7 +47,7 @@ function generateSessionToken() {
 // Auth middleware for new system
 async function systemAuthMiddleware(c: any, next: any) {
   const sessionToken = getCookie(c, 'session_token');
-  
+
   if (!sessionToken) {
     return c.json({ error: "No session token" }, 401);
   }
@@ -84,7 +84,7 @@ app.get('/api/public/agencies', async (c) => {
 app.post('/api/auth/register', async (c) => {
   try {
     const body = await c.req.json();
-    
+
     // Validate required fields
     const requiredFields = ['agency_name', 'agency_email', 'admin_name', 'admin_email', 'admin_password'];
     for (const field of requiredFields) {
@@ -192,47 +192,47 @@ app.post('/api/auth/register', async (c) => {
 
 app.post('/api/auth/login', async (c) => {
   try {
-    const body = await c.req.json();
-    
-    if (!body.email || !body.password || !body.agency_id) {
-      return c.json({ error: "Email, senha e agência são obrigatórios" }, 400);
+    const { email, password } = await c.req.json();
+
+    if (!email || !password) {
+      return c.json({ error: "Email e senha são obrigatórios" }, 400);
     }
 
-    // Find user
+    // Find user by email (agency is determined automatically)
     const user = await c.env.DB.prepare(
-      "SELECT * FROM system_users WHERE email = ? AND agency_id = ? AND is_active = 1"
-    ).bind(body.email, parseInt(body.agency_id)).first();
+      "SELECT u.*, a.name as agency_name FROM system_users u JOIN agencies a ON u.agency_id = a.id WHERE u.email = ? AND u.is_active = 1"
+    ).bind(email).first();
 
     if (!user) {
-      return c.json({ error: "Email ou senha incorretos" }, 401);
+      return c.json({ error: "Credenciais inválidas" }, 401);
     }
 
-    // Check password
-    const passwordMatch = await bcrypt.compare(body.password, user.password_hash as string);
-    if (!passwordMatch) {
-      return c.json({ error: "Email ou senha incorretos" }, 401);
+    // Verify password
+    const isValid = await bcrypt.compare(password, user.password_hash as string);
+    if (!isValid) {
+      return c.json({ error: "Credenciais inválidas" }, 401);
     }
+
+    // Create session
+    const sessionToken = generateSessionToken();
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+
+    await c.env.DB.prepare(
+      "INSERT INTO user_sessions (user_id, session_token, expires_at) VALUES (?, ?, ?)"
+    ).bind(user.id, sessionToken, expiresAt.toISOString()).run();
 
     // Update last login
     await c.env.DB.prepare(
       "UPDATE system_users SET last_login_at = CURRENT_TIMESTAMP WHERE id = ?"
     ).bind(user.id).run();
 
-    // Create session
-    const sessionToken = generateSessionToken();
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 30); // 30 days
-
-    await c.env.DB.prepare(
-      "INSERT INTO user_sessions (user_id, session_token, expires_at) VALUES (?, ?, ?)"
-    ).bind(user.id, sessionToken, expiresAt.toISOString()).run();
-
+    // Set cookie
     setCookie(c, 'session_token', sessionToken, {
       httpOnly: true,
-      path: "/",
-      sameSite: "lax",
+      path: '/',
+      sameSite: 'lax',
       secure: true,
-      maxAge: 30 * 24 * 60 * 60, // 30 days
+      maxAge: 30 * 24 * 60 * 60,
     });
 
     return c.json({ success: true });
@@ -296,7 +296,7 @@ app.post('/api/auth/users', systemAuthMiddleware, async (c) => {
 
   try {
     const body = await c.req.json();
-    
+
     if (!body.name || !body.email || !body.password) {
       return c.json({ error: "Nome, email e senha são obrigatórios" }, 400);
     }
@@ -446,7 +446,7 @@ app.delete('/api/auth/users/:id', systemAuthMiddleware, async (c) => {
   }
 
   const userId = parseInt(c.req.param("id"));
-  
+
   // Don't allow admin to delete themselves
   if (userId === user.id) {
     return c.json({ error: "Você não pode excluir sua própria conta" }, 400);
@@ -559,7 +559,7 @@ app.post("/api/professionals", systemAuthMiddleware, async (c) => {
     const rawBody = await c.req.text();
     console.log('=== BACKEND DEBUGGING ===');
     console.log('Raw request body:', rawBody);
-    
+
     let body;
     try {
       body = JSON.parse(rawBody);
@@ -675,7 +675,7 @@ app.get("/api/process-steps", systemAuthMiddleware, async (c) => {
   if (!user) return c.json({ error: "User not found" }, 404);
 
   const activeOnly = c.req.query('active_only') === 'true';
-  
+
   const query = activeOnly 
     ? "SELECT * FROM process_steps WHERE agency_id = ? AND is_active = 1 ORDER BY sort_order"
     : "SELECT * FROM process_steps WHERE agency_id = ? ORDER BY sort_order";
@@ -744,7 +744,7 @@ app.patch("/api/process-steps/:id/reorder", systemAuthMiddleware, async (c) => {
 
     // Swap sort_order values
     const targetStep = steps[targetIndex];
-    
+
     await c.env.DB.prepare(
       "UPDATE process_steps SET sort_order = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?"
     ).bind(targetStep.sort_order, stepId).run();
@@ -854,14 +854,14 @@ app.delete("/api/fees/:id", systemAuthMiddleware, async (c) => {
 async function sendEmailWithHTML(to: string, subject: string, htmlContent: string) {
   // For now, we'll return a simulated success since we don't have email configuration
   // In a real implementation, you would use an email service like SendGrid, Resend, etc.
-  
+
   console.log(`Would send email to: ${to}`);
   console.log(`Subject: ${subject}`);
   console.log(`HTML Content length: ${htmlContent.length}`);
-  
+
   // Simulate email sending delay
   await new Promise(resolve => setTimeout(resolve, 1000));
-  
+
   return { success: true };
 }
 
@@ -935,13 +935,13 @@ app.post("/api/step-processes", systemAuthMiddleware, async (c) => {
     const newProcessId = result.id as number;
     for (const stepId of body.selected_steps) {
       const professionalId = body.selected_professionals?.[stepId.toString()];
-      
+
       // Validate that the professional exists and belongs to this agency (if provided)
       if (professionalId) {
         const professionalExists = await c.env.DB.prepare(
           "SELECT id FROM professionals WHERE id = ? AND agency_id = ? AND is_active = 1"
         ).bind(professionalId, user.agency_id).first();
-        
+
         if (!professionalExists) {
           console.warn(`Professional ${professionalId} not found or not active for agency ${user.agency_id}`);
           // Insert step without professional if professional doesn't exist
@@ -951,7 +951,7 @@ app.post("/api/step-processes", systemAuthMiddleware, async (c) => {
           continue;
         }
       }
-      
+
       await c.env.DB.prepare(
         "INSERT INTO process_selected_steps (process_id, step_id, professional_id) VALUES (?, ?, ?)"
       ).bind(newProcessId, stepId, professionalId || null).run();
@@ -962,7 +962,7 @@ app.post("/api/step-processes", systemAuthMiddleware, async (c) => {
       const fee = await c.env.DB.prepare(
         "SELECT amount FROM fees WHERE id = ? AND agency_id = ?"
       ).bind(feeId, user.agency_id).first();
-      
+
       if (fee) {
         await c.env.DB.prepare(
           "INSERT INTO process_selected_fees (process_id, fee_id, amount) VALUES (?, ?, ?)"
@@ -998,7 +998,7 @@ app.post("/api/step-processes", systemAuthMiddleware, async (c) => {
           await c.env.DB.prepare(
             "INSERT INTO process_selected_fees (process_id, fee_id, amount) VALUES (?, ?, ?)"
           ).bind(newProcessId, fee.id as number, fee.amount as number).run();
-          
+
           // Update total amount to include linked fee
           totalAmount += fee.amount;
         }
@@ -1101,12 +1101,12 @@ app.get("/api/step-processes/:id", systemAuthMiddleware, async (c) => {
   // Add linked fees based on selected professionals
   const linkedFees = (allFees as any[])?.filter((fee: any) => {
     if (!fee.linked_professional_type) return false;
-    
+
     // Check if there's a professional of this type selected
     const hasLinkedProfessional = selectedSteps?.some((ss: any) => {
       return ss.type === fee.linked_professional_type && ss.professional_id;
     });
-    
+
     return hasLinkedProfessional;
   }) || [];
 
@@ -1139,7 +1139,7 @@ app.post("/api/step-processes/send-email", systemAuthMiddleware, async (c) => {
 
   try {
     const body = await c.req.json();
-    
+
     if (!body.recipient_email) {
       return c.json({ error: "Email do destinatário é obrigatório" }, 400);
     }
@@ -1149,13 +1149,13 @@ app.post("/api/step-processes/send-email", systemAuthMiddleware, async (c) => {
     }
 
     const processData = body.process_data;
-    
+
     // Get agency logo if exists
     let logoUrl = null;
     const agency = await c.env.DB.prepare(
       "SELECT logo_key FROM agencies WHERE id = ?"
     ).bind(user.agency_id as number).first();
-    
+
     if (agency && (agency as any).logo_key) {
       logoUrl = `https://motixwf4k27yu.mocha.app/api/files/${encodeURIComponent((agency as any).logo_key)}`;
     }
@@ -1351,22 +1351,22 @@ function generateEmailHTML(processData: any, logoUrl: string | null, generalInst
             ${(() => {
               const filteredSteps = (processData.all_steps || processData.selected_steps).filter((step: any) => step.type !== 'prova');
               let stepCounter = 0;
-              
+
               return filteredSteps.map((step: any) => {
                 const isSelected = processData.selected_steps.find((s: any) => s.id === step.id);
                 const professional = isSelected ? processData.selected_professionals[step.id.toString()] : null;
-                
+
                 const hasTaxesSelected = step.type === 'taxa' && isSelected && 
                   processData.selected_fees.filter((fee: any) => !fee.linked_professional_type).length > 0;
-                
+
                 const hasData = professional || hasTaxesSelected;
                 if (hasData) {
                   stepCounter++;
                 }
-                
+
                 const stepNumber = stepCounter;
                 const stepIcon = getStepIcon(step.type);
-              
+
                 return `
                   <div class="step-card">
                       <div class="step-header">
@@ -1507,10 +1507,10 @@ app.get("/api/agencies/logo", systemAuthMiddleware, async (c) => {
 
 app.get("/api/files/:key", async (c) => {
   const key = c.req.param("key");
-  
+
   try {
     const object = await c.env.R2_BUCKET.get(key);
-    
+
     if (!object) {
       return c.json({ error: "File not found" }, 404);
     }
@@ -1519,7 +1519,7 @@ app.get("/api/files/:key", async (c) => {
     object.writeHttpMetadata(headers);
     headers.set("etag", object.httpEtag);
     headers.set("cache-control", "public, max-age=31536000");
-    
+
     return c.body(object.body, { headers });
   } catch (error) {
     console.error('Error retrieving file:', error);
@@ -1550,7 +1550,7 @@ app.patch("/api/agencies/info", systemAuthMiddleware, async (c) => {
 
   try {
     const body = await c.req.json();
-    
+
     const updateFields = [];
     const updateValues = [];
 
@@ -1635,14 +1635,14 @@ app.post("/api/instructions", systemAuthMiddleware, async (c) => {
       const result = await c.env.DB.prepare(
         "UPDATE agency_instructions SET general_instructions = ?, required_documents = ?, updated_at = CURRENT_TIMESTAMP WHERE agency_id = ? RETURNING *"
       ).bind(body.general_instructions || '', body.required_documents || '', user.agency_id).first();
-      
+
       return c.json(result);
     } else {
       // Create new
       const result = await c.env.DB.prepare(
         "INSERT INTO agency_instructions (agency_id, general_instructions, required_documents) VALUES (?, ?, ?) RETURNING *"
       ).bind(user.agency_id, body.general_instructions || '', body.required_documents || '').first();
-      
+
       return c.json(result);
     }
   } catch (error) {
