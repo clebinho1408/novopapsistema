@@ -870,12 +870,12 @@ app.get("/api/step-processes", systemAuthMiddleware, async (c) => {
   const user = getUserWithAgency(c);
   if (!user) return c.json({ error: "User not found" }, 404);
 
-  const query = user.role === 'administrator' 
+  const query = (user.role === 'administrator' || user.role === 'supervisor')
     ? "SELECT sp.*, c.name as city_name, u.name as user_name FROM step_processes sp JOIN cities c ON sp.city_id = c.id JOIN system_users u ON sp.user_id = u.id WHERE sp.agency_id = ? ORDER BY sp.created_at DESC"
     : "SELECT sp.*, c.name as city_name FROM step_processes sp JOIN cities c ON sp.city_id = c.id WHERE sp.agency_id = ? AND sp.user_id = ? ORDER BY sp.created_at DESC";
 
   let results: any[];
-  if (user.role === 'administrator') {
+  if (user.role === 'administrator' || user.role === 'supervisor') {
     const res = await c.env.DB.prepare(query).bind(user.agency_id).all();
     results = res.results || [];
   } else {
