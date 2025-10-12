@@ -35,7 +35,7 @@ export default function App() {
         <Route 
           path="/professionals" 
           element={
-            <ProtectedRoute requiredRole="administrator">
+            <ProtectedRoute requiredRole="supervisor">
               <ProfessionalsPage />
             </ProtectedRoute>
           } 

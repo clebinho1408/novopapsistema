@@ -5,14 +5,14 @@ interface User {
   id: number;
   name: string;
   email: string;
-  role: 'administrator' | 'collaborator';
+  role: 'administrator' | 'supervisor' | 'collaborator';
   agency_id: number;
   agency_name: string;
 }
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: 'administrator' | 'collaborator';
+  requiredRole?: 'administrator' | 'supervisor' | 'collaborator';
 }
 
 export default function ProtectedRoute({ children, requiredRole = 'collaborator' }: ProtectedRouteProps) {
@@ -34,8 +34,15 @@ export default function ProtectedRoute({ children, requiredRole = 'collaborator'
           setUser(data);
           
           // Check if user has required role
+          // Role hierarchy: administrator > supervisor > collaborator
           if (requiredRole === 'administrator' && data.role !== 'administrator') {
-            // Collaborator trying to access admin-only page
+            // Non-admin trying to access admin-only page
+            navigate('/step-process');
+            return;
+          }
+          
+          if (requiredRole === 'supervisor' && !['administrator', 'supervisor'].includes(data.role)) {
+            // Collaborator trying to access supervisor page
             navigate('/step-process');
             return;
           }
