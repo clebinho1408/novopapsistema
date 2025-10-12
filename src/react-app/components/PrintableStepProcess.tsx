@@ -371,7 +371,6 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             margin-bottom: 8px;
         }
         .instructions-content {
-            font-size: 12px;
             line-height: 1.3;
             color: #333;
             word-wrap: break-word;
