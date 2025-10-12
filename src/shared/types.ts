@@ -17,7 +17,7 @@ export const AgencySchema = z.object({
 export type Agency = z.infer<typeof AgencySchema>;
 
 // User types
-export const UserRoleSchema = z.enum(['administrator', 'collaborator']);
+export const UserRoleSchema = z.enum(['administrator', 'supervisor', 'collaborator']);
 
 export const UserSchema = z.object({
   id: z.number(),
