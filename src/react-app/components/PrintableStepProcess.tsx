@@ -476,7 +476,6 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 ` : ''}
                 <div class="logo-text">
                     <h1 style="font-size: 28px; font-weight: bold; margin: 0;">SIGA O PASSO A PASSO</h1>
-                    ${processData.client_name ? `<p style="font-size: 16px; margin: 4px 0 0 0;">Cliente: ${processData.client_name}</p>` : ''}
                 </div>
             </div>
         </div>
@@ -703,9 +702,6 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
 
   const generateEmailContent = () => {
     let content = `SIGA O PASSO A PASSO\n`;
-    if (processData.client_name) {
-      content += `Cliente: ${processData.client_name}\n`;
-    }
     content += `\n======================================\n\n`;
 
     // Filtrar etapas (excluindo prova para processar separadamente)
@@ -931,9 +927,6 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 )}
                 <div>
                   <h1 className="text-3xl font-bold">SIGA O PASSO A PASSO</h1>
-                  {processData.client_name && (
-                    <p className="text-lg mt-1">Cliente: {processData.client_name}</p>
-                  )}
                 </div>
               </div>
             </div>
