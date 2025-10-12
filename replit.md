@@ -73,6 +73,12 @@ The application uses the following main tables:
 - `process_selected_steps` - Steps selected for each process
 - `process_selected_fees` - Fees selected for each process
 
+## User Roles and Permissions
+The system supports three levels of access:
+- **Administrator**: Full access to all features and pages
+- **Supervisor**: Read-only access to Passo a Passo and Profissionais pages (cannot create, edit, or delete)
+- **Collaborator**: Access only to Passo a Passo page (their own processes)
+
 ## Recent Changes (October 12, 2025)
 - ✅ Code import completed successfully
 - ✅ Applied all 16 database migrations to local D1 database
@@ -110,6 +116,14 @@ The application uses the following main tables:
   - Service selection is optional; no fees auto-selected when empty
   - Service name is not displayed in print/email output (only used for fee selection)
   - Fixed Cancel button to properly reset form data and return to step 1
+- ✅ Added new "Supervisor" user role:
+  - Created three-tier permission system: Administrator > Supervisor > Collaborator
+  - Supervisors have read-only access to Passo a Passo and Profissionais pages
+  - Supervisors can view all processes (like administrators) but cannot create, edit, or delete
+  - UI buttons (New, Edit, Delete) are hidden for supervisors in Professionals page
+  - Backend enforces administrator-only permissions for POST/PATCH/DELETE operations
+  - Updated Layout navigation to show appropriate menu items for each role
+  - Updated ProtectedRoute to enforce role-based access control
 
 ## Known Issues
 - TypeScript LSP shows type errors in worker/index.ts (Cloudflare types) - these don't affect runtime
