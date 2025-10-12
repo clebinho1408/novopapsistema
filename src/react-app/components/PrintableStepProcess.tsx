@@ -644,22 +644,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
         ${generalInstructions ? `
         <div class="instructions">
             <div class="instructions-content">
-                ${(() => {
-                  // Remove HTML tags and convert to plain text for print version
-                  const plainTextInstructions = generalInstructions
-                    .replace(/<br\s*\/?>/gi, '\n') // Replace <br> tags with newlines temporarily
-                    .replace(/<[^>]*>/g, ' ') // Remove HTML tags and replace with space
-                    .replace(/&nbsp;/g, ' ') // Replace &nbsp; with spaces
-                    .replace(/&amp;/g, '&')  // Replace &amp; with &
-                    .replace(/&lt;/g, '<')   // Replace &lt; with <
-                    .replace(/&gt;/g, '>')   // Replace &gt; with >
-                    .replace(/&quot;/g, '"') // Replace &quot; with "
-                    .replace(/\s*\n\s*/g, ' ') // Replace newlines (with optional spaces) with single space
-                    .replace(/\s+/g, ' ') // Replace multiple spaces with single space
-                    .trim()
-                    .replace(/\s*;\s*/g, ';<br><br>'); // Add double line break after semicolon for better separation
-                  return plainTextInstructions;
-                })()}
+                ${generalInstructions}
             </div>
         </div>
         ` : ''}
