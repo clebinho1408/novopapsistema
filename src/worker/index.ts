@@ -1157,6 +1157,45 @@ app.get("/api/step-processes/:id", systemAuthMiddleware, async (c) => {
   });
 });
 
+// Delete all step processes (admin only)
+app.delete("/api/step-processes/delete-all", systemAuthMiddleware, async (c) => {
+  const user = getUserWithAgency(c);
+  if (!user) return c.json({ error: "User not found" }, 404);
+  if (user.role !== 'administrator') return c.json({ error: "Acesso negado" }, 403);
+
+  try {
+    // Get all process IDs for this agency
+    const { results: processes } = await c.env.DB.prepare(
+      "SELECT id FROM step_processes WHERE agency_id = ?"
+    ).bind(user.agency_id).all();
+
+    if (!processes || processes.length === 0) {
+      return c.json({ success: true, deleted: 0 });
+    }
+
+    // Delete related data for each process
+    for (const process of processes as any[]) {
+      await c.env.DB.prepare(
+        "DELETE FROM process_selected_steps WHERE process_id = ?"
+      ).bind(process.id).run();
+
+      await c.env.DB.prepare(
+        "DELETE FROM process_selected_fees WHERE process_id = ?"
+      ).bind(process.id).run();
+    }
+
+    // Delete all processes
+    const result = await c.env.DB.prepare(
+      "DELETE FROM step_processes WHERE agency_id = ?"
+    ).bind(user.agency_id).run();
+
+    return c.json({ success: true, deleted: (result as any).changes || 0 });
+  } catch (error) {
+    console.error('Error deleting all processes:', error);
+    return c.json({ error: "Erro ao excluir processos" }, 500);
+  }
+});
+
 // Send step process by email
 app.post("/api/step-processes/send-email", systemAuthMiddleware, async (c) => {
   const user = getUserWithAgency(c);

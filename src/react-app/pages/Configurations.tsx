@@ -6,7 +6,7 @@ import { PROFESSIONAL_TYPE_LABELS } from '@/shared/types';
 import RichTextEditor from '@/react-app/components/RichTextEditor';
 import UserManagement from '@/react-app/components/UserManagement';
 
-type TabType = 'steps' | 'fees' | 'users' | 'instructions' | 'agency';
+type TabType = 'steps' | 'fees' | 'users' | 'instructions' | 'agency' | 'processes';
 
 export default function Configurations() {
   const [activeTab, setActiveTab] = useState<TabType>('steps');
@@ -44,6 +44,7 @@ export default function Configurations() {
     { id: 'instructions', name: 'Instruções', icon: FileText },
     { id: 'users', name: 'Usuários', icon: Users },
     { id: 'agency', name: 'Dados da Agência', icon: Building2 },
+    { id: 'processes', name: 'Processos', icon: Trash2 },
   ];
 
   return (
@@ -86,6 +87,7 @@ export default function Configurations() {
           {activeTab === 'instructions' && <InstructionsConfiguration />}
           {activeTab === 'users' && <UserManagement />}
           {activeTab === 'agency' && <AgencyDataConfiguration />}
+          {activeTab === 'processes' && <ProcessesManagement />}
         </div>
       </div>
     </Layout>
@@ -539,6 +541,99 @@ function InstructionsConfiguration() {
 }
 
 
+
+function ProcessesManagement() {
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [processCount, setProcessCount] = useState(0);
+
+  useEffect(() => {
+    fetchProcessCount();
+  }, []);
+
+  const fetchProcessCount = async () => {
+    try {
+      const response = await fetch('/api/step-processes', { credentials: 'include' });
+      const data = await response.json();
+      setProcessCount(data.length);
+    } catch (error) {
+      console.error('Error fetching process count:', error);
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    if (!confirm(`Tem certeza que deseja EXCLUIR TODOS os ${processCount} passo a passos criados? Esta ação não pode ser desfeita!`)) {
+      return;
+    }
+
+    if (!confirm('ATENÇÃO: Esta ação é irreversível! Confirma a exclusão de TODOS os processos?')) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch('/api/step-processes/delete-all', {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        alert('Todos os processos foram excluídos com sucesso!');
+        fetchProcessCount();
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Erro ao excluir processos');
+      }
+    } catch (error) {
+      console.error('Error deleting processes:', error);
+      alert('Erro ao excluir processos');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+      <div className="px-6 py-4 border-b border-gray-200">
+        <h2 className="text-lg font-medium text-gray-900">Gerenciar Processos</h2>
+        <p className="text-sm text-gray-600">Exclusão em massa de todos os passo a passos criados</p>
+      </div>
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <div className="flex items-start space-x-3">
+            <AlertTriangle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-red-900 mb-2">Zona de Perigo</h3>
+              <p className="text-sm text-red-700 mb-4">
+                Esta ação irá excluir permanentemente TODOS os passo a passos criados na sua agência. 
+                Esta operação não pode ser desfeita.
+              </p>
+              
+              <div className="bg-white rounded-lg p-4 mb-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Total de processos criados:</p>
+                    <p className="text-2xl font-bold text-gray-900">{processCount}</p>
+                  </div>
+                  <FileText className="w-12 h-12 text-gray-400" />
+                </div>
+              </div>
+
+              <button
+                onClick={handleDeleteAll}
+                disabled={isDeleting || processCount === 0}
+                className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 font-semibold"
+              >
+                {isDeleting && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>}
+                <Trash2 className="w-5 h-5" />
+                <span>{isDeleting ? 'Excluindo...' : 'Excluir Todos os Processos'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function AgencyDataConfiguration() {
   const [agencyData, setAgencyData] = useState<any>(null);
