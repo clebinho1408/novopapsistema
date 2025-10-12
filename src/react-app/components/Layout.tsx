@@ -42,6 +42,14 @@ export default function Layout({ children }: LayoutProps) {
               navigate('/step-process');
             }
           }
+          // Redirect supervisors to their allowed pages if they're on a restricted page
+          if (data.role === 'supervisor') {
+            const currentPath = location.pathname;
+            const allowedPaths = ['/step-process', '/professionals'];
+            if (!allowedPaths.includes(currentPath)) {
+              navigate('/step-process');
+            }
+          }
         }
       })
       .catch(() => {
@@ -66,6 +74,9 @@ export default function Layout({ children }: LayoutProps) {
     { name: 'Cidades', href: '/cities', icon: MapPin },
     { name: 'Profissionais', href: '/professionals', icon: Users },
     { name: 'Configurações', href: '/configurations', icon: Settings },
+  ] : userData?.role === 'supervisor' ? [
+    { name: 'Passo a Passo', href: '/step-process', icon: FileText },
+    { name: 'Profissionais', href: '/professionals', icon: Users },
   ] : [
     { name: 'Passo a Passo', href: '/step-process', icon: FileText },
   ];
