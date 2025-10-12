@@ -305,8 +305,8 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
         }
         .prova-card {
             border: 2px solid black;
-            min-height: 128px;
-            width: 380px;
+            min-height: 100px;
+            width: 480px;
             flex-shrink: 0;
         }
         .prova-header {
@@ -1144,7 +1144,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 
                 return (
                   <>
-                    <div className="border-2 border-black w-96 h-32 flex-shrink-0">
+                    <div className="border-2 border-black w-[480px] min-h-24 flex-shrink-0">
                       {/* Prova Header */}
                       <div className="bg-gray-100 px-2 py-1 border-b-2 border-black flex items-center h-8">
                         <div className="text-xl mr-2">📝</div>
@@ -1159,7 +1159,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                       </div>
 
                       {/* Prova Content */}
-                      <div className="p-2 h-24 flex flex-col justify-center">
+                      <div className="p-2 flex flex-col justify-center min-h-[64px]">
                         {professional ? (
                           <div className="space-y-1">
                             <h4 className="font-bold text-sm uppercase">
