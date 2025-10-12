@@ -81,7 +81,7 @@ The system supports three levels of access:
 
 ## Recent Changes (October 12, 2025)
 - ✅ Code import completed successfully
-- ✅ Applied all 16 database migrations to local D1 database
+- ✅ Applied all 17 database migrations to local D1 database (including supervisor role migration)
 - ✅ Server running without errors on port 5000
 - ✅ Enhanced PrintableStepProcess component with improved formatting
 - ✅ Fixed print layout to display all professional cards (with X for unselected)
