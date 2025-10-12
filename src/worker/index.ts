@@ -16,7 +16,26 @@ interface Env {
 const app = new Hono<{ Bindings: Env }>();
 
 app.use("*", cors({
-  origin: ["http://localhost:5173"],
+  origin: (origin) => {
+    const allowedOrigins = [
+      "http://localhost:5173",
+      "http://localhost:5000",
+      "https://localhost:5000",
+    ];
+    
+    if (!origin) return true;
+    
+    const replitDomain = process.env.REPLIT_DEV_DOMAIN || process.env.REPLIT_DOMAINS;
+    if (replitDomain) {
+      allowedOrigins.push(`https://${replitDomain}`);
+      allowedOrigins.push(`http://${replitDomain}`);
+    }
+    
+    if (allowedOrigins.includes(origin)) return origin;
+    if (origin.includes('.replit.dev')) return origin;
+    
+    return allowedOrigins[0];
+  },
   credentials: true,
 }));
 
