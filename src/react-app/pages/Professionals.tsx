@@ -25,11 +25,23 @@ export default function Professionals() {
     working_hours: ''
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [userRole, setUserRole] = useState<string>('');
 
   useEffect(() => {
     fetchProfessionals();
     fetchCities();
+    fetchUserData();
   }, []);
+
+  const fetchUserData = async () => {
+    try {
+      const response = await fetch('/api/auth/me', { credentials: 'include' });
+      const data = await response.json();
+      setUserRole(data.role);
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    }
+  };
 
   const fetchProfessionals = async () => {
     try {
@@ -248,13 +260,15 @@ export default function Professionals() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-semibold text-gray-900">Profissionais Credenciados</h1>
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 flex items-center space-x-2"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Novo Profissional</span>
-            </button>
+            {userRole === 'administrator' && (
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 flex items-center space-x-2"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Novo Profissional</span>
+              </button>
+            )}
           </div>
 
           {/* Filters */}
@@ -379,41 +393,43 @@ export default function Professionals() {
                             )}
                           </div>
                         </div>
-                        <div className="flex space-x-2 ml-4">
-                          <button
-                            onClick={() => {
-                              setEditingProfessional(professional);
-                              setFormData({
-                                name: professional.name,
-                                type: professional.type,
-                                city_id: professional.city_id.toString(),
-                                phone: professional.phone || '',
-                                email: professional.email || '',
-                                address: professional.address || '',
-                                observations: professional.observations || '',
-                                attendance_type: professional.attendance_type || 'AGENDAMENTO',
-                                working_days: (() => {
-                                  try {
-                                    return professional.working_days ? JSON.parse(professional.working_days) : [];
-                                  } catch {
-                                    return [];
-                                  }
-                                })(),
-                                working_hours: professional.working_hours || ''
-                              });
-                              setIsModalOpen(true);
-                            }}
-                            className="p-2 text-gray-400 hover:text-blue-600"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(professional.id)}
-                            className="p-2 text-gray-400 hover:text-red-600"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                        {userRole === 'administrator' && (
+                          <div className="flex space-x-2 ml-4">
+                            <button
+                              onClick={() => {
+                                setEditingProfessional(professional);
+                                setFormData({
+                                  name: professional.name,
+                                  type: professional.type,
+                                  city_id: professional.city_id.toString(),
+                                  phone: professional.phone || '',
+                                  email: professional.email || '',
+                                  address: professional.address || '',
+                                  observations: professional.observations || '',
+                                  attendance_type: professional.attendance_type || 'AGENDAMENTO',
+                                  working_days: (() => {
+                                    try {
+                                      return professional.working_days ? JSON.parse(professional.working_days) : [];
+                                    } catch {
+                                      return [];
+                                    }
+                                  })(),
+                                  working_hours: professional.working_hours || ''
+                                });
+                                setIsModalOpen(true);
+                              }}
+                              className="p-2 text-gray-400 hover:text-blue-600"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(professional.id)}
+                              className="p-2 text-gray-400 hover:text-red-600"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
