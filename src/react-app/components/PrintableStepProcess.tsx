@@ -702,9 +702,9 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
   };
 
   const generateEmailContent = () => {
-    let content = `PASSO A PASSO\n`;
+    let content = `*PASSO A PASSO*\n`;
     if (processData.client_name) {
-      content += `Cliente: ${processData.client_name}\n`;
+      content += `*Cliente:* ${processData.client_name}\n`;
     }
     content += `\n======================================\n\n`;
 
@@ -728,29 +728,29 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
       
       stepCounter++;
 
-      content += `${getStepIcon(step.type)} ${step.name.toUpperCase()}\n`;
-      content += `(${stepCounter}° PASSO)\n`;
+      content += `${getStepIcon(step.type)} *${step.name.toUpperCase()}*\n`;
+      content += `*(${stepCounter}° PASSO)*\n`;
       content += `${'-'.repeat(40)}\n`;
 
       if (professional) {
-        content += `${professional.name}\n`;
+        content += `*${professional.name}*\n`;
         
         if (professional.address || professional.city_name) {
           const location = professional.address 
             ? `${professional.address}${professional.city_name ? ` - ${professional.city_name}` : ''}`
             : professional.city_name || '';
-          content += `ENDEREÇO: ${location}\n`;
+          content += `*ENDEREÇO:* ${location}\n`;
         }
         
         if (professional.attendance_type) {
-          content += `\n${professional.attendance_type}:\n`;
+          content += `\n*${professional.attendance_type}:*\n`;
           if (professional.phone) {
-            content += `TELEFONE: ${professional.phone} - Somente mensagem WhatsApp\n`;
+            content += `*TELEFONE:* ${professional.phone} - Somente mensagem WhatsApp\n`;
           }
         }
         
         if (professional.email) {
-          content += `EMAIL: ${professional.email}\n`;
+          content += `*EMAIL:* ${professional.email}\n`;
         }
         
         if (professional.working_days) {
@@ -766,35 +766,35 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
               'sunday': 'Dom'
             };
             const daysList = days.map((day: string) => dayLabels[day] || day).join(', ');
-            content += `DIAS: ${daysList}\n`;
+            content += `*DIAS:* ${daysList}\n`;
           } catch {
-            content += `DIAS: ${professional.working_days}\n`;
+            content += `*DIAS:* ${professional.working_days}\n`;
           }
         }
         
         if (professional.working_hours) {
-          content += `HORÁRIO: ${professional.working_hours}\n`;
+          content += `*HORÁRIO:* ${professional.working_hours}\n`;
         }
         
         if (professional.observations) {
-          content += `OBSERVAÇÕES: ${professional.observations}\n`;
+          content += `*OBSERVAÇÕES:* ${professional.observations}\n`;
         }
         
         // Taxa vinculada
         const linkedFee = processData.selected_fees.find((fee: any) => fee.linked_professional_type === step.type);
         if (linkedFee) {
-          content += `VALOR: R$ ${linkedFee.amount.toFixed(2)}\n`;
+          content += `*VALOR: R$ ${linkedFee.amount.toFixed(2)}*\n`;
         }
         
         // Mensagem toxicológico
         if (step.type === 'medico' && processData.show_toxicologico_message) {
-          content += `\n>> LEVAR O TOXICOLÓGICO <<\n`;
+          content += `\n*>> LEVAR O TOXICOLÓGICO <<*\n`;
         }
         
       } else if (step.type === 'taxa') {
-        content += `TAXAS A PAGAR:\n`;
+        content += `*TAXAS A PAGAR:*\n`;
         processData.selected_fees.filter((fee: any) => !fee.linked_professional_type).forEach((fee: any) => {
-          content += `• ${fee.name}: R$ ${fee.amount.toFixed(2)}\n`;
+          content += `• ${fee.name}: *R$ ${fee.amount.toFixed(2)}*\n`;
         });
         
         const manualFeesTotal = processData.selected_fees
@@ -802,7 +802,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
           .reduce((total: number, fee: any) => total + fee.amount, 0);
         
         if (manualFeesTotal > 0) {
-          content += `TOTAL: R$ ${manualFeesTotal.toFixed(2)}\n`;
+          content += `*TOTAL: R$ ${manualFeesTotal.toFixed(2)}*\n`;
         }
       }
       
@@ -826,20 +826,20 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
           return stepProfessional || stepHasTaxes;
         }).length + 1;
         
-        content += `📝 PROVA\n`;
-        content += `(${provaStepNumber}° PASSO)\n`;
+        content += `📝 *PROVA*\n`;
+        content += `*(${provaStepNumber}° PASSO)*\n`;
         content += `${'-'.repeat(40)}\n`;
-        content += `LOCAL: ${professional.name}\n`;
+        content += `*LOCAL:* ${professional.name}\n`;
         
         if (professional.attendance_type) {
-          content += `${professional.attendance_type}:\n`;
+          content += `*${professional.attendance_type}:*\n`;
           if (professional.phone) {
-            content += `TELEFONE: ${professional.phone} - Somente mensagem WhatsApp\n`;
+            content += `*TELEFONE:* ${professional.phone} - Somente mensagem WhatsApp\n`;
           }
         }
         
         if (professional.email) {
-          content += `EMAIL: ${professional.email}\n`;
+          content += `*EMAIL:* ${professional.email}\n`;
         }
         
         content += `\n`;
@@ -848,12 +848,12 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
 
     // Valor total
     content += `======================================\n`;
-    content += `VALOR TOTAL: R$ ${processData.total_amount.toFixed(2)}\n`;
+    content += `*VALOR TOTAL: R$ ${processData.total_amount.toFixed(2)}*\n`;
     content += `======================================\n\n`;
 
     // Instruções gerais
     if (generalInstructions) {
-      content += `INSTRUÇÕES GERAIS:\n`;
+      content += `*INSTRUÇÕES GERAIS:*\n`;
       content += `${'-'.repeat(40)}\n`;
       
       // Use the same logic as the print version to remove HTML tags and format
