@@ -668,7 +668,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
         ${generalInstructions ? `
         <div class="instructions">
             <div class="instructions-content">
-                ${generalInstructions}
+                ${generalInstructions.replace(/;/g, '')}
             </div>
         </div>
         ` : ''}
