@@ -97,6 +97,17 @@ The application uses the following main tables:
 - Set up development workflow
 - Configured deployment for Cloudflare Workers (autoscale)
 - Installed dependencies with --legacy-peer-deps flag (React 19 compatibility)
+- ✅ Print layout improvements:
+  - Increased prova card width from 380px to 480px for better visibility
+  - Increased font sizes in prova card (text-sm) for better readability
+  - Card uses flexible height (min-h-24) to adapt to content
+- ✅ Step Process form enhancements:
+  - Transformed "Nome do Cliente" field into "Serviço" dropdown
+  - Added service options: "Renovação" and "Renovação + Transferência"
+  - Implemented automatic fee selection:
+    - "Renovação" → auto-selects "Emissão da CNH" fee
+    - "Renovação + Transferência" → auto-selects "Emissão da CNH" + "Transferência" fees
+  - Service selection is optional; no fees auto-selected when empty
 
 ## Known Issues
 - TypeScript LSP shows type errors in worker/index.ts (Cloudflare types) - these don't affect runtime
