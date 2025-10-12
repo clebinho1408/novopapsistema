@@ -49,6 +49,17 @@ npm run dev                      # Start dev server on port 5000
 - CORS is configured to work with Replit's proxy
 - Frontend binds to 0.0.0.0:5000 for accessibility
 
+### Database Migrations
+Apply migrations to local database:
+```bash
+npx wrangler d1 migrations apply 0199c55d-a66a-73b2-b501-16d101636238 --local
+```
+
+Check migration status:
+```bash
+npx wrangler d1 migrations list 0199c55d-a66a-73b2-b501-16d101636238 --local
+```
+
 ## Database Schema
 The application uses the following main tables:
 - `agencies` - Multi-tenant agency data
@@ -63,6 +74,9 @@ The application uses the following main tables:
 - `process_selected_fees` - Fees selected for each process
 
 ## Recent Changes (October 12, 2025)
+- ✅ Code import completed successfully
+- ✅ Applied all 16 database migrations to local D1 database
+- ✅ Server running without errors on port 5000
 - Configured Vite to bind to 0.0.0.0:5000 for Replit environment
 - Updated CORS configuration to support Replit proxy domains
 - Set up development workflow
