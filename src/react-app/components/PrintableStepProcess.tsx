@@ -21,11 +21,13 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [generalInstructions, setGeneralInstructions] = useState<string>('');
   const [emailModal, setEmailModal] = useState({ isOpen: false, email: '' });
+  const [currentUserName, setCurrentUserName] = useState<string>('');
 
   useEffect(() => {
     if (isOpen) {
       checkAgencyLogo();
       fetchInstructions();
+      fetchCurrentUser();
     }
   }, [isOpen]);
 
@@ -49,6 +51,16 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
       setGeneralInstructions(data.general_instructions || '');
     } catch (error) {
       console.error('Error fetching instructions:', error);
+    }
+  };
+
+  const fetchCurrentUser = async () => {
+    try {
+      const response = await fetch('/api/auth/me', { credentials: 'include' });
+      const data = await response.json();
+      setCurrentUserName(data.name || '');
+    } catch (error) {
+      console.error('Error fetching current user:', error);
     }
   };
 
@@ -675,6 +687,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
         <!-- Footer -->
         <div class="footer">
             <p>Documento gerado pelo PAP - Sistema - ${new Date().toLocaleDateString('pt-BR')}</p>
+            ${currentUserName ? `<p style="margin-top: 4px;">Impresso por: ${currentUserName}</p>` : ''}
         </div>
     </div>
 </body>
@@ -878,6 +891,9 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
 
     // Rodapé
     content += `Documento gerado pelo PAP - Sistema - ${new Date().toLocaleDateString('pt-BR')}\n`;
+    if (currentUserName) {
+      content += `Impresso por: ${currentUserName}\n`;
+    }
 
     return content;
   };
@@ -1208,6 +1224,11 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
               <p className="text-xs">
                 Documento gerado pelo PAP - Sistema - {new Date().toLocaleDateString('pt-BR')}
               </p>
+              {currentUserName && (
+                <p className="text-xs mt-1">
+                  Impresso por: {currentUserName}
+                </p>
+              )}
             </div>
           </div>
         </div>
