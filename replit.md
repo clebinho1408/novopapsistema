@@ -84,8 +84,13 @@ The application uses the following main tables:
 - ✅ Removed fixed font-size to respect editor settings in print
 - ✅ Email functionality: Semicolons (;) create line breaks in email, hidden in print
 - ✅ Updated email title from "PASSO A PASSO" to "SIGA O PASSO A PASSO"
-- ✅ Fixed deployment configuration: Updated @vitejs/plugin-react to v5.0.4 (vite 7.x compatible)
-- ✅ Fixed deployment run command to use wrangler deploy for Cloudflare Workers
+- ✅ Fixed deployment issues:
+  - Removed react-quill (incompatible with React 19), using quill directly
+  - Updated @vitejs/plugin-react to v5.0.4 (vite 7.x compatible)
+  - Changed deployment target to VM with dev server (always running)
+  - All dependencies now compatible with React 19
+  - Build command: npm install --legacy-peer-deps
+  - Run command: npm run dev (serves app on port 5000)
 - Configured Vite to bind to 0.0.0.0:5000 for Replit environment
 - Updated CORS configuration to support Replit proxy domains
 - Set up development workflow
@@ -93,8 +98,8 @@ The application uses the following main tables:
 - Installed dependencies with --legacy-peer-deps flag (React 19 compatibility)
 
 ## Known Issues
-- react-quill (2.0.0) has peer dependency warnings with React 19
 - TypeScript LSP shows type errors in worker/index.ts (Cloudflare types) - these don't affect runtime
+- Minor security vulnerabilities in dependencies (2 low, 1 moderate) - not critical for development
 
 ## Authentication
 The application uses a custom session-based authentication system:
