@@ -125,6 +125,9 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
     <title>Passo a Passo - ${processData.client_name || 'Cliente'}</title>
     <meta charset="UTF-8">
     <style>
+        html {
+            height: 100%;
+        }
         body { 
             font-family: Arial, sans-serif; 
             margin: 10px; 
@@ -132,10 +135,19 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             background: white;
             color: black;
             line-height: 1.2;
+            min-height: calc(100% - 20px);
+            display: flex;
+            flex-direction: column;
         }
         .container {
             max-width: none;
             margin: 0;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .content-wrapper {
+            flex: 1;
         }
         .header {
             display: flex;
@@ -414,7 +426,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             margin: 2px 0;
         }
         .footer {
-            margin-top: 8px;
+            margin-top: auto;
             padding-top: 6px;
             border-top: 1px solid black;
             text-align: center;
@@ -424,6 +436,12 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             margin: 0;
         }
         @media print {
+            html, body {
+                height: 100%;
+            }
+            .container {
+                min-height: 100%;
+            }
             html, body { 
                 margin: 0;
                 padding: 0;
@@ -485,6 +503,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
 </head>
 <body>
     <div class="container">
+        <div class="content-wrapper">
         <!-- Header -->
         <div class="header">
             <div class="logo-section">
@@ -688,6 +707,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             </div>
         </div>
         ` : ''}
+        </div>
 
         <!-- Footer -->
         <div class="footer">
