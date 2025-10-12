@@ -1,6 +1,6 @@
 import Layout from '@/react-app/components/Layout';
 import { useState, useEffect } from 'react';
-import { Settings, Plus, Edit, Trash2, DollarSign, List, FileText, Upload, Users, Building2, Save } from 'lucide-react';
+import { Settings, Plus, Edit, Trash2, DollarSign, List, FileText, Upload, Users, Building2, Save, AlertTriangle } from 'lucide-react';
 import type { ProcessStep, Fee, ProfessionalType } from '@/shared/types';
 import { PROFESSIONAL_TYPE_LABELS } from '@/shared/types';
 import RichTextEditor from '@/react-app/components/RichTextEditor';
