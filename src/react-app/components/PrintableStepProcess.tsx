@@ -377,6 +377,23 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             word-wrap: break-word;
             overflow-wrap: break-word;
         }
+        .instructions-content p {
+            margin: 4px 0;
+        }
+        .instructions-content ul,
+        .instructions-content ol {
+            margin: 4px 0;
+            padding-left: 20px;
+        }
+        .instructions-content li {
+            margin: 2px 0;
+        }
+        .instructions-content strong {
+            font-weight: bold;
+        }
+        .instructions-content em {
+            font-style: italic;
+        }
         .footer {
             margin-top: 8px;
             padding-top: 6px;
