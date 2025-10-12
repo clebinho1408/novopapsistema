@@ -399,16 +399,21 @@ function FeesConfiguration({ fees, onUpdate }: { fees: Fee[], onUpdate: () => vo
                 <select
                   value={formData.linked_professional_type}
                   onChange={(e) => setFormData(prev => ({ ...prev, linked_professional_type: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={editingFee && (editingFee.name === 'Emissão da CNH' || editingFee.name === 'Transferência')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >
                   <option value="">Nenhum vínculo</option>
                   {Object.entries(PROFESSIONAL_TYPE_LABELS).map(([value, label]) => (
                     <option key={value} value={value}>{label}</option>
                   ))}
                 </select>
-                <p className="text-xs text-gray-500 mt-1">
-                  Taxa só aparecerá no processo se houver profissional deste tipo selecionado
-                </p>
+                {editingFee && (editingFee.name === 'Emissão da CNH' || editingFee.name === 'Transferência') ? (
+                  <p className="text-xs text-gray-500 mt-1">O vínculo desta taxa não pode ser alterado</p>
+                ) : (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Taxa só aparecerá no processo se houver profissional deste tipo selecionado
+                  </p>
+                )}
               </div>
               <div className="flex justify-end space-x-3">
                 <button
