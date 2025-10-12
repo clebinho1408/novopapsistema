@@ -798,10 +798,22 @@ app.patch("/api/fees/:id", systemAuthMiddleware, async (c) => {
   const feeId = c.req.param("id");
   const body = await c.req.json();
 
+  // Verificar se é uma taxa obrigatória
+  const fee = await c.env.DB.prepare(
+    "SELECT name FROM fees WHERE id = ? AND agency_id = ?"
+  ).bind(feeId, user.agency_id).first();
+
+  if (!fee) {
+    return c.json({ error: "Taxa não encontrada" }, 404);
+  }
+
+  const isMandatoryFee = (fee as any).name === 'Emissão da CNH' || (fee as any).name === 'Transferência';
+
   const updateFields = [];
   const updateValues = [];
 
-  if (body.name !== undefined) {
+  // Taxas obrigatórias: apenas permitir alteração de valor
+  if (body.name !== undefined && !isMandatoryFee) {
     updateFields.push("name = ?");
     updateValues.push(body.name);
   }
@@ -809,11 +821,11 @@ app.patch("/api/fees/:id", systemAuthMiddleware, async (c) => {
     updateFields.push("amount = ?");
     updateValues.push(body.amount);
   }
-  if (body.linked_professional_type !== undefined) {
+  if (body.linked_professional_type !== undefined && !isMandatoryFee) {
     updateFields.push("linked_professional_type = ?");
     updateValues.push(body.linked_professional_type || null);
   }
-  if (body.is_active !== undefined) {
+  if (body.is_active !== undefined && !isMandatoryFee) {
     updateFields.push("is_active = ?");
     updateValues.push(body.is_active ? 1 : 0);
   }
