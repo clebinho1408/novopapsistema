@@ -109,6 +109,7 @@ The application uses the following main tables:
     - "Renovação + Transferência" → auto-selects "Emissão da CNH" + "Transferência" fees
   - Service selection is optional; no fees auto-selected when empty
   - Service name is not displayed in print/email output (only used for fee selection)
+  - Fixed Cancel button to properly reset form data and return to step 1
 
 ## Known Issues
 - TypeScript LSP shows type errors in worker/index.ts (Cloudflare types) - these don't affect runtime

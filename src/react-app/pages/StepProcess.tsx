@@ -198,6 +198,22 @@ export default function StepProcess() {
     });
   };
 
+  const handleCancel = () => {
+    // Reset form data
+    setFormData({
+      city_id: '',
+      client_name: '',
+      selected_steps: [],
+      selected_professionals: {},
+      selected_fees: [],
+      show_toxicologico_message: false
+    });
+    // Reset to first step
+    setCurrentStep(1);
+    // Close form
+    setShowForm(false);
+  };
+
   const handleFeeToggle = (feeId: number) => {
     setFormData(prev => ({
       ...prev,
@@ -669,7 +685,7 @@ export default function StepProcess() {
                   </div>
                   <div className="flex space-x-3">
                     <button
-                      onClick={() => setShowForm(false)}
+                      onClick={handleCancel}
                       className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
                     >
                       Cancelar
