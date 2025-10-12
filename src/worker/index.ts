@@ -23,7 +23,7 @@ app.use("*", cors({
       "https://localhost:5000",
     ];
     
-    if (!origin) return true;
+    if (!origin) return allowedOrigins[0];
     
     const replitDomain = process.env.REPLIT_DEV_DOMAIN || process.env.REPLIT_DOMAINS;
     if (replitDomain) {
