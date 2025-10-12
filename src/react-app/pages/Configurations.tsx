@@ -377,7 +377,7 @@ function FeesConfiguration({ fees, onUpdate }: { fees: Fee[], onUpdate: () => vo
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  disabled={editingFee && (editingFee.name === 'Emissão da CNH' || editingFee.name === 'Transferência')}
+                  disabled={!!(editingFee && (editingFee.name === 'Emissão da CNH' || editingFee.name === 'Transferência'))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                   required
                 />
@@ -401,7 +401,7 @@ function FeesConfiguration({ fees, onUpdate }: { fees: Fee[], onUpdate: () => vo
                 <select
                   value={formData.linked_professional_type}
                   onChange={(e) => setFormData(prev => ({ ...prev, linked_professional_type: e.target.value }))}
-                  disabled={editingFee && (editingFee.name === 'Emissão da CNH' || editingFee.name === 'Transferência')}
+                  disabled={!!(editingFee && (editingFee.name === 'Emissão da CNH' || editingFee.name === 'Transferência'))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >
                   <option value="">Nenhum vínculo</option>
