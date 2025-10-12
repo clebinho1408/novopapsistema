@@ -372,27 +372,34 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
         }
         .instructions-content {
             font-size: 12px;
-            line-height: 1.4;
+            line-height: 1.3;
             color: #333;
             word-wrap: break-word;
             overflow-wrap: break-word;
         }
         .instructions-content p {
-            margin: 4px 0;
+            margin: 0;
+            padding: 0;
         }
         .instructions-content ul,
         .instructions-content ol {
-            margin: 4px 0;
+            margin: 2px 0;
             padding-left: 20px;
         }
         .instructions-content li {
-            margin: 2px 0;
+            margin: 0;
+            padding: 0;
         }
         .instructions-content strong {
             font-weight: bold;
         }
         .instructions-content em {
             font-style: italic;
+        }
+        .instructions-content br {
+            display: block;
+            content: "";
+            margin: 2px 0;
         }
         .footer {
             margin-top: 8px;
