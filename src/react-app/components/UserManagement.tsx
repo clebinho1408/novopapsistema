@@ -5,7 +5,7 @@ interface SystemUser {
   id: number;
   name: string;
   email: string;
-  role: 'administrator' | 'collaborator';
+  role: 'administrator' | 'supervisor' | 'collaborator';
   is_active: boolean;
   last_login_at?: string;
   created_at: string;
@@ -25,7 +25,7 @@ export default function UserManagement() {
     email: '',
     password: '',
     confirm_password: '',
-    role: 'collaborator' as 'administrator' | 'collaborator'
+    role: 'collaborator' as 'administrator' | 'supervisor' | 'collaborator'
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -260,7 +260,7 @@ export default function UserManagement() {
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium ${
-                      user.role === 'administrator' ? 'bg-red-500' : 'bg-blue-500'
+                      user.role === 'administrator' ? 'bg-red-500' : user.role === 'supervisor' ? 'bg-purple-500' : 'bg-blue-500'
                     }`}>
                       {user.role === 'administrator' ? <Shield className="w-4 h-4" /> : <Users className="w-4 h-4" />}
                     </div>
@@ -281,9 +281,11 @@ export default function UserManagement() {
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                     user.role === 'administrator' 
                       ? 'bg-red-100 text-red-800' 
+                      : user.role === 'supervisor'
+                      ? 'bg-purple-100 text-purple-800'
                       : 'bg-green-100 text-green-800'
                   }`}>
-                    {user.role === 'administrator' ? 'Administrador' : 'Colaborador'}
+                    {user.role === 'administrator' ? 'Administrador' : user.role === 'supervisor' ? 'Supervisor' : 'Colaborador'}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -391,10 +393,11 @@ export default function UserManagement() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Nível de Acesso</label>
                 <select
                   value={formData.role}
-                  onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value as 'administrator' | 'collaborator' }))}
+                  onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value as 'administrator' | 'supervisor' | 'collaborator' }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="collaborator">Colaborador</option>
+                  <option value="supervisor">Supervisor</option>
                   <option value="administrator">Administrador</option>
                 </select>
               </div>
