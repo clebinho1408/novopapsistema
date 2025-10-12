@@ -75,8 +75,8 @@ The application uses the following main tables:
 
 ## User Roles and Permissions
 The system supports three levels of access:
-- **Administrator**: Full access to all features and pages
-- **Supervisor**: Read-only access to Passo a Passo and Profissionais pages (cannot create, edit, or delete)
+- **Administrator**: Full access to all features and pages (can create, edit, and delete)
+- **Supervisor**: Access to Passo a Passo and Profissionais pages (can create and edit, but cannot delete)
 - **Collaborator**: Access only to Passo a Passo page (their own processes)
 
 ## Recent Changes (October 12, 2025)
@@ -118,12 +118,14 @@ The system supports three levels of access:
   - Fixed Cancel button to properly reset form data and return to step 1
 - ✅ Added new "Supervisor" user role:
   - Created three-tier permission system: Administrator > Supervisor > Collaborator
-  - Supervisors have read-only access to Passo a Passo and Profissionais pages
-  - Supervisors can view all processes (like administrators) but cannot create, edit, or delete
-  - UI buttons (New, Edit, Delete) are hidden for supervisors in Professionals page
-  - Backend enforces administrator-only permissions for POST/PATCH/DELETE operations
+  - Supervisors have access to Passo a Passo and Profissionais pages
+  - Supervisors can view all processes and create/edit professionals (cannot delete)
+  - UI Delete button is hidden for supervisors in Professionals page
+  - Backend enforces administrator-only permissions for DELETE operations
+  - Supervisors can use POST/PATCH endpoints (create and edit)
   - Updated Layout navigation to show appropriate menu items for each role
   - Updated ProtectedRoute to enforce role-based access control
+  - Applied migration 17 to add supervisor role to database schema
 
 ## Known Issues
 - TypeScript LSP shows type errors in worker/index.ts (Cloudflare types) - these don't affect runtime

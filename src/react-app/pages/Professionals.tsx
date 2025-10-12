@@ -260,7 +260,7 @@ export default function Professionals() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-semibold text-gray-900">Profissionais Credenciados</h1>
-            {userRole === 'administrator' && (
+            {(userRole === 'administrator' || userRole === 'supervisor') && (
               <button
                 onClick={() => setIsModalOpen(true)}
                 className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 flex items-center space-x-2"
@@ -393,7 +393,7 @@ export default function Professionals() {
                             )}
                           </div>
                         </div>
-                        {userRole === 'administrator' && (
+                        {(userRole === 'administrator' || userRole === 'supervisor') && (
                           <div className="flex space-x-2 ml-4">
                             <button
                               onClick={() => {
@@ -422,12 +422,14 @@ export default function Professionals() {
                             >
                               <Edit className="w-4 h-4" />
                             </button>
-                            <button
-                              onClick={() => handleDelete(professional.id)}
-                              className="p-2 text-gray-400 hover:text-red-600"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            {userRole === 'administrator' && (
+                              <button
+                                onClick={() => handleDelete(professional.id)}
+                                className="p-2 text-gray-400 hover:text-red-600"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
                           </div>
                         )}
                       </div>

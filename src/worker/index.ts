@@ -552,7 +552,7 @@ app.get("/api/professionals", systemAuthMiddleware, async (c) => {
 app.post("/api/professionals", systemAuthMiddleware, async (c) => {
   const user = getUserWithAgency(c);
   if (!user) return c.json({ error: "User not found" }, 404);
-  if (user.role !== 'administrator') return c.json({ error: "Acesso negado" }, 403);
+  if (user.role !== 'administrator' && user.role !== 'supervisor') return c.json({ error: "Acesso negado" }, 403);
 
   try {
     // Parse the raw request body for detailed debugging
@@ -616,7 +616,7 @@ app.post("/api/professionals", systemAuthMiddleware, async (c) => {
 app.patch("/api/professionals/:id", systemAuthMiddleware, async (c) => {
   const user = getUserWithAgency(c);
   if (!user) return c.json({ error: "User not found" }, 404);
-  if (user.role !== 'administrator') return c.json({ error: "Acesso negado" }, 403);
+  if (user.role !== 'administrator' && user.role !== 'supervisor') return c.json({ error: "Acesso negado" }, 403);
 
   const professionalId = c.req.param("id");
   const body = await c.req.json();
