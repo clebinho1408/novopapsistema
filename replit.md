@@ -82,6 +82,10 @@ The application uses the following main tables:
 - ✅ Preserved HTML formatting in instructions when printing
 - ✅ Optimized line spacing in printed instructions (line-height: 1.1)
 - ✅ Removed fixed font-size to respect editor settings in print
+- ✅ Email functionality: Semicolons (;) create line breaks in email, hidden in print
+- ✅ Updated email title from "PASSO A PASSO" to "SIGA O PASSO A PASSO"
+- ✅ Fixed deployment configuration: Updated @vitejs/plugin-react to v5.0.4 (vite 7.x compatible)
+- ✅ Fixed deployment run command to use wrangler deploy for Cloudflare Workers
 - Configured Vite to bind to 0.0.0.0:5000 for Replit environment
 - Updated CORS configuration to support Replit proxy domains
 - Set up development workflow
