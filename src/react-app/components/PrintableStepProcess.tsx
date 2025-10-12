@@ -873,6 +873,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
         .replace(/&lt;/g, '<')                   // Replace &lt; with <
         .replace(/&gt;/g, '>')                   // Replace &gt; with >
         .replace(/&quot;/g, '"')                 // Replace &quot; with "
+        .replace(/;/g, ';\n\n')                  // Replace semicolon with semicolon + double line break
         .replace(/\n{3,}/g, '\n\n')              // Replace 3+ line breaks with double line break
         .trim();
       
