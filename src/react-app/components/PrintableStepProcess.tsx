@@ -463,7 +463,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
               const filteredSteps = (processData.all_steps || processData.selected_steps).filter(step => step.type !== 'prova');
               let stepCounter = 0;
               
-              return filteredSteps.filter((step) => {
+              return filteredSteps.map((step) => {
                 const isSelected = processData.selected_steps.find(s => s.id === step.id);
                 const professional = isSelected ? processData.selected_professionals[step.id.toString()] : null;
                 
@@ -471,13 +471,11 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 const hasTaxesSelected = step.type === 'taxa' && isSelected && 
                   processData.selected_fees.filter(fee => !fee.linked_professional_type).length > 0;
                 
-                // Só incluir se há dados para exibir
-                return professional || hasTaxesSelected;
-              }).map((step) => {
-                const isSelected = processData.selected_steps.find(s => s.id === step.id);
-                const professional = isSelected ? processData.selected_professionals[step.id.toString()] : null;
-                
-                stepCounter++;
+                // Incrementar contador apenas se há dados para exibir
+                const hasData = professional || hasTaxesSelected;
+                if (hasData) {
+                  stepCounter++;
+                }
                 const stepNumber = stepCounter;
                 const stepIcon = getStepIcon(step.type);
               
@@ -491,7 +489,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                     <div class="step-header">
                         <div class="step-icon">${stepIcon}</div>
                         <div class="step-number-and-title">
-                            <p class="step-number-text"><strong>(${stepNumber}°) PASSO</strong></p>
+                            ${hasData ? `<p class="step-number-text"><strong>(${stepNumber}°) PASSO</strong></p>` : ''}
                             <div class="step-title">
                                 <strong>${step.name}</strong>
                             </div>
@@ -555,7 +553,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                                 </div>
                               </div>
                             ` : ''}
-                        ` : step.type === 'taxa' ? `
+                        ` : (step.type === 'taxa' && hasTaxesSelected) ? `
                             <div class="fee-section">
                                 <h4><strong>TAXAS A PAGAR:</strong></h4>
                                 ${processData.selected_fees.filter(fee => {
