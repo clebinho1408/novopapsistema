@@ -702,7 +702,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
   };
 
   const generateEmailContent = () => {
-    let content = `PASSO A PASSO\n`;
+    let content = `SIGA O PASSO A PASSO\n`;
     if (processData.client_name) {
       content += `Cliente: ${processData.client_name}\n`;
     }
