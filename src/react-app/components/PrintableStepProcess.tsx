@@ -810,14 +810,6 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
         processData.selected_fees.filter((fee: any) => !fee.linked_professional_type).forEach((fee: any) => {
           content += `• ${fee.name}: R$ ${fee.amount.toFixed(2)}\n`;
         });
-        
-        const manualFeesTotal = processData.selected_fees
-          .filter((fee: any) => !fee.linked_professional_type)
-          .reduce((total: number, fee: any) => total + fee.amount, 0);
-        
-        if (manualFeesTotal > 0) {
-          content += `TOTAL: R$ ${manualFeesTotal.toFixed(2)}\n`;
-        }
       }
       
       content += `\n`;
@@ -897,7 +889,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
     // Rodapé
     content += `Documento gerado pelo PAP - Sistema - ${new Date().toLocaleDateString('pt-BR')}\n`;
     if (currentUserName) {
-      content += `Impresso por: ${currentUserName}\n`;
+      content += `Enviado por: ${currentUserName}\n`;
     }
 
     return content;
