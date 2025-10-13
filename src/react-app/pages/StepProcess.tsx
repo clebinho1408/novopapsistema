@@ -130,9 +130,9 @@ export default function StepProcess() {
         const newProfessionals = { ...prev.selected_professionals };
         delete newProfessionals[stepId];
         
-        // Se for tipo prova, remover também a taxa vinculada
+        // Se for tipo prova, remover também a "Taxa da Prova" pelo nome
         if (step?.type === 'prova') {
-          const provaFee = fees.find(fee => fee.linked_professional_type === 'prova');
+          const provaFee = fees.find(fee => fee.name === 'Taxa da Prova');
           return {
             ...prev,
             selected_professionals: newProfessionals,
@@ -175,9 +175,9 @@ export default function StepProcess() {
     // Para outros tipos, selecionar diretamente
     console.log('Selecting professional directly for non-medical type');
     
-    // Se for tipo prova, auto-selecionar a taxa vinculada à prova
+    // Se for tipo prova, auto-selecionar a "Taxa da Prova" pelo nome
     if (step?.type === 'prova') {
-      const provaFee = fees.find(fee => fee.linked_professional_type === 'prova');
+      const provaFee = fees.find(fee => fee.name === 'Taxa da Prova');
       console.log('Step is prova, found provaFee:', provaFee);
       
       setFormData(prev => {
