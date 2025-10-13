@@ -143,11 +143,10 @@ The system supports three levels of access:
   - Changed "Profissional" to "Credenciado" in all UI elements
   - Updated navigation menus, page titles, labels, and messages
   - Maintained internal code structure (table names, API routes remain unchanged)
-- ✅ Print layout - Prova card fee display:
-  - Linked fee for "prova" now displays inside the prova card (like medico and psicologo)
-  - Fee badge shows "TAXA: R$ XX.XX" at the bottom of prova card
-  - Linked fees no longer appear in the general fees card
-  - Adjusted prova card height and padding to properly contain the fee badge
+- ✅ Print layout - Fee display:
+  - Fees linked to medico/psicologo display inside their respective cards
+  - Fees linked to prova display in the general fees card (TAXAS A PAGAR)
+  - Fees without links display in the general fees card
 
 ## Known Issues
 - TypeScript LSP shows type errors in worker/index.ts (Cloudflare types) - these don't affect runtime

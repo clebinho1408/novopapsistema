@@ -317,7 +317,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
         }
         .prova-card {
             border: 2px solid black;
-            min-height: 120px;
+            min-height: 100px;
             width: 480px;
             flex-shrink: 0;
         }
@@ -352,9 +352,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             margin-top: 1px;
         }
         .prova-content {
-            padding: 4px 6px 38px 6px;
-            position: relative;
-            min-height: 80px;
+            padding: 4px 6px;
         }
         .prova-content .professional-name {
             font-size: 12px;
@@ -599,8 +597,8 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                             <div class="fee-section">
                                 <h4><strong>TAXAS A PAGAR:</strong></h4>
                                 ${processData.selected_fees.filter(fee => {
-                                  // Apenas incluir taxas que NÃO têm vínculo com profissionais
-                                  return !fee.linked_professional_type;
+                                  // Incluir taxas sem vínculo OU com vínculo à prova
+                                  return !fee.linked_professional_type || fee.linked_professional_type === 'prova';
                                 }).map(fee => `
                                     <div class="fee-item"><strong>${fee.name}: R$ ${fee.amount.toFixed(2)}</strong></div>
                                 `).join('')}
@@ -671,15 +669,6 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                         ${professional.email ? `
                             <div class="professional-info"><strong>Email:</strong> ${professional.email}</div>
                         ` : ''}
-                        ${(() => {
-                          // Buscar taxa vinculada ao tipo prova
-                          const linkedFee = processData.selected_fees.find(fee => fee.linked_professional_type === 'prova');
-                          return linkedFee ? `
-                            <div class="fee-badge">
-                              <strong>TAXA: R$ ${linkedFee.amount.toFixed(2)}</strong>
-                            </div>
-                          ` : '';
-                        })()}
                     </div>
                 </div>
                 <div class="total-amount-card">
