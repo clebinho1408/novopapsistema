@@ -151,6 +151,7 @@ The system supports three levels of access:
   - When selecting a credenciado for Prova, automatically selects the linked prova fee
   - When deselecting a credenciado for Prova, automatically deselects the linked prova fee
   - Improves workflow by reducing manual steps in the registration process
+  - Fixed database: Updated "Prova" fee to have linked_professional_type = 'prova'
 
 ## Known Issues
 - TypeScript LSP shows type errors in worker/index.ts (Cloudflare types) - these don't affect runtime
