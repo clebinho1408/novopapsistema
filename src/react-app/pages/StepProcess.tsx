@@ -178,17 +178,23 @@ export default function StepProcess() {
     // Se for tipo prova, auto-selecionar a taxa vinculada à prova
     if (step?.type === 'prova') {
       const provaFee = fees.find(fee => fee.linked_professional_type === 'prova');
+      console.log('Step is prova, found provaFee:', provaFee);
       
-      setFormData(prev => ({
-        ...prev,
-        selected_professionals: {
-          ...prev.selected_professionals,
-          [stepId]: professionalId
-        },
-        selected_fees: provaFee && !prev.selected_fees.includes(provaFee.id)
-          ? [...prev.selected_fees, provaFee.id]
-          : prev.selected_fees
-      }));
+      setFormData(prev => {
+        const shouldAddFee = provaFee && !prev.selected_fees.includes(provaFee.id);
+        console.log('Should add fee?', shouldAddFee, 'Current fees:', prev.selected_fees);
+        
+        return {
+          ...prev,
+          selected_professionals: {
+            ...prev.selected_professionals,
+            [stepId]: professionalId
+          },
+          selected_fees: shouldAddFee
+            ? [...prev.selected_fees, provaFee.id]
+            : prev.selected_fees
+        };
+      });
     } else {
       setFormData(prev => ({
         ...prev,
