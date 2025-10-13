@@ -91,7 +91,37 @@ class PostgresQuery {
   // Convert D1-style SQL (with ?) to PostgreSQL-style (with $1, $2, etc.)
   private convertToPgSql(sql: string): string {
     let paramIndex = 1;
-    return sql.replace(/\?/g, () => `$${paramIndex++}`);
+    let converted = sql.replace(/\?/g, () => `$${paramIndex++}`);
+    
+    // Replace SQLite-specific functions with PostgreSQL equivalents
+    converted = converted.replace(/datetime\('now'\)/gi, 'NOW()');
+    converted = converted.replace(/CURRENT_TIMESTAMP/gi, 'NOW()');
+    
+    // Handle boolean conversions (0/1 to true/false)
+    // This is already handled at the application level
+    
+    return converted;
+  }
+
+  // Helper to convert boolean results from PostgreSQL
+  private convertResult(row: any): any {
+    if (!row) return row;
+    
+    const converted = { ...row };
+    // PostgreSQL returns booleans as true/false, which is what we want
+    // No conversion needed, but we ensure consistency
+    for (const [key, value] of Object.entries(converted)) {
+      if (typeof value === 'boolean') {
+        // Already a boolean, keep as-is
+        converted[key] = value;
+      } else if (value === 1 || value === 0) {
+        // If somehow we get 0/1, convert to boolean
+        if (key.includes('is_') || key.includes('show_')) {
+          converted[key] = value === 1;
+        }
+      }
+    }
+    return converted;
   }
 }
 
