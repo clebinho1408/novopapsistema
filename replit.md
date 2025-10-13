@@ -147,6 +147,10 @@ The system supports three levels of access:
   - Fees linked to medico/psicologo display inside their respective cards
   - Fees linked to prova display in the general fees card (TAXAS A PAGAR)
   - Fees without links display in the general fees card
+- ✅ Auto-select prova fee (October 13, 2025):
+  - When selecting a credenciado for Prova, automatically selects the linked prova fee
+  - When deselecting a credenciado for Prova, automatically deselects the linked prova fee
+  - Improves workflow by reducing manual steps in the registration process
 
 ## Known Issues
 - TypeScript LSP shows type errors in worker/index.ts (Cloudflare types) - these don't affect runtime

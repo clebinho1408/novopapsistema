@@ -124,9 +124,24 @@ export default function StepProcess() {
     
     if (!selectedValue) {
       // Remover seleção
+      const step = processSteps.find(s => s.id === stepId);
+      
       setFormData(prev => {
         const newProfessionals = { ...prev.selected_professionals };
         delete newProfessionals[stepId];
+        
+        // Se for tipo prova, remover também a taxa vinculada
+        if (step?.type === 'prova') {
+          const provaFee = fees.find(fee => fee.linked_professional_type === 'prova');
+          return {
+            ...prev,
+            selected_professionals: newProfessionals,
+            selected_fees: provaFee 
+              ? prev.selected_fees.filter(id => id !== provaFee.id)
+              : prev.selected_fees
+          };
+        }
+        
         return {
           ...prev,
           selected_professionals: newProfessionals
@@ -159,13 +174,30 @@ export default function StepProcess() {
     
     // Para outros tipos, selecionar diretamente
     console.log('Selecting professional directly for non-medical type');
-    setFormData(prev => ({
-      ...prev,
-      selected_professionals: {
-        ...prev.selected_professionals,
-        [stepId]: professionalId
-      }
-    }));
+    
+    // Se for tipo prova, auto-selecionar a taxa vinculada à prova
+    if (step?.type === 'prova') {
+      const provaFee = fees.find(fee => fee.linked_professional_type === 'prova');
+      
+      setFormData(prev => ({
+        ...prev,
+        selected_professionals: {
+          ...prev.selected_professionals,
+          [stepId]: professionalId
+        },
+        selected_fees: provaFee && !prev.selected_fees.includes(provaFee.id)
+          ? [...prev.selected_fees, provaFee.id]
+          : prev.selected_fees
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        selected_professionals: {
+          ...prev.selected_professionals,
+          [stepId]: professionalId
+        }
+      }));
+    }
   };
 
   const confirmProfessionalSelection = () => {
