@@ -14,8 +14,8 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "0199c55d-a66a-73b2-b501-16d101636238",
-      "database_id": "0199c55d-a66a-73b2-b501-16d101636238"
+      "database_name": "pap-sistema-producao",
+      "database_id": "f57092b8-0b17-4a0f-834a-be1c9c3d9b1a"
     }
   ],
   "r2_buckets": [
