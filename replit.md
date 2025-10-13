@@ -138,6 +138,11 @@ The system supports three levels of access:
   - Added "TAXA:" label before linked fee amounts in professional cards
   - Clearer display of fees associated with each professional type
   - Increased logo size in print view (80px height, 160px width)
+- ✅ System-wide terminology update (October 13, 2025):
+  - Changed "Profissionais" to "Credenciados" throughout the system
+  - Changed "Profissional" to "Credenciado" in all UI elements
+  - Updated navigation menus, page titles, labels, and messages
+  - Maintained internal code structure (table names, API routes remain unchanged)
 
 ## Known Issues
 - TypeScript LSP shows type errors in worker/index.ts (Cloudflare types) - these don't affect runtime

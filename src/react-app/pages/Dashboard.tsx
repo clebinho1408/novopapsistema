@@ -48,7 +48,7 @@ export default function Dashboard() {
               link="/cities"
             />
             <StatsCard
-              title="Profissionais"
+              title="Credenciados"
               value={stats.professionals}
               icon={<Users className="w-6 h-6" />}
               color="bg-green-500"
@@ -89,7 +89,7 @@ export default function Dashboard() {
                 color="from-green-500 to-green-600"
               />
               <ActionCard
-                title="Gerenciar Profissionais"
+                title="Gerenciar Credenciados"
                 description="Cadastrar médicos e psicólogos"
                 icon={<Users className="w-8 h-8" />}
                 link="/professionals"

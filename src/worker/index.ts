@@ -602,7 +602,7 @@ app.post("/api/professionals", systemAuthMiddleware, async (c) => {
     ).first();
 
     if (!result) {
-      return c.json({ error: "Falha ao criar profissional" }, 500);
+      return c.json({ error: "Falha ao criar credenciado" }, 500);
     }
 
     console.log('Professional created successfully:', result);
@@ -645,7 +645,7 @@ app.patch("/api/professionals/:id", systemAuthMiddleware, async (c) => {
     ).first();
 
     if (!result) {
-      return c.json({ error: "Profissional não encontrado" }, 404);
+      return c.json({ error: "Credenciado não encontrado" }, 404);
     }
 
     return c.json(result);

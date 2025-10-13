@@ -53,7 +53,7 @@ export default function Home() {
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
             Gerencie de forma eficiente todos os processos de habilitação com nossa plataforma 
-            completa e isolada por agência. Cadastre cidades, profissionais e acompanhe cada etapa.
+            completa e isolada por agência. Cadastre cidades, credenciados e acompanhe cada etapa.
           </p>
           <Link
             to="/login"
@@ -85,7 +85,7 @@ export default function Home() {
           />
           <FeatureCard
             icon={<Users className="w-8 h-8" />}
-            title="Profissionais Credenciados"
+            title="Credenciados"
             description="Gerencie médicos, psicólogos e locais credenciados"
             gradient="from-pink-500 to-rose-500"
           />

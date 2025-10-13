@@ -494,7 +494,7 @@ export default function StepProcess() {
                       return step?.type !== 'taxa';
                     }).length > 0 && (
                       <div className="mt-6">
-                        <h3 className="font-medium text-gray-900 mb-4">Selecione o Local/Profissional</h3>
+                        <h3 className="font-medium text-gray-900 mb-4">Selecione o Local/Credenciado</h3>
                         <div className="space-y-4">
                           {formData.selected_steps.filter(stepId => {
                             const step = processSteps.find(s => s.id === stepId);
@@ -514,7 +514,7 @@ export default function StepProcess() {
                                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                   required
                                 >
-                                  <option value="">Selecione um profissional</option>
+                                  <option value="">Selecione um credenciado</option>
                                   {stepProfessionals.map((prof: any) => (
                                     <option key={prof.id} value={prof.id}>
                                       {prof.name}{prof.city_name ? ` - ${prof.city_name}` : ''}
@@ -523,7 +523,7 @@ export default function StepProcess() {
                                 </select>
                                 {stepProfessionals.length === 0 && (
                                   <p className="text-sm text-red-600 mt-1">
-                                    Nenhum profissional cadastrado para este tipo{step?.type === 'medico' || step?.type === 'psicologo' ? ' nesta cidade' : ''}
+                                    Nenhum credenciado cadastrado para este tipo{step?.type === 'medico' || step?.type === 'psicologo' ? ' nesta cidade' : ''}
                                   </p>
                                 )}
                                 
@@ -630,7 +630,7 @@ export default function StepProcess() {
                                 <h4 className="font-medium text-gray-900">{step?.name}</h4>
                                 {professional ? (
                                   <div className="mt-2 text-sm text-gray-600">
-                                    <p><strong>Local/Profissional:</strong> {professional.name}</p>
+                                    <p><strong>Local/Credenciado:</strong> {professional.name}</p>
                                     {professional.address && <p><strong>Endereço:</strong> {professional.address}</p>}
                                     {professional.phone && <p><strong>Telefone:</strong> {professional.phone}</p>}
                                     {professional.email && <p><strong>Email:</strong> {professional.email}</p>}
@@ -751,7 +751,7 @@ export default function StepProcess() {
                           ATENÇÃO! CONFIRMA A SELEÇÃO?
                         </p>
                         <p className="text-sm text-gray-500 mb-3">
-                          Profissional selecionado para <strong>{confirmModal.stepName}</strong>:
+                          Credenciado selecionado para <strong>{confirmModal.stepName}</strong>:
                         </p>
                         <div className="bg-gray-50 rounded-lg p-4 border-l-4 border-red-500">
                           <h4 className="font-bold text-lg text-gray-900 mb-2">

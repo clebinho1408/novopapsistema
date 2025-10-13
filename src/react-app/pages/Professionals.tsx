@@ -152,13 +152,13 @@ export default function Professionals() {
           resetForm();
         } catch (parseError) {
           console.error('Failed to parse success response:', parseError);
-          alert('Profissional salvo, mas erro ao processar resposta');
+          alert('Credenciado salvo, mas erro ao processar resposta');
           fetchProfessionals();
           setIsModalOpen(false);
           resetForm();
         }
       } else {
-        let errorMessage = 'Erro ao salvar profissional';
+        let errorMessage = 'Erro ao salvar credenciado';
         
         try {
           const errorData = JSON.parse(responseText);
@@ -208,7 +208,7 @@ export default function Professionals() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Tem certeza que deseja excluir este profissional?')) return;
+    if (!confirm('Tem certeza que deseja excluir este credenciado?')) return;
 
     try {
       const response = await fetch(`/api/professionals/${id}`, {
@@ -218,16 +218,16 @@ export default function Professionals() {
       
       if (response.ok) {
         fetchProfessionals();
-        alert('Profissional excluído com sucesso!');
+        alert('Credenciado excluído com sucesso!');
       } else {
         const errorData = await response.text();
         console.error('Delete error:', errorData);
-        alert('Erro ao excluir profissional. Tente novamente.');
+        alert('Erro ao excluir credenciado. Tente novamente.');
       }
     } catch (error) {
       console.error('Error deleting professional:', error);
       const errorMessage = error instanceof Error ? error.message : 'Erro de conexão';
-      alert(`Erro ao excluir profissional: ${errorMessage}`);
+      alert(`Erro ao excluir credenciado: ${errorMessage}`);
     }
   };
 
@@ -259,14 +259,14 @@ export default function Professionals() {
       <div className="py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-semibold text-gray-900">Profissionais Credenciados</h1>
+            <h1 className="text-2xl font-semibold text-gray-900">Credenciados</h1>
             {(userRole === 'administrator' || userRole === 'supervisor') && (
               <button
                 onClick={() => setIsModalOpen(true)}
                 className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 flex items-center space-x-2"
               >
                 <Plus className="w-4 h-4" />
-                <span>Novo Profissional</span>
+                <span>Novo Credenciado</span>
               </button>
             )}
           </div>
@@ -277,7 +277,7 @@ export default function Professionals() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
-                placeholder="Buscar profissional..."
+                placeholder="Buscar credenciado..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -313,8 +313,8 @@ export default function Professionals() {
                   <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <p className="text-gray-500">
                     {searchTerm || typeFilter !== 'all' || cityFilter !== 'all' 
-                      ? 'Nenhum profissional encontrado' 
-                      : 'Nenhum profissional cadastrado'}
+                      ? 'Nenhum credenciado encontrado' 
+                      : 'Nenhum credenciado cadastrado'}
                   </p>
                 </div>
               ) : (
@@ -447,7 +447,7 @@ export default function Professionals() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-4xl mx-4 max-h-screen overflow-y-auto">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              {editingProfessional ? 'Editar Profissional' : 'Novo Profissional'}
+              {editingProfessional ? 'Editar Credenciado' : 'Novo Credenciado'}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

@@ -397,7 +397,7 @@ function FeesConfiguration({ fees, onUpdate }: { fees: Fee[], onUpdate: () => vo
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Vincular ao Tipo de Profissional (opcional)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Vincular ao Tipo de Credenciado (opcional)</label>
                 <select
                   value={formData.linked_professional_type}
                   onChange={(e) => setFormData(prev => ({ ...prev, linked_professional_type: e.target.value }))}
@@ -413,7 +413,7 @@ function FeesConfiguration({ fees, onUpdate }: { fees: Fee[], onUpdate: () => vo
                   <p className="text-xs text-gray-500 mt-1">O vínculo desta taxa não pode ser alterado</p>
                 ) : (
                   <p className="text-xs text-gray-500 mt-1">
-                    Taxa só aparecerá no processo se houver profissional deste tipo selecionado
+                    Taxa só aparecerá no processo se houver credenciado deste tipo selecionado
                   </p>
                 )}
               </div>

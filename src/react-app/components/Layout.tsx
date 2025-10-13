@@ -72,11 +72,11 @@ export default function Layout({ children }: LayoutProps) {
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Passo a Passo', href: '/step-process', icon: FileText },
     { name: 'Cidades', href: '/cities', icon: MapPin },
-    { name: 'Profissionais', href: '/professionals', icon: Users },
+    { name: 'Credenciados', href: '/professionals', icon: Users },
     { name: 'Configurações', href: '/configurations', icon: Settings },
   ] : userData?.role === 'supervisor' ? [
     { name: 'Passo a Passo', href: '/step-process', icon: FileText },
-    { name: 'Profissionais', href: '/professionals', icon: Users },
+    { name: 'Credenciados', href: '/professionals', icon: Users },
   ] : [
     { name: 'Passo a Passo', href: '/step-process', icon: FileText },
   ];
