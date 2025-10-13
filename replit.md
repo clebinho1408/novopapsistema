@@ -83,9 +83,12 @@ The system supports three levels of access:
 - ⚠️ **Critical Issue**: Published app uses temporary D1 database that resets, causing data loss after logout/login
 - 📦 Exported all configuration data: agencies, cities, process steps, fees, professionals (28 credenciados)
 - 📝 Migration instructions available in INSTRUCOES-MIGRACAO-PRODUCAO.md
-- 🗄️ SQL import script ready: migration-to-production.sql
-- ✅ **Solution**: Create permanent D1 production database on Cloudflare and apply migrations
+- 🗄️ SQL import script ready: MIGRACOES-COMPLETAS.sql (schema + data combined, tested and verified)
+- ✅ **Solution**: Created permanent D1 production database (ID: f57092b8-0b17-4a0f-834a-be1c9c3d9b1a)
+- 🔧 Updated wrangler.json to use production database
+- ✅ Migration file tested locally - all data verified (7 cities, 5 fees, 5 steps, 28 professionals)
 - 🔄 Evaluated PostgreSQL migration (50% complete) but reverted to Cloudflare D1 for simplicity and speed
+- 📋 **Next Steps**: User applies MIGRACOES-COMPLETAS.sql via Cloudflare Dashboard → Republish app
 
 ## Recent Changes (October 12, 2025)
 - ✅ Code import completed successfully
