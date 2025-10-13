@@ -79,13 +79,13 @@ The system supports three levels of access:
 - **Supervisor**: Access to Passo a Passo and Profissionais pages (can create and edit, but cannot delete)
 - **Collaborator**: Access only to Passo a Passo page (their own processes)
 
-## Production Database Migration (October 13, 2025)
-- 🔧 Created migration script to move from temporary to permanent production database
+## Production Database Setup (October 13, 2025)
+- ⚠️ **Critical Issue**: Published app uses temporary D1 database that resets, causing data loss after logout/login
 - 📦 Exported all configuration data: agencies, cities, process steps, fees, professionals (28 credenciados)
-- 📝 Created detailed migration instructions (INSTRUCOES-MIGRACAO-PRODUCAO.md)
-- 🗄️ Generated SQL import script (migration-to-production.sql)
-- ⚠️ Issue: Published app uses temporary D1 database that resets, causing data loss
-- ✅ Solution: User needs to create production D1 database and apply migration
+- 📝 Migration instructions available in INSTRUCOES-MIGRACAO-PRODUCAO.md
+- 🗄️ SQL import script ready: migration-to-production.sql
+- ✅ **Solution**: Create permanent D1 production database on Cloudflare and apply migrations
+- 🔄 Evaluated PostgreSQL migration (50% complete) but reverted to Cloudflare D1 for simplicity and speed
 
 ## Recent Changes (October 12, 2025)
 - ✅ Code import completed successfully
