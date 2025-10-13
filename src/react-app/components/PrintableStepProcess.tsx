@@ -753,13 +753,13 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
           const location = professional.address 
             ? `${professional.address}${professional.city_name ? ` - ${professional.city_name}` : ''}`
             : professional.city_name || '';
-          content += `ENDEREÇO: ${location}\n`;
+          content += `${location}\n`;
         }
         
         if (professional.attendance_type) {
           content += `\n${professional.attendance_type}:\n`;
           if (professional.phone) {
-            content += `TELEFONE: ${professional.phone} - Somente mensagem WhatsApp\n`;
+            content += `${professional.phone} - Somente mensagem WhatsApp\n`;
           }
         }
         
@@ -797,7 +797,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
         // Taxa vinculada
         const linkedFee = processData.selected_fees.find((fee: any) => fee.linked_professional_type === step.type);
         if (linkedFee) {
-          content += `VALOR: R$ ${linkedFee.amount.toFixed(2)}\n`;
+          content += `TAXA: R$ ${linkedFee.amount.toFixed(2)}\n`;
         }
         
         // Mensagem toxicológico
@@ -840,7 +840,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
         if (professional.attendance_type) {
           content += `${professional.attendance_type}:\n`;
           if (professional.phone) {
-            content += `TELEFONE: ${professional.phone} - Somente mensagem WhatsApp\n`;
+            content += `${professional.phone} - Somente mensagem WhatsApp\n`;
           }
         }
         
