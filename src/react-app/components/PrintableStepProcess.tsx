@@ -669,6 +669,15 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                         ${professional.email ? `
                             <div class="professional-info"><strong>Email:</strong> ${professional.email}</div>
                         ` : ''}
+                        ${(() => {
+                          // Buscar taxa vinculada ao tipo prova
+                          const linkedFee = processData.selected_fees.find(fee => fee.linked_professional_type === 'prova');
+                          return linkedFee ? `
+                            <div class="fee-badge">
+                              <strong>TAXA: R$ ${linkedFee.amount.toFixed(2)}</strong>
+                            </div>
+                          ` : '';
+                        })()}
                     </div>
                 </div>
                 <div class="total-amount-card">
