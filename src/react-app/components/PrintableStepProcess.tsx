@@ -582,7 +582,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                               const linkedFee = processData.selected_fees.find(fee => fee.linked_professional_type === step.type);
                               return linkedFee ? `
                                 <div class="fee-badge">
-                                  <strong>R$ ${linkedFee.amount.toFixed(2)}</strong>
+                                  <strong>TAXA: R$ ${linkedFee.amount.toFixed(2)}</strong>
                                 </div>
                               ` : '';
                             })()}

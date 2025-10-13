@@ -134,6 +134,9 @@ The system supports three levels of access:
   - Resolved type mismatch in Configurations.tsx (lines 380 and 404)
   - Changed disabled attribute from `boolean | null` to explicit boolean using `!!` operator
   - Build now compiles without TypeScript errors
+- ✅ Print layout improvements:
+  - Added "TAXA:" label before linked fee amounts in professional cards
+  - Clearer display of fees associated with each professional type
 
 ## Known Issues
 - TypeScript LSP shows type errors in worker/index.ts (Cloudflare types) - these don't affect runtime
