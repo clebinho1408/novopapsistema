@@ -599,9 +599,9 @@ export default function StepProcess() {
                     <h2 className="text-lg font-medium text-gray-900 mb-4">Selecione as Taxas Aplicáveis</h2>
                     <div className="space-y-3">
                       {fees.filter(fee => {
-                        // Apenas mostrar taxas que NÃO têm vínculo com profissionais
-                        // Taxas vinculadas serão incluídas automaticamente na impressão
-                        return !fee.linked_professional_type;
+                        // Mostrar taxas sem vínculo OU taxa da prova
+                        // Taxas vinculadas a médico/psicólogo NÃO aparecem (são automáticas)
+                        return !fee.linked_professional_type || fee.linked_professional_type === 'prova';
                       }).map(fee => (
                         <label key={fee.id} className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">
