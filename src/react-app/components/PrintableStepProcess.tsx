@@ -317,7 +317,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
         }
         .prova-card {
             border: 2px solid black;
-            min-height: 100px;
+            min-height: 120px;
             width: 480px;
             flex-shrink: 0;
         }
@@ -352,7 +352,9 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             margin-top: 1px;
         }
         .prova-content {
-            padding: 4px 6px;
+            padding: 4px 6px 38px 6px;
+            position: relative;
+            min-height: 80px;
         }
         .prova-content .professional-name {
             font-size: 12px;
