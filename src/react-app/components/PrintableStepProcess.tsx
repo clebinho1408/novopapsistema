@@ -489,7 +489,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
         <div class="header">
             <div class="logo-section">
                 ${logoUrl ? `
-                    <img src="${logoUrl}" alt="Logo da Agência" style="max-height: 60px; max-width: 120px; margin-right: 10px;" />
+                    <img src="${logoUrl}" alt="Logo da Agência" style="max-height: 80px; max-width: 160px; margin-right: 10px;" />
                 ` : ''}
                 <div class="logo-text">
                     <h1 style="font-size: 28px; font-weight: bold; margin: 0;">SIGA O PASSO A PASSO</h1>

@@ -137,6 +137,7 @@ The system supports three levels of access:
 - ✅ Print layout improvements:
   - Added "TAXA:" label before linked fee amounts in professional cards
   - Clearer display of fees associated with each professional type
+  - Increased logo size in print view (80px height, 160px width)
 
 ## Known Issues
 - TypeScript LSP shows type errors in worker/index.ts (Cloudflare types) - these don't affect runtime
