@@ -121,8 +121,8 @@ export default function StepProcess() {
           p => p.type === 'foto' && p.city_id.toString() === prev.city_id
         );
         
-        // Se há exatamente um credenciado de foto para essa cidade, selecionar automaticamente
-        if (fotoProfessionals.length === 1) {
+        // Auto-preencher com o primeiro credenciado de foto da cidade (se houver)
+        if (fotoProfessionals.length > 0) {
           return {
             ...prev,
             selected_steps: [...prev.selected_steps, stepId],
