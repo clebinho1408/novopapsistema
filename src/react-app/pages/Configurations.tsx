@@ -13,7 +13,6 @@ export default function Configurations() {
   const [processSteps, setProcessSteps] = useState<ProcessStep[]>([]);
   const [fees, setFees] = useState<Fee[]>([]);
 
-  console.log('Configurations: activeTab =', activeTab, 'fees =', fees);
 
   useEffect(() => {
     fetchProcessSteps();
@@ -85,12 +84,7 @@ export default function Configurations() {
 
           {/* Tab Content */}
           {activeTab === 'steps' && <StepsConfiguration steps={processSteps} onUpdate={fetchProcessSteps} />}
-          {activeTab === 'fees' && (
-            <>
-              {console.log('Rendering FeesConfiguration with fees:', fees)}
-              <FeesConfiguration fees={fees} onUpdate={fetchFees} />
-            </>
-          )}
+          {activeTab === 'fees' && <FeesConfiguration fees={fees} onUpdate={fetchFees} />}
           {activeTab === 'instructions' && <InstructionsConfiguration />}
           {activeTab === 'users' && <UserManagement />}
           {activeTab === 'agency' && <AgencyDataConfiguration />}
@@ -228,8 +222,6 @@ function FeesConfiguration({ fees, onUpdate }: { fees: Fee[], onUpdate: () => vo
   const [formData, setFormData] = useState({ name: '', amount: '', linked_professional_type: '' });
   const [isLoading, setIsLoading] = useState(false);
 
-  console.log('FeesConfiguration rendered, fees:', fees);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -334,7 +326,7 @@ function FeesConfiguration({ fees, onUpdate }: { fees: Fee[], onUpdate: () => vo
                 <div key={fee.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
                   <div>
                     <h3 className="font-medium text-gray-900">{fee.name}</h3>
-                    <p className="text-lg font-semibold text-green-600">R$ {fee.amount.toFixed(2)}</p>
+                    <p className="text-lg font-semibold text-green-600">R$ {parseFloat(fee.amount).toFixed(2)}</p>
                     {fee.linked_professional_type && (
                       <div className="mt-1">
                         <span className="inline-flex px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
