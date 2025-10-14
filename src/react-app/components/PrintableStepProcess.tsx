@@ -138,9 +138,6 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             max-width: none;
             margin: 10px;
             padding: 0;
-            display: flex;
-            flex-direction: column;
-            min-height: calc(100vh - 20px);
         }
         .header {
             display: flex;
@@ -381,10 +378,8 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             border-top: 2px solid black;
             padding-top: 12px;
             page-break-inside: avoid;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-height: 0;
+            max-height: 35vh;
+            overflow: hidden;
         }
         .instructions h3 {
             font-size: 14px;
@@ -392,15 +387,11 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             margin-bottom: 8px;
         }
         .instructions-content {
-            line-height: 1.3;
+            line-height: 1.2;
             color: #333;
             word-wrap: break-word;
             overflow-wrap: break-word;
-            font-size: clamp(11px, 2.5vw, 18px);
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
+            font-size: clamp(10px, 1.5vw, 15px);
         }
         .instructions-content p {
             margin: 0;
@@ -458,14 +449,12 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             }
             .instructions {
                 page-break-inside: avoid;
-                flex: 1;
-                display: flex;
-                flex-direction: column;
+                max-height: 250px;
+                overflow: hidden;
             }
             .instructions-content {
-                font-size: clamp(10px, 2vw, 16px) !important;
-                line-height: 1.4 !important;
-                flex: 1;
+                font-size: clamp(9px, 1.3vw, 14px) !important;
+                line-height: 1.25 !important;
             }
             .header {
                 margin-bottom: 10px;
@@ -955,8 +944,8 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
         </div>
 
           {/* Preview Content */}
-        <div className="p-8 flex flex-col min-h-screen">
-          <div className="max-w-none flex flex-col flex-1">
+        <div className="p-8">
+          <div className="max-w-none">
             {/* Header */}
             <div className="flex items-center mb-8 pb-4 border-b-2 border-black">
               <div className="flex items-center space-x-4">
@@ -1239,8 +1228,8 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
 
             {/* General Instructions */}
             {generalInstructions && (
-              <div className="border-t-2 border-black pt-6 flex-1 flex flex-col min-h-0">
-                <div className="leading-[1.3] flex-1 flex flex-col justify-start" style={{ fontSize: 'clamp(11px, 2.5vw, 18px)' }}>
+              <div className="border-t-2 border-black pt-6 max-h-[35vh] overflow-hidden">
+                <div className="leading-[1.2]" style={{ fontSize: 'clamp(10px, 1.5vw, 15px)' }}>
                   <div dangerouslySetInnerHTML={{ 
                     __html: generalInstructions
                       .replace(/;/g, ';<br>') // Add line break after each semicolon
