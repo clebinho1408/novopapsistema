@@ -62,8 +62,8 @@ class PostgresD1PreparedStatement implements D1PreparedStatement {
         console.error('SQL:', this.sql);
         console.error('Params:', this.params);
         
-        // If it's a connection timeout, wait and retry
-        if (error.code === 'CONNECT_TIMEOUT' && attempt < maxRetries) {
+        // If it's a connection timeout or control plane error, wait and retry
+        if ((error.code === 'CONNECT_TIMEOUT' || error.code === 'XX000') && attempt < maxRetries) {
           console.log(`Retrying in ${attempt * 1000}ms...`);
           await new Promise(resolve => setTimeout(resolve, attempt * 1000));
           continue;
@@ -90,7 +90,7 @@ class PostgresD1PreparedStatement implements D1PreparedStatement {
         console.error('SQL:', this.sql);
         console.error('Params:', this.params);
         
-        if (error.code === 'CONNECT_TIMEOUT' && attempt < maxRetries) {
+        if ((error.code === 'CONNECT_TIMEOUT' || error.code === 'XX000') && attempt < maxRetries) {
           console.log(`Retrying in ${attempt * 1000}ms...`);
           await new Promise(resolve => setTimeout(resolve, attempt * 1000));
           continue;
@@ -104,15 +104,31 @@ class PostgresD1PreparedStatement implements D1PreparedStatement {
   }
 
   async run(): Promise<any> {
-    try {
-      await client.unsafe(this.sql, this.params);
-      return { success: true };
-    } catch (error) {
-      console.error('D1 Adapter Error (run):', error);
-      console.error('SQL:', this.sql);
-      console.error('Params:', this.params);
-      throw error;
+    const maxRetries = 3;
+    let lastError: any;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        await client.unsafe(this.sql, this.params);
+        return { success: true };
+      } catch (error: any) {
+        lastError = error;
+        console.error(`D1 Adapter Error (run) - Attempt ${attempt}/${maxRetries}:`, error);
+        console.error('SQL:', this.sql);
+        console.error('Params:', this.params);
+        
+        // Retry on connection timeout or control plane errors
+        if ((error.code === 'CONNECT_TIMEOUT' || error.code === 'XX000') && attempt < maxRetries) {
+          console.log(`Retrying in ${attempt * 1000}ms...`);
+          await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+          continue;
+        }
+        
+        throw error;
+      }
     }
+    
+    throw lastError;
   }
 }
 
