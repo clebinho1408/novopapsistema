@@ -185,8 +185,8 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
         .steps-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 12px;
+            gap: 6px;
+            margin-bottom: 8px;
         }
         .step-card {
             border: 2px solid black;
@@ -292,7 +292,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             display: flex;
             align-items: flex-start;
             gap: 6px;
-            margin: 12px 0;
+            margin: 8px 0;
             justify-content: space-between;
         }
         .total-amount-card {
@@ -838,7 +838,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
         content += `📝 PROVA\n`;
         content += `(${provaStepNumber}° PASSO)\n`;
         content += `${'-'.repeat(40)}\n`;
-        content += `LOCAL: ${professional.name}\n`;
+        content += `${professional.name}\n`;
         
         if (professional.attendance_type) {
           content += `${professional.attendance_type}:\n`;
@@ -849,6 +849,10 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
         
         if (professional.email) {
           content += `EMAIL: ${professional.email}\n`;
+        }
+        
+        if (professional.observations) {
+          content += `OBS: ${professional.observations}\n`;
         }
         
         content += `\n`;
@@ -948,7 +952,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             </div>
 
             {/* Steps Grid */}
-            <div className="grid grid-cols-2 gap-6 mb-8">
+            <div className="grid grid-cols-2 gap-3 mb-4">
               {(() => {
                 const filteredSteps = (processData.all_steps || processData.selected_steps).filter(step => step.type !== 'prova');
                 let stepCounter = 0;
@@ -1117,7 +1121,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             </div>
 
             {/* Total Amount Card and Prova Card Container */}
-            <div className="flex items-start gap-2 mb-6 justify-between">
+            <div className="flex items-start gap-2 mb-4 justify-between">
               {(() => {
                 const allSteps = processData.all_steps || processData.selected_steps;
                 const provaStep = allSteps.find(step => step.type === 'prova');
