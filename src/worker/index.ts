@@ -193,6 +193,7 @@ app.post('/api/auth/register', async (c) => {
 app.post('/api/auth/login', async (c) => {
   try {
     const { email, password } = await c.req.json();
+    console.log('🔐 Login attempt:', { email, passwordLength: password?.length });
 
     if (!email || !password) {
       return c.json({ error: "Email e senha são obrigatórios" }, 400);
@@ -203,12 +204,16 @@ app.post('/api/auth/login', async (c) => {
       "SELECT u.*, a.name as agency_name FROM system_users u JOIN agencies a ON u.agency_id = a.id WHERE u.email = ? AND u.is_active = 1"
     ).bind(email).first();
 
+    console.log('👤 User found:', user ? `Yes (id: ${user.id})` : 'No');
+
     if (!user) {
       return c.json({ error: "Credenciais inválidas" }, 401);
     }
 
     // Verify password
     const isValid = await bcrypt.compare(password, user.password_hash as string);
+    console.log('🔑 Password valid:', isValid);
+    
     if (!isValid) {
       return c.json({ error: "Credenciais inválidas" }, 401);
     }
