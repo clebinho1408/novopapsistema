@@ -54,7 +54,7 @@ async function systemAuthMiddleware(c: any, next: any) {
 
   // Check if session is valid and not expired
   const session = await mockEnv.DB.prepare(
-    "SELECT s.*, u.*, a.name as agency_name FROM user_sessions s JOIN system_users u ON s.user_id = u.id JOIN agencies a ON u.agency_id = a.id WHERE s.session_token = ? AND s.expires_at > datetime('now') AND u.is_active = true"
+    "SELECT s.*, u.*, a.name as agency_name FROM user_sessions s JOIN system_users u ON s.user_id = u.id JOIN agencies a ON u.agency_id = a.id WHERE s.session_token = ? AND s.expires_at > CURRENT_TIMESTAMP AND u.is_active = true"
   ).bind(sessionToken).first();
 
   if (!session) {
