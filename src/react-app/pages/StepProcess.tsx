@@ -75,6 +75,61 @@ export default function StepProcess() {
     });
   }, [formData.client_name, fees]);
 
+  // Auto-selecionar credenciado de Foto quando a cidade mudar
+  useEffect(() => {
+    if (!formData.city_id || professionals.length === 0 || processSteps.length === 0) return;
+    
+    // Verificar se há uma etapa do tipo "foto" selecionada
+    const fotoStep = processSteps.find(step => step.type === 'foto');
+    if (!fotoStep) return;
+    
+    const isFotoStepSelected = formData.selected_steps.includes(fotoStep.id);
+    if (!isFotoStepSelected) return;
+    
+    // Buscar credenciado de foto daquela cidade
+    const fotoProfessionalForCity = professionals.find(
+      p => p.type === 'foto' && p.city_id.toString() === formData.city_id
+    );
+    
+    setFormData(prev => {
+      const currentSelectedProfId = prev.selected_professionals[fotoStep.id];
+      
+      // Se não há profissional de foto nessa cidade
+      if (!fotoProfessionalForCity) {
+        // Remover a seleção (limpar profissional de cidade antiga)
+        const newProfessionals = { ...prev.selected_professionals };
+        delete newProfessionals[fotoStep.id];
+        
+        return {
+          ...prev,
+          selected_professionals: newProfessionals
+        };
+      }
+      
+      // Se já tem um profissional selecionado
+      if (currentSelectedProfId) {
+        // Verificar se o profissional atual é da mesma cidade
+        const currentSelectedProf = professionals.find(p => p.id === currentSelectedProfId);
+        
+        // Se for da mesma cidade, manter a seleção (não sobrescrever escolha manual)
+        if (currentSelectedProf && currentSelectedProf.city_id.toString() === formData.city_id) {
+          return prev;
+        }
+        
+        // Se for de cidade diferente, atualizar para o profissional da nova cidade
+      }
+      
+      // Auto-selecionar o profissional da cidade
+      return {
+        ...prev,
+        selected_professionals: {
+          ...prev.selected_professionals,
+          [fotoStep.id]: fotoProfessionalForCity.id
+        }
+      };
+    });
+  }, [formData.city_id, formData.selected_steps, professionals, processSteps]);
+
   const fetchData = async () => {
     try {
       const [citiesRes, stepsRes, feesRes, profRes] = await Promise.all([

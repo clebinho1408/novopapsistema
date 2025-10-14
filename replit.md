@@ -164,6 +164,13 @@ The system supports three levels of access:
   - When deselecting a credenciado for Prova, automatically deselects the linked prova fee
   - Improves workflow by reducing manual steps in the registration process
   - Fixed database: Updated "Prova" fee to have linked_professional_type = 'prova'
+- ✅ Auto-select foto professional (October 14, 2025):
+  - When selecting a city in Passo a Passo form, automatically selects the Foto credenciado of that city
+  - Auto-selection only occurs if the Foto step is selected
+  - When city changes, replaces the foto professional if the current selection belongs to a different city
+  - Preserves manual selection if user chooses a different foto professional from the same city
+  - Clears selection when switching to a city without a foto professional
+  - User can always manually override the auto-selection
 
 ## Known Issues
 - TypeScript LSP shows type errors in worker/index.ts (Cloudflare types) - these don't affect runtime
