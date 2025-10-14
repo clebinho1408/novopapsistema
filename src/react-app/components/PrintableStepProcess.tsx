@@ -1264,7 +1264,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 <input
                   type="email"
                   value={emailModal.email}
-                  onChange={(e) => setEmailModal(prev => ({ ...prev, email: e.target.value }))}
+                  onChange={(e) => setEmailModal(prev => ({ ...prev, email: e.target.value.toLowerCase() }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="exemplo@email.com"
                 />
