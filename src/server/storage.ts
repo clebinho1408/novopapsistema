@@ -16,6 +16,10 @@ function initClient() {
   _client = postgres(connectionString, {
     prepare: false,
     max: 10,
+    idle_timeout: 20,
+    connect_timeout: 30,
+    max_lifetime: 60 * 30,
+    onnotice: () => {}, // Suppress notices
   });
   
   return _client;
