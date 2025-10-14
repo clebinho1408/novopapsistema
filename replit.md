@@ -5,11 +5,13 @@ This is a multi-tenant management system for driving license (Detran) processes 
 
 ## Technology Stack
 - **Frontend**: React 19 with TypeScript, React Router, TailwindCSS
-- **Backend**: Hono (running on Cloudflare Workers)
-- **Database**: Cloudflare D1 (SQLite)
-- **Storage**: Cloudflare R2
+- **Backend**: Hono on Node.js server
+- **Database**: Replit PostgreSQL
+- **ORM**: Drizzle ORM
 - **Build Tool**: Vite
-- **Deployment**: Cloudflare Workers
+- **Development Architecture**: Dual server (Vite on port 5000, Node.js API on port 3000)
+- **Deployment**: Replit Autoscale
+- **Legacy Support**: Maintains Cloudflare Workers compatibility (worker/index.ts) for optional deployment
 
 ## Project Structure
 ```
@@ -19,11 +21,17 @@ This is a multi-tenant management system for driving license (Detran) processes 
 │   │   ├── pages/          # Page components
 │   │   ├── App.tsx         # Main app component
 │   │   └── main.tsx        # Entry point
-│   ├── worker/             # Cloudflare Worker backend
-│   │   └── index.ts        # Hono API server
-│   └── shared/             # Shared types between frontend/backend
+│   ├── server/             # Node.js backend (development)
+│   │   ├── app.ts          # Hono API server (shared with worker)
+│   │   ├── node-entry.ts   # Node.js entry point
+│   │   ├── storage.ts      # PostgreSQL client (Drizzle)
+│   │   └── d1-adapter.ts   # D1-to-PostgreSQL adapter
+│   ├── worker/             # Cloudflare Worker backend (legacy/optional)
+│   │   └── index.ts        # Worker entry point
+│   └── shared/             # Shared code between frontend/backend
+│       ├── schema.ts       # Drizzle schema definitions
 │       └── types.ts        # Zod schemas and TypeScript types
-├── migrations/             # Database migration files
+├── drizzle.config.ts       # Drizzle ORM configuration
 └── public/                 # Static assets
 ```
 
@@ -41,24 +49,33 @@ This is a multi-tenant management system for driving license (Detran) processes 
 ### Running Locally
 ```bash
 npm install --legacy-peer-deps  # Install dependencies
-npm run dev                      # Start dev server on port 5000
+npm run dev                      # Start dual server (Vite + Node.js API)
 ```
+
+This starts two servers concurrently:
+- **Vite frontend**: http://localhost:5000 (user-facing)
+- **Node.js API server**: http://localhost:3000 (backend API)
+
+The Vite server proxies all `/api/*` requests to the Node.js server.
 
 ### Environment Configuration
-- The application is configured to run on port 5000
+- Frontend: Vite dev server on port 5000 (binds to 0.0.0.0)
+- Backend: Node.js Hono server on port 3000
+- Database: PostgreSQL via DATABASE_URL environment variable
 - CORS is configured to work with Replit's proxy
-- Frontend binds to 0.0.0.0:5000 for accessibility
 
-### Database Migrations
-Apply migrations to local database:
-```bash
-npx wrangler d1 migrations apply 0199c55d-a66a-73b2-b501-16d101636238 --local
-```
+### Database Setup
+The application uses **Drizzle ORM** with PostgreSQL. The schema is defined in `src/shared/schema.ts`.
 
-Check migration status:
-```bash
-npx wrangler d1 migrations list 0199c55d-a66a-73b2-b501-16d101636238 --local
-```
+**Schema is already applied** to the PostgreSQL database. To modify the schema:
+1. Edit `src/shared/schema.ts`
+2. Run `npm run db:push` to sync changes
+3. If prompted about data loss, use `npm run db:push --force`
+
+**Important**: The schema uses PostgreSQL-specific syntax:
+- Columns use `text` type (not `varchar`)
+- Booleans use `true/false` literals (not `1/0`)
+- Timestamps use `CURRENT_TIMESTAMP` (not `datetime('now')`)
 
 ## Database Schema
 The application uses the following main tables:
@@ -79,17 +96,45 @@ The system supports three levels of access:
 - **Supervisor**: Access to Passo a Passo and Profissionais pages (can create and edit, but cannot delete)
 - **Collaborator**: Access only to Passo a Passo page (their own processes)
 
-## Production Database Setup (October 13-14, 2025)
-- ⚠️ **Critical Issue Resolved**: Published app was using temporary D1 database that reset, causing data loss
-- 📦 Exported all configuration data: agencies, cities, process steps, fees, professionals (28 credenciados)
-- 🗄️ SQL import script: MIGRACOES-COMPLETAS.sql (schema + data combined, tested and verified)
-- ✅ **Solution**: Created permanent D1 production database (ID: f57092b8-0b17-4a0f-834a-be1c9c3d9b1a)
-- ✅ Migration applied successfully via Cloudflare Dashboard Console
-- ✅ User data preserved: 1 admin user, 7 cities, 5 fees, 5 steps, 28 professionals
-- 👤 Default admin user: admin@bcamboriu.com / admin123 (user must change password after first login)
-- 🔧 Updated wrangler.json to use production database (removed R2 bucket dependency)
-- 🚀 **Status**: Ready to publish - needs workers.dev subdomain registration
-- 📝 Publishing instructions: INSTRUCOES-PUBLICACAO.md
+## Database Migration: D1 → PostgreSQL (October 14, 2025)
+**Critical Issue**: Application was experiencing data loss on every Replit deployment due to using temporary D1 database storage.
+
+**Solution**: Migrated from Cloudflare D1 (SQLite) to Replit PostgreSQL for persistent storage.
+
+### Migration Steps Completed:
+1. ✅ Created Drizzle ORM schema (`src/shared/schema.ts`) matching existing PostgreSQL database
+2. ✅ Built D1-to-PostgreSQL adapter (`src/server/d1-adapter.ts`) to maintain API compatibility
+3. ✅ Separated backend into standalone `app.ts` with Node.js entry point (`node-entry.ts`)
+4. ✅ Converted all SQL queries from SQLite syntax to PostgreSQL:
+   - Changed `datetime('now')` → `CURRENT_TIMESTAMP`
+   - Changed `is_active = 1/0` → `is_active = true/false`
+   - Changed `varchar` → `text` for string columns
+5. ✅ Configured dual server architecture (Vite + Node.js) with proxy
+6. ✅ Tested CRUD operations - all working with PostgreSQL
+
+### Architecture:
+- **Development**: PostgreSQL (persistent across deployments)
+- **Backend**: Hono API on Node.js server (port 3000)
+- **Frontend**: Vite dev server (port 5000) with API proxy
+- **Database Client**: Drizzle ORM with postgres.js driver
+
+### Data Preserved:
+- ✅ 1 agency (Balneário Camboriú)
+- ✅ 7 cities
+- ✅ 28 professionals (credenciados)
+- ✅ 5 process steps
+- ✅ 5 fees
+- ✅ 1 admin user (admin@bcamboriu.com)
+
+**Status**: Migration complete and tested. Data now persists across all deployments.
+
+## Production Database Setup (Historical - October 13-14, 2025)
+**Note**: This section describes the previous Cloudflare D1 setup. Current production uses Replit PostgreSQL (see migration section above).
+
+- ⚠️ **Legacy Setup**: Previously used Cloudflare D1 database (ID: f57092b8-0b17-4a0f-834a-be1c9c3d9b1a)
+- 📦 Data export: MIGRACOES-COMPLETAS.sql (schema + data combined, tested and verified)
+- 👤 Default admin user: admin@bcamboriu.com / admin123
+- **Current Status**: System migrated to Replit PostgreSQL for better data persistence
 
 ## Recent Changes (October 12, 2025)
 - ✅ Code import completed successfully
@@ -105,15 +150,15 @@ The system supports three levels of access:
 - ✅ Fixed deployment issues:
   - Removed react-quill (incompatible with React 19), using quill directly
   - Updated @vitejs/plugin-react to v5.0.4 (vite 7.x compatible)
-  - Deployment target: Autoscale (Cloud Run) with production build
+  - Deployment target: Replit Autoscale with production build
   - All dependencies now compatible with React 19
   - Build command: npm install --legacy-peer-deps && npm run build
   - Run command: npm run preview (serves production build on port 5000)
   - Added preview script to package.json for production deployment
 - Configured Vite to bind to 0.0.0.0:5000 for Replit environment
 - Updated CORS configuration to support Replit proxy domains
-- Set up development workflow
-- Configured deployment for Cloudflare Workers (autoscale)
+- Set up development workflow for dual server architecture
+- Configured deployment for Replit Autoscale
 - Installed dependencies with --legacy-peer-deps flag (React 19 compatibility)
 - ✅ Print layout improvements:
   - Increased prova card width from 380px to 480px for better visibility
@@ -184,13 +229,13 @@ The application uses a custom session-based authentication system:
 - Multi-tenant isolation enforced at database level
 
 ## Deployment
-The application is configured for production deployment:
-- Deployment target: Autoscale (Cloud Run)
+The application is configured for production deployment on Replit:
+- Deployment target: Replit Autoscale
 - Build command: `npm install --legacy-peer-deps && npm run build`
-- Run command: `npm run preview` (serves production build)
+- Run command: `npm run preview` (serves production build on port 5000)
 - Build process:
-  1. Generates Cloudflare Worker types (`wrangler types`)
+  1. Installs dependencies
   2. Compiles TypeScript
   3. Builds Vite production bundle
-- Uses Cloudflare D1 for database
-- Uses Cloudflare R2 for file storage
+- Database: Replit PostgreSQL (persistent storage)
+- No additional storage services required
