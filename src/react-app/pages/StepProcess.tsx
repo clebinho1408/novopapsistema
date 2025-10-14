@@ -937,7 +937,7 @@ export default function StepProcess() {
                             </span>
                             <span className="flex items-center">
                               <DollarSign className="w-4 h-4 mr-1" />
-                              R$ {process.total_amount?.toFixed(2)}
+                              R$ {parseFloat(process.total_amount || 0).toFixed(2)}
                             </span>
                             <span>
                               {new Date(process.created_at).toLocaleDateString('pt-BR')}

@@ -46,7 +46,6 @@ function generateSessionToken() {
 // Auth middleware for new system
 async function systemAuthMiddleware(c: any, next: any) {
   const sessionToken = getCookie(c, 'session_token');
-  console.log('🔍 Auth middleware - Cookie received:', sessionToken ? 'YES ✅' : 'NO ❌');
 
   if (!sessionToken) {
     return c.json({ error: "No session token" }, 401);
@@ -57,10 +56,7 @@ async function systemAuthMiddleware(c: any, next: any) {
     "SELECT s.*, u.*, a.name as agency_name FROM user_sessions s JOIN system_users u ON s.user_id = u.id JOIN agencies a ON u.agency_id = a.id WHERE s.session_token = ? AND s.expires_at > CURRENT_TIMESTAMP AND u.is_active = true"
   ).bind(sessionToken).first();
 
-  console.log('🔍 Session found:', session ? `YES (user: ${session.name})` : 'NO');
-
   if (!session) {
-    console.log('❌ Session invalid - Token:', sessionToken?.substring(0, 10) + '...');
     return c.json({ error: "Invalid or expired session" }, 401);
   }
 
