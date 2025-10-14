@@ -658,6 +658,9 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                     </div>
                     <div class="prova-content">
                         <div class="professional-name"><strong>${professional.name}</strong></div>
+                        ${professional.city_name ? `
+                            <div class="professional-info"><strong>LOCAL:</strong> ${professional.city_name}</div>
+                        ` : ''}
                         ${professional.attendance_type ? `
                             <div class="schedule-info">
                                 <div class="schedule-label"><strong>${professional.attendance_type}:</strong></div>
@@ -1171,6 +1174,11 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                             <h4 className="font-bold text-sm uppercase">
                               {professional.name}
                             </h4>
+                            {professional.city_name && (
+                              <div className="text-sm">
+                                <span className="font-bold">LOCAL:</span> {professional.city_name}
+                              </div>
+                            )}
                             {professional.attendance_type && (
                               <div className="text-sm">
                                 <span className="font-bold">{professional.attendance_type}:</span>
