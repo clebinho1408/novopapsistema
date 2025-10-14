@@ -474,7 +474,7 @@ export default function StepProcess() {
       return filtered;
     }
     
-    // Para outros tipos, mostrar todos da agência
+    // Para foto e outros tipos, mostrar todos da agência (permitir escolha entre cidades)
     const filtered = professionals.filter(p => p.type === stepType);
     console.log(`Filtered ${stepType} professionals (all cities):`, filtered);
     return filtered;
