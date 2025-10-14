@@ -376,6 +376,10 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             border-top: 2px solid black;
             padding-top: 12px;
             page-break-inside: avoid;
+            max-height: calc(100vh - 680px);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
         .instructions h3 {
             font-size: 14px;
@@ -387,6 +391,9 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             color: #333;
             word-wrap: break-word;
             overflow-wrap: break-word;
+            font-size: clamp(9px, calc(0.7vw + 0.5vh), 14px);
+            flex: 1;
+            overflow: hidden;
         }
         .instructions-content p {
             margin: 0;
@@ -444,6 +451,11 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             }
             .instructions {
                 page-break-inside: avoid;
+                max-height: calc(297mm - 680px);
+                overflow: hidden;
+            }
+            .instructions-content {
+                font-size: clamp(8px, 1.2vw, 13px) !important;
             }
             .header {
                 margin-bottom: 10px;
@@ -1217,8 +1229,8 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
 
             {/* General Instructions */}
             {generalInstructions && (
-              <div className="border-t-2 border-black pt-6">
-                <div className="text-sm leading-relaxed">
+              <div className="border-t-2 border-black pt-6 max-h-[calc(100vh-680px)] overflow-hidden flex flex-col">
+                <div className="leading-[1.1] flex-1 overflow-hidden" style={{ fontSize: 'clamp(9px, calc(0.7vw + 0.5vh), 14px)' }}>
                   <div dangerouslySetInnerHTML={{ 
                     __html: generalInstructions
                       .replace(/;/g, ';<br>') // Add line break after each semicolon
