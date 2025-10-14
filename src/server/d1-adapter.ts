@@ -51,7 +51,7 @@ class PostgresD1PreparedStatement implements D1PreparedStatement {
   async first<T = any>(): Promise<T | null> {
     try {
       const result = await client.unsafe(this.sql, this.params);
-      return result[0] || null;
+      return (result[0] as T) || null;
     } catch (error) {
       console.error('D1 Adapter Error (first):', error);
       console.error('SQL:', this.sql);
@@ -63,7 +63,7 @@ class PostgresD1PreparedStatement implements D1PreparedStatement {
   async all<T = any>(): Promise<{ results: T[] }> {
     try {
       const results = await client.unsafe(this.sql, this.params);
-      return { results };
+      return { results: results as unknown as T[] };
     } catch (error) {
       console.error('D1 Adapter Error (all):', error);
       console.error('SQL:', this.sql);

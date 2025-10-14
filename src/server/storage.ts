@@ -28,18 +28,18 @@ function initDb() {
 }
 
 export const client = new Proxy({} as ReturnType<typeof postgres>, {
-  get(target, prop) {
+  get(_target, prop) {
     const c = initClient();
     return (c as any)[prop];
   },
-  apply(target, thisArg, args) {
+  apply(_target, _thisArg, args) {
     const c = initClient();
     return (c as any)(...args);
   }
 });
 
 export const db = new Proxy({} as ReturnType<typeof drizzle>, {
-  get(target, prop) {
+  get(_target, prop) {
     const d = initDb();
     return (d as any)[prop];
   }

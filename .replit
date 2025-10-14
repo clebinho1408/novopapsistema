@@ -44,5 +44,5 @@ externalPort = 3000
 
 [deployment]
 deploymentTarget = "autoscale"
-build = ["sh", "-c", "npm install --legacy-peer-deps && npm run build"]
-run = ["npm", "run", "preview"]
+build = ["bash", "-c", "npm install --legacy-peer-deps && npm run build"]
+run = ["npm", "start"]

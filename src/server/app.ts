@@ -1738,5 +1738,17 @@ app.post("/api/instructions", systemAuthMiddleware, async (c) => {
   }
 });
 
+// Serve static files in production (Vite build output)
+// This uses a simple fallback approach: serve from dist/client/ for any non-API route
+if (process.env.NODE_ENV === 'production') {
+  const { serveStatic } = await import('@hono/node-server/serve-static');
+  
+  // Serve static assets
+  app.use('/*', serveStatic({ root: './dist/client' }));
+  
+  // SPA fallback - serve index.html for routes that don't exist
+  app.get('*', serveStatic({ path: './dist/client/index.html' }));
+}
+
 export default app;
 export { app };
