@@ -79,17 +79,17 @@ The system supports three levels of access:
 - **Supervisor**: Access to Passo a Passo and Profissionais pages (can create and edit, but cannot delete)
 - **Collaborator**: Access only to Passo a Passo page (their own processes)
 
-## Production Database Setup (October 13, 2025)
-- ⚠️ **Critical Issue**: Published app uses temporary D1 database that resets, causing data loss after logout/login
+## Production Database Setup (October 13-14, 2025)
+- ⚠️ **Critical Issue Resolved**: Published app was using temporary D1 database that reset, causing data loss
 - 📦 Exported all configuration data: agencies, cities, process steps, fees, professionals (28 credenciados)
-- 📝 Migration instructions available in INSTRUCOES-MIGRACAO-PRODUCAO.md
-- 🗄️ SQL import script ready: MIGRACOES-COMPLETAS.sql (schema + data combined, tested and verified)
+- 🗄️ SQL import script: MIGRACOES-COMPLETAS.sql (schema + data combined, tested and verified)
 - ✅ **Solution**: Created permanent D1 production database (ID: f57092b8-0b17-4a0f-834a-be1c9c3d9b1a)
-- 🔧 Updated wrangler.json to use production database
-- ✅ Migration file tested locally - all data verified (1 user, 7 cities, 5 fees, 5 steps, 28 professionals)
-- 👤 Default admin user created: admin@bcamboriu.com / admin123 (change password after first login)
-- 🔄 Evaluated PostgreSQL migration (50% complete) but reverted to Cloudflare D1 for simplicity and speed
-- 📋 **Next Steps**: User applies MIGRACOES-COMPLETAS.sql via Cloudflare Dashboard → Republish app
+- ✅ Migration applied successfully via Cloudflare Dashboard Console
+- ✅ User data preserved: 1 admin user, 7 cities, 5 fees, 5 steps, 28 professionals
+- 👤 Default admin user: admin@bcamboriu.com / admin123 (user must change password after first login)
+- 🔧 Updated wrangler.json to use production database (removed R2 bucket dependency)
+- 🚀 **Status**: Ready to publish - needs workers.dev subdomain registration
+- 📝 Publishing instructions: INSTRUCOES-PUBLICACAO.md
 
 ## Recent Changes (October 12, 2025)
 - ✅ Code import completed successfully
