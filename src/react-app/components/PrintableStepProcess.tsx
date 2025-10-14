@@ -12,7 +12,7 @@ interface PrintableStepProcessProps {
     all_steps: ProcessStep[]; // Todas as etapas disponíveis
     selected_professionals: Record<string, Professional>;
     selected_fees: Fee[];
-    total_amount: number;
+    total_amount: string; // Database returns as string (decimal/numeric)
     show_toxicologico_message?: boolean;
   };
 }
