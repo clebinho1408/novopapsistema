@@ -10,7 +10,6 @@ import {
 
 interface Env {
   DB: D1Database;
-  R2_BUCKET: R2Bucket;
 }
 
 const app = new Hono<{ Bindings: Env }>();
@@ -1226,7 +1225,7 @@ app.post("/api/step-processes/send-email", systemAuthMiddleware, async (c) => {
     ).bind(user.agency_id as number).first();
 
     if (agency && (agency as any).logo_key) {
-      logoUrl = `https://motixwf4k27yu.mocha.app/api/files/${encodeURIComponent((agency as any).logo_key)}`;
+      logoUrl = `https://motixwf4k27yu.mocha.app/api/files/logo-${user.agency_id}`;
     }
 
     // Get agency instructions
@@ -1537,22 +1536,17 @@ app.post("/api/agencies/logo", systemAuthMiddleware, async (c) => {
   }
 
   try {
-    const fileExtension = file.name.split('.').pop() || 'jpg';
-    const fileName = `logo.${fileExtension}`;
-    const key = `agencies/${user.agency_id}/${fileName}`;
+    // Convert image to base64
+    const arrayBuffer = await file.arrayBuffer();
+    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+    const dataUrl = `data:${file.type};base64,${base64}`;
 
-    await c.env.R2_BUCKET.put(key, file.stream(), {
-      httpMetadata: {
-        contentType: file.type,
-      },
-    });
-
-    // Update agency logo_key in database
+    // Store base64 data in database
     await c.env.DB.prepare(
       "UPDATE agencies SET logo_key = ? WHERE id = ?"
-    ).bind(key, user.agency_id).run();
+    ).bind(dataUrl, user.agency_id).run();
 
-    return c.json({ success: true, logo_key: key });
+    return c.json({ success: true, logo_key: `logo-${user.agency_id}` });
   } catch (error) {
     console.error('Error uploading logo:', error);
     return c.json({ error: "Erro ao fazer upload da logo" }, 500);
@@ -1571,25 +1565,49 @@ app.get("/api/agencies/logo", systemAuthMiddleware, async (c) => {
     return c.json({ has_logo: false });
   }
 
-  return c.json({ has_logo: true, logo_key: agency.logo_key });
+  return c.json({ has_logo: true, logo_key: `logo-${user.agency_id}` });
 });
 
 app.get("/api/files/:key", async (c) => {
   const key = c.req.param("key");
 
   try {
-    const object = await c.env.R2_BUCKET.get(key);
+    // Extract agency ID from key (format: logo-{agency_id})
+    const agencyId = key.replace('logo-', '');
+    
+    const agency = await c.env.DB.prepare(
+      "SELECT logo_key FROM agencies WHERE id = ?"
+    ).bind(parseInt(agencyId)).first();
 
-    if (!object) {
+    if (!agency || !agency.logo_key) {
       return c.json({ error: "File not found" }, 404);
     }
 
-    const headers = new Headers();
-    object.writeHttpMetadata(headers);
-    headers.set("etag", object.httpEtag);
-    headers.set("cache-control", "public, max-age=31536000");
+    // logo_key now contains the data URL (data:image/...;base64,...)
+    const dataUrl = agency.logo_key as string;
+    
+    // Extract mime type and base64 data
+    const matches = dataUrl.match(/data:([^;]+);base64,(.+)/);
+    if (!matches) {
+      return c.json({ error: "Invalid image data" }, 500);
+    }
 
-    return c.body(object.body, { headers });
+    const mimeType = matches[1];
+    const base64Data = matches[2];
+    
+    // Convert base64 back to binary
+    const binaryString = atob(base64Data);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+
+    return c.body(bytes.buffer, {
+      headers: {
+        'Content-Type': mimeType,
+        'Cache-Control': 'public, max-age=31536000',
+      },
+    });
   } catch (error) {
     console.error('Error retrieving file:', error);
     return c.json({ error: "Error retrieving file" }, 500);
