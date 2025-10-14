@@ -178,7 +178,7 @@ app.post('/api/auth/register', async (c) => {
       httpOnly: true,
       path: "/",
       sameSite: "lax",
-      secure: true,
+      secure: process.env.NODE_ENV === 'production',
       maxAge: 30 * 24 * 60 * 60, // 30 days
     });
 
@@ -235,7 +235,7 @@ app.post('/api/auth/login', async (c) => {
       httpOnly: true,
       path: '/',
       sameSite: 'lax',
-      secure: true,
+      secure: process.env.NODE_ENV === 'production',
       maxAge: 30 * 24 * 60 * 60,
     });
 
@@ -259,7 +259,7 @@ app.post('/api/auth/logout', async (c) => {
     httpOnly: true,
     path: '/',
     sameSite: 'lax',
-    secure: true,
+    secure: process.env.NODE_ENV === 'production',
     maxAge: 0,
   });
 
