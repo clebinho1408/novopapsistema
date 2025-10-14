@@ -498,14 +498,14 @@ export default function StepProcess() {
       return [];
     }
     
-    // Filtrar por cidade apenas para médicos e psicólogos
-    if (stepType === 'medico' || stepType === 'psicologo') {
+    // Filtrar por cidade para médicos, psicólogos e foto
+    if (stepType === 'medico' || stepType === 'psicologo' || stepType === 'foto') {
       const filtered = professionals.filter(p => p.type === stepType && p.city_id.toString() === cityId);
       console.log(`Filtered ${stepType} professionals for city ${cityId}:`, filtered);
       return filtered;
     }
     
-    // Para foto, prova e outros tipos, mostrar todos da agência (permitir escolha entre cidades)
+    // Para prova e outros tipos, mostrar todos da agência (permitir escolha entre cidades)
     const filtered = professionals.filter(p => p.type === stepType);
     console.log(`Filtered ${stepType} professionals (all cities):`, filtered);
     return filtered;
