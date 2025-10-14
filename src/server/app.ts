@@ -46,6 +46,7 @@ function generateSessionToken() {
 // Auth middleware for new system
 async function systemAuthMiddleware(c: any, next: any) {
   const sessionToken = getCookie(c, 'session_token');
+  console.log('🔍 Auth middleware - Cookie received:', sessionToken ? 'YES ✅' : 'NO ❌');
 
   if (!sessionToken) {
     return c.json({ error: "No session token" }, 401);
