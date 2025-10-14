@@ -95,7 +95,7 @@ export const FeeSchema = z.object({
   id: z.number(),
   agency_id: z.number(),
   name: z.string(),
-  amount: z.number(),
+  amount: z.string(), // Database returns as string (decimal/numeric)
   linked_professional_type: z.string().optional(),
   is_active: z.boolean(),
   created_at: z.string(),

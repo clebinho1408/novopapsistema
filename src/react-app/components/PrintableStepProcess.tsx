@@ -582,7 +582,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                               const linkedFee = processData.selected_fees.find(fee => fee.linked_professional_type === step.type);
                               return linkedFee ? `
                                 <div class="fee-badge">
-                                  <strong>TAXA: R$ ${linkedFee.amount.toFixed(2)}</strong>
+                                  <strong>TAXA: R$ ${parseFloat(linkedFee.amount).toFixed(2)}</strong>
                                 </div>
                               ` : '';
                             })()}
@@ -600,7 +600,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                                   // Incluir taxas sem vínculo OU com vínculo à prova
                                   return !fee.linked_professional_type || fee.linked_professional_type === 'prova';
                                 }).map(fee => `
-                                    <div class="fee-item"><strong>${fee.name}: R$ ${fee.amount.toFixed(2)}</strong></div>
+                                    <div class="fee-item"><strong>${fee.name}: R$ ${parseFloat(fee.amount).toFixed(2)}</strong></div>
                                 `).join('')}
                             </div>
                         ` : `
@@ -627,7 +627,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 return `
                   <div style="width: 100%; display: flex; justify-content: flex-end;">
                     <div class="total-amount-box">
-                      <div class="total-amount-text"><strong>VALOR TOTAL: R$ ${processData.total_amount.toFixed(2)}</strong></div>
+                      <div class="total-amount-text"><strong>VALOR TOTAL: R$ ${parseFloat(processData.total_amount).toFixed(2)}</strong></div>
                     </div>
                   </div>
                 `;
@@ -673,7 +673,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 </div>
                 <div class="total-amount-card">
                     <div class="total-amount-box">
-                        <div class="total-amount-text"><strong>VALOR TOTAL: R$ ${processData.total_amount.toFixed(2)}</strong></div>
+                        <div class="total-amount-text"><strong>VALOR TOTAL: R$ ${parseFloat(processData.total_amount).toFixed(2)}</strong></div>
                     </div>
                 </div>
               `;
@@ -797,7 +797,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
         // Taxa vinculada
         const linkedFee = processData.selected_fees.find((fee: any) => fee.linked_professional_type === step.type);
         if (linkedFee) {
-          content += `TAXA: R$ ${linkedFee.amount.toFixed(2)}\n`;
+          content += `TAXA: R$ ${parseFloat(linkedFee.amount).toFixed(2)}\n`;
         }
         
         // Mensagem toxicológico
@@ -808,7 +808,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
       } else if (step.type === 'taxa') {
         content += `TAXAS A PAGAR:\n`;
         processData.selected_fees.filter((fee: any) => !fee.linked_professional_type).forEach((fee: any) => {
-          content += `• ${fee.name}: R$ ${fee.amount.toFixed(2)}\n`;
+          content += `• ${fee.name}: R$ ${parseFloat(fee.amount).toFixed(2)}\n`;
         });
       }
       
@@ -854,7 +854,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
 
     // Valor total
     content += `======================================\n`;
-    content += `VALOR TOTAL: R$ ${processData.total_amount.toFixed(2)}\n`;
+    content += `VALOR TOTAL: R$ ${parseFloat(processData.total_amount).toFixed(2)}\n`;
     content += `======================================\n\n`;
 
     // Instruções gerais
@@ -1072,7 +1072,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                             return linkedFee ? (
                               <div className="absolute bottom-1 right-1">
                                 <div className="bg-gray-100 border border-black px-2 py-1 rounded text-xs font-bold shadow-sm">
-                                  R$ {linkedFee.amount.toFixed(2)}
+                                  R$ {parseFloat(linkedFee.amount).toFixed(2)}
                                 </div>
                               </div>
                             ) : null;
@@ -1097,7 +1097,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                             return !fee.linked_professional_type;
                           }).map(fee => (
                             <div key={fee.id} className="text-xs">
-                              {fee.name}: R$ {fee.amount.toFixed(2)}
+                              {fee.name}: R$ {parseFloat(fee.amount).toFixed(2)}
                             </div>
                           ))}
                         </div>
@@ -1125,7 +1125,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                     <div className="w-full flex justify-end">
                       <div className="bg-gray-100 border-2 border-black p-3 rounded-lg text-center">
                         <div className="text-sm font-bold text-black">
-                          <strong>VALOR TOTAL: R$ {processData.total_amount.toFixed(2)}</strong>
+                          <strong>VALOR TOTAL: R$ {parseFloat(processData.total_amount).toFixed(2)}</strong>
                         </div>
                       </div>
                     </div>
@@ -1194,7 +1194,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                     <div className="flex-shrink-0 ml-auto">
                       <div className="bg-gray-100 border-2 border-black p-3 rounded-lg text-center">
                         <div className="text-sm font-bold text-black">
-                          VALOR TOTAL: R$ {processData.total_amount.toFixed(2)}
+                          VALOR TOTAL: R$ {parseFloat(processData.total_amount).toFixed(2)}
                         </div>
                       </div>
                     </div>

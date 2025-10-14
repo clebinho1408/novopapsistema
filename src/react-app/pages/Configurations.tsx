@@ -350,7 +350,7 @@ function FeesConfiguration({ fees, onUpdate }: { fees: Fee[], onUpdate: () => vo
                     <button 
                       onClick={() => {
                         setEditingFee(fee);
-                        setFormData({ name: fee.name, amount: fee.amount.toString(), linked_professional_type: fee.linked_professional_type || '' });
+                        setFormData({ name: fee.name, amount: fee.amount, linked_professional_type: fee.linked_professional_type || '' });
                         setIsModalOpen(true);
                       }}
                       className="p-1 text-gray-400 hover:text-blue-600"
