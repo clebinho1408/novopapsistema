@@ -123,7 +123,7 @@ export default function Dashboard() {
                               {process.client_name || 'Processo sem nome'}
                             </div>
                             <div className="text-sm text-gray-500">
-                              {process.city_name} • R$ {process.total_amount?.toFixed(2)}
+                              {process.city_name} • R$ {parseFloat(process.total_amount || 0).toFixed(2)}
                             </div>
                           </div>
                         </div>
