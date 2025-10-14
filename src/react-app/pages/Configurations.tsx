@@ -13,6 +13,8 @@ export default function Configurations() {
   const [processSteps, setProcessSteps] = useState<ProcessStep[]>([]);
   const [fees, setFees] = useState<Fee[]>([]);
 
+  console.log('Configurations: activeTab =', activeTab, 'fees =', fees);
+
   useEffect(() => {
     fetchProcessSteps();
     fetchFees();
@@ -83,7 +85,12 @@ export default function Configurations() {
 
           {/* Tab Content */}
           {activeTab === 'steps' && <StepsConfiguration steps={processSteps} onUpdate={fetchProcessSteps} />}
-          {activeTab === 'fees' && <FeesConfiguration fees={fees} onUpdate={fetchFees} />}
+          {activeTab === 'fees' && (
+            <>
+              {console.log('Rendering FeesConfiguration with fees:', fees)}
+              <FeesConfiguration fees={fees} onUpdate={fetchFees} />
+            </>
+          )}
           {activeTab === 'instructions' && <InstructionsConfiguration />}
           {activeTab === 'users' && <UserManagement />}
           {activeTab === 'agency' && <AgencyDataConfiguration />}
