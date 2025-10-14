@@ -187,6 +187,10 @@ CREATE INDEX idx_step_processes_user_id ON step_processes(user_id);
 INSERT INTO agencies (id, name, email, created_at) VALUES
 (1, 'Balneário Camboriú', 'contato@bcamboriu.com', '2025-10-12 17:38:43');
 
+-- USUÁRIO ADMINISTRADOR
+INSERT INTO system_users (id, agency_id, name, email, password_hash, role, created_at) VALUES
+(1, 1, 'Administrador', 'admin@bcamboriu.com', '$2b$10$sHazEuBXmztZchGGc0RwcuaJkaagp4QTdAz0enHXmZcOvtxSUjLKW', 'administrator', '2025-10-13 20:00:00');
+
 -- CIDADES
 INSERT INTO cities (id, agency_id, name, state, created_at) VALUES
 (1, 1, 'BALNEÁRIO CAMBORIÚ', 'SC', '2025-10-12 17:40:23'),

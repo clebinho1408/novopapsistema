@@ -86,7 +86,8 @@ The system supports three levels of access:
 - 🗄️ SQL import script ready: MIGRACOES-COMPLETAS.sql (schema + data combined, tested and verified)
 - ✅ **Solution**: Created permanent D1 production database (ID: f57092b8-0b17-4a0f-834a-be1c9c3d9b1a)
 - 🔧 Updated wrangler.json to use production database
-- ✅ Migration file tested locally - all data verified (7 cities, 5 fees, 5 steps, 28 professionals)
+- ✅ Migration file tested locally - all data verified (1 user, 7 cities, 5 fees, 5 steps, 28 professionals)
+- 👤 Default admin user created: admin@bcamboriu.com / admin123 (change password after first login)
 - 🔄 Evaluated PostgreSQL migration (50% complete) but reverted to Cloudflare D1 for simplicity and speed
 - 📋 **Next Steps**: User applies MIGRACOES-COMPLETAS.sql via Cloudflare Dashboard → Republish app
 
