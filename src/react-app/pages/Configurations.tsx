@@ -299,71 +299,78 @@ function FeesConfiguration({ fees, onUpdate }: { fees: Fee[], onUpdate: () => vo
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-      <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-        <div>
-          <h2 className="text-lg font-medium text-gray-900">Taxas</h2>
-          <p className="text-sm text-gray-600">Configure as taxas disponíveis para os processos</p>
+        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+          <div>
+            <h2 className="text-lg font-medium text-gray-900">Taxas</h2>
+            <p className="text-sm text-gray-600">Configure as taxas disponíveis para os processos</p>
+          </div>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 flex items-center space-x-2"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Nova Taxa</span>
+          </button>
         </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 flex items-center space-x-2"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Nova Taxa</span>
-        </button>
-      </div>
-      <div className="p-6">
-        <div className="space-y-4">
-          {fees.map((fee) => (
-            <div key={fee.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-              <div>
-                <h3 className="font-medium text-gray-900">{fee.name}</h3>
-                <p className="text-lg font-semibold text-green-600">R$ {fee.amount.toFixed(2)}</p>
-                {fee.linked_professional_type && (
-                  <div className="mt-1">
-                    <span className="inline-flex px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
-                      Vinculada: {PROFESSIONAL_TYPE_LABELS[fee.linked_professional_type as ProfessionalType]}
-                    </span>
-                  </div>
-                )}
-              </div>
-              <div className="flex items-center space-x-2">
-                {fee.name !== 'Emissão da CNH' && fee.name !== 'Transferência' && (
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      checked={fee.is_active} 
-                      onChange={(e) => handleFeeToggle(fee.id, e.target.checked)}
-                      className="sr-only peer" 
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
-                )}
-                <button 
-                  onClick={() => {
-                    setEditingFee(fee);
-                    setFormData({ name: fee.name, amount: fee.amount.toString(), linked_professional_type: fee.linked_professional_type || '' });
-                    setIsModalOpen(true);
-                  }}
-                  className="p-1 text-gray-400 hover:text-blue-600"
-                >
-                  <Edit className="w-4 h-4" />
-                </button>
-                {fee.name !== 'Emissão da CNH' && fee.name !== 'Transferência' && (
-                  <button 
-                    onClick={() => handleDeleteFee(fee.id)}
-                    className="p-1 text-gray-400 hover:text-red-600"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
+        <div className="p-6">
+          {fees.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <DollarSign className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+              <p>Nenhuma taxa cadastrada ainda</p>
+              <p className="text-sm mt-1">Clique em "Nova Taxa" para adicionar</p>
             </div>
-          ))}
-        </div>
+          ) : (
+            <div className="space-y-4">
+              {fees.map((fee) => (
+                <div key={fee.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                  <div>
+                    <h3 className="font-medium text-gray-900">{fee.name}</h3>
+                    <p className="text-lg font-semibold text-green-600">R$ {fee.amount.toFixed(2)}</p>
+                    {fee.linked_professional_type && (
+                      <div className="mt-1">
+                        <span className="inline-flex px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                          Vinculada: {PROFESSIONAL_TYPE_LABELS[fee.linked_professional_type as ProfessionalType]}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {fee.name !== 'Emissão da CNH' && fee.name !== 'Transferência' && (
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          checked={fee.is_active} 
+                          onChange={(e) => handleFeeToggle(fee.id, e.target.checked)}
+                          className="sr-only peer" 
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      </label>
+                    )}
+                    <button 
+                      onClick={() => {
+                        setEditingFee(fee);
+                        setFormData({ name: fee.name, amount: fee.amount.toString(), linked_professional_type: fee.linked_professional_type || '' });
+                        setIsModalOpen(true);
+                      }}
+                      className="p-1 text-gray-400 hover:text-blue-600"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    {fee.name !== 'Emissão da CNH' && fee.name !== 'Transferência' && (
+                      <button 
+                        onClick={() => handleDeleteFee(fee.id)}
+                        className="p-1 text-gray-400 hover:text-red-600"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+        )}
       </div>
 
-      {/* Modal for adding/editing fees */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
