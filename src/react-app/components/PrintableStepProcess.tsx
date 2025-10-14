@@ -669,8 +669,8 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                         ${professional.email ? `
                             <div class="professional-info"><strong>Email:</strong> ${professional.email}</div>
                         ` : ''}
-                        ${professional.observation ? `
-                            <div class="professional-info"><strong>OBS:</strong> ${professional.observation}</div>
+                        ${professional.observations ? `
+                            <div class="professional-info"><strong>OBS:</strong> ${professional.observations}</div>
                         ` : ''}
                     </div>
                 </div>
@@ -1185,9 +1185,9 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                                 {professional.email}
                               </div>
                             )}
-                            {professional.observation && (
+                            {professional.observations && (
                               <div className="text-sm mt-1">
-                                <span className="font-bold">OBS:</span> {professional.observation}
+                                <span className="font-bold">OBS:</span> {professional.observations}
                               </div>
                             )}
                           </div>
