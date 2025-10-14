@@ -46,10 +46,25 @@ Do not make changes to the `worker/` folder unless explicitly instructed, as it 
 - **Deployment Strategy**: Configured for Replit Autoscale, utilizing a single-server Node.js setup in production.
 
 ## External Dependencies
-- **Database**: Neon PostgreSQL 16 (external, primary database).
+- **Database**: Neon PostgreSQL 16 (São Paulo, Brazil - external, primary database).
 - **Deployment Platform**: Replit Autoscale.
 - **ORM**: Drizzle ORM.
 - **Frontend Libraries**: React, React Router.
 - **Styling Framework**: TailwindCSS.
 - **Backend Libraries**: Hono, `@hono/node-server/serve-static`.
 - **Utility Libraries**: `bcryptjs` for password hashing, `tsx` for running TypeScript in Node.js.
+
+## Database Configuration (October 14, 2025)
+**Migration to Neon PostgreSQL 16 (São Paulo, Brazil)**
+
+**Issue**: Replit PostgreSQL experiencing persistent instability (Control plane errors, connection timeouts). Initial Neon deployment in US East region also experienced outages.
+
+**Solution**: Migrated to external Neon PostgreSQL 16 in São Paulo region for improved stability and low latency.
+
+**Current Setup**:
+- **Database**: Neon PostgreSQL 16 (South America - São Paulo, sa-east-1)
+- **Connection**: NEON_DATABASE_URL environment variable
+- **Admin user**: admin@bcamboriu.com / admin123
+- **Data**: All production data migrated (28 credenciados, 7 cidades, 5 etapas, 5 taxas)
+- **Retry logic**: 3 attempts with exponential backoff for connection errors
+- **Status**: ✅ Stable and operational
