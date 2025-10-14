@@ -117,18 +117,18 @@ export default function StepProcess() {
       
       // Se está adicionando a etapa de foto e há uma cidade selecionada
       if (isAdding && step?.type === 'foto' && prev.city_id) {
-        const fotoProfessionals = professionals.filter(
+        const fotoProfessionalsInCity = professionals.filter(
           p => p.type === 'foto' && p.city_id.toString() === prev.city_id
         );
         
-        // Auto-preencher com o primeiro credenciado de foto da cidade (se houver)
-        if (fotoProfessionals.length > 0) {
+        // Auto-preencher SOMENTE se houver credenciado de foto nesta cidade específica
+        if (fotoProfessionalsInCity.length > 0) {
           return {
             ...prev,
             selected_steps: [...prev.selected_steps, stepId],
             selected_professionals: {
               ...prev.selected_professionals,
-              [stepId]: fotoProfessionals[0].id
+              [stepId]: fotoProfessionalsInCity[0].id
             }
           };
         }
