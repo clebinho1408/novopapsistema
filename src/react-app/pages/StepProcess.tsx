@@ -117,24 +117,21 @@ export default function StepProcess() {
       
       // Se está adicionando a etapa de foto e há uma cidade selecionada
       if (isAdding && step?.type === 'foto' && prev.city_id) {
-        const selectedCity = cities.find(c => c.id.toString() === prev.city_id);
+        // Buscar o credenciado de foto da cidade selecionada
+        const fotoDaCidade = professionals.find(
+          p => p.type === 'foto' && p.city_id.toString() === prev.city_id
+        );
         
-        // Se a cidade selecionada for Camboriú, auto-preencher com o local de foto de Camboriú
-        if (selectedCity?.name === 'CAMBORIÚ') {
-          const fotoCamboriu = professionals.find(
-            p => p.type === 'foto' && p.city_id.toString() === prev.city_id
-          );
-          
-          if (fotoCamboriu) {
-            return {
-              ...prev,
-              selected_steps: [...prev.selected_steps, stepId],
-              selected_professionals: {
-                ...prev.selected_professionals,
-                [stepId]: fotoCamboriu.id
-              }
-            };
-          }
+        // Se encontrou um credenciado de foto para essa cidade, auto-preencher
+        if (fotoDaCidade) {
+          return {
+            ...prev,
+            selected_steps: [...prev.selected_steps, stepId],
+            selected_professionals: {
+              ...prev.selected_professionals,
+              [stepId]: fotoDaCidade.id
+            }
+          };
         }
       }
       
