@@ -221,6 +221,8 @@ function FeesConfiguration({ fees, onUpdate }: { fees: Fee[], onUpdate: () => vo
   const [formData, setFormData] = useState({ name: '', amount: '', linked_professional_type: '' });
   const [isLoading, setIsLoading] = useState(false);
 
+  console.log('FeesConfiguration rendered, fees:', fees);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
