@@ -111,7 +111,7 @@ export const StepProcessSchema = z.object({
   user_id: z.number(),
   city_id: z.number(),
   client_name: z.string().optional(),
-  total_amount: z.number(),
+  total_amount: z.string(), // Database returns as string (decimal/numeric)
   status: z.string(),
   created_at: z.string(),
   updated_at: z.string(),

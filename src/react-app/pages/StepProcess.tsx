@@ -320,7 +320,7 @@ export default function StepProcess() {
     // Calcular total das taxas selecionadas manualmente (não vinculadas)
     const manualFeesTotal = formData.selected_fees.reduce((total, feeId) => {
       const fee = fees.find(f => f.id === feeId);
-      return total + (fee?.amount || 0);
+      return total + (fee ? parseFloat(fee.amount) : 0);
     }, 0);
 
     // Calcular total das taxas vinculadas automaticamente
@@ -335,7 +335,7 @@ export default function StepProcess() {
       });
       
       return hasLinkedProfessional;
-    }).reduce((total, fee) => total + fee.amount, 0);
+    }).reduce((total, fee) => total + parseFloat(fee.amount), 0);
 
     return manualFeesTotal + linkedFeesTotal;
   };
@@ -668,7 +668,7 @@ export default function StepProcess() {
                             />
                             <span className="text-gray-900">{fee.name}</span>
                           </div>
-                          <span className="text-gray-600 font-medium">R$ {fee.amount.toFixed(2)}</span>
+                          <span className="text-gray-600 font-medium">R$ {parseFloat(fee.amount).toFixed(2)}</span>
                         </label>
                       ))}
                     </div>
@@ -736,7 +736,7 @@ export default function StepProcess() {
                                       {formData.selected_fees.map(feeId => {
                                         const fee = fees.find(f => f.id === feeId && !f.linked_professional_type);
                                         return fee ? (
-                                          <p key={feeId} className="ml-4">• {fee.name}: R$ {fee.amount.toFixed(2)}</p>
+                                          <p key={feeId} className="ml-4">• {fee.name}: R$ {parseFloat(fee.amount).toFixed(2)}</p>
                                         ) : null;
                                       })}
                                       {/* Mostrar taxas vinculadas */}
@@ -750,7 +750,7 @@ export default function StepProcess() {
                                         });
                                         return hasLinkedProfessional;
                                       }).map(fee => (
-                                        <p key={fee.id} className="ml-4 text-blue-600">• {fee.name}: R$ {fee.amount.toFixed(2)} (vinculada)</p>
+                                        <p key={fee.id} className="ml-4 text-blue-600">• {fee.name}: R$ {parseFloat(fee.amount).toFixed(2)} (vinculada)</p>
                                       ))}
                                     </div>
                                   </div>
