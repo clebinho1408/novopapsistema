@@ -216,6 +216,13 @@ The system supports three levels of access:
   - Preserves manual selection if user chooses a different foto professional from the same city
   - Clears selection when switching to a city without a foto professional
   - User can always manually override the auto-selection
+- ✅ Production deployment configuration (October 14, 2025):
+  - Configured single-server production mode with Node.js Hono
+  - Added `@hono/node-server/serve-static` for static file serving
+  - Fixed TypeScript compilation errors in d1-adapter.ts and storage.ts
+  - Updated build to output frontend to `dist/client/`
+  - Production server (port 5000) serves both API and static files
+  - Ready for Replit Autoscale deployment
 
 ## Known Issues
 - TypeScript LSP shows type errors in worker/index.ts (Cloudflare types) - these don't affect runtime
@@ -230,12 +237,26 @@ The application uses a custom session-based authentication system:
 
 ## Deployment
 The application is configured for production deployment on Replit:
-- Deployment target: Replit Autoscale
-- Build command: `npm install --legacy-peer-deps && npm run build`
-- Run command: `npm run preview` (serves production build on port 5000)
-- Build process:
-  1. Installs dependencies
-  2. Compiles TypeScript
-  3. Builds Vite production bundle
-- Database: Replit PostgreSQL (persistent storage)
-- No additional storage services required
+- **Deployment target**: Replit Autoscale
+- **Build command**: `npm install --legacy-peer-deps && npm run build`
+- **Run command**: `npm start` (runs Node.js server with tsx on port 5000)
+
+### Production Architecture
+- **Single server**: Node.js Hono server on port 5000
+- **Static files**: Served from `dist/client/` using `@hono/node-server/serve-static`
+- **API endpoints**: All `/api/*` routes handled by Hono
+- **SPA routing**: Falls back to `index.html` for client-side routing
+- **Runtime**: TypeScript executed via `tsx` (no compilation needed in production)
+- **Database**: Replit PostgreSQL (persistent storage)
+
+### Build Process
+1. `npm install --legacy-peer-deps` - Installs dependencies (React 19 compatibility)
+2. `tsc -b` - Compiles TypeScript (type checking)
+3. `vite build` - Builds frontend to `dist/client/`
+4. Production server serves:
+   - Frontend assets from `dist/client/`
+   - Backend API from Hono routes
+
+### Development vs Production
+- **Development**: Dual server (Vite on 5000, Node.js API on 3000)
+- **Production**: Single server (Node.js serves both frontend and API on 5000)
