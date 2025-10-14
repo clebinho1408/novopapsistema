@@ -626,6 +626,21 @@ app.patch("/api/professionals/:id", systemAuthMiddleware, async (c) => {
   const body = await c.req.json();
 
   try {
+    console.log('=== UPDATING PROFESSIONAL ===');
+    console.log('Professional ID:', professionalId);
+    console.log('Request body:', body);
+    
+    // Validate required fields
+    if (!body.name || !body.type || !body.city_id) {
+      return c.json({ error: "Campos obrigatórios faltando: name, type, city_id" }, 400);
+    }
+
+    // Parse city_id safely
+    const cityId = typeof body.city_id === 'number' ? body.city_id : parseInt(body.city_id);
+    if (isNaN(cityId)) {
+      return c.json({ error: "city_id inválido" }, 400);
+    }
+
     const result = await mockEnv.DB.prepare(`
       UPDATE professionals 
       SET name = ?, type = ?, city_id = ?, phone = ?, email = ?, address = ?, 
@@ -636,7 +651,7 @@ app.patch("/api/professionals/:id", systemAuthMiddleware, async (c) => {
     `).bind(
       body.name,
       body.type,
-      parseInt(body.city_id),
+      cityId,
       body.phone || null,
       body.email || null,
       body.address || null,
@@ -652,9 +667,11 @@ app.patch("/api/professionals/:id", systemAuthMiddleware, async (c) => {
       return c.json({ error: "Credenciado não encontrado" }, 404);
     }
 
+    console.log('Professional updated successfully:', result);
     return c.json(result);
   } catch (error) {
     console.error('Error updating professional:', error);
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     return c.json({ error: "Erro interno do servidor" }, 500);
   }
 });
