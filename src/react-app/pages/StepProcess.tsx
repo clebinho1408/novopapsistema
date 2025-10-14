@@ -111,37 +111,12 @@ export default function StepProcess() {
   };
 
   const handleStepToggle = (stepId: number) => {
-    setFormData(prev => {
-      const isAdding = !prev.selected_steps.includes(stepId);
-      const step = processSteps.find(s => s.id === stepId);
-      
-      // Se está adicionando a etapa de foto e há uma cidade selecionada
-      if (isAdding && step?.type === 'foto' && prev.city_id) {
-        // Buscar o credenciado de foto da cidade selecionada
-        const fotoDaCidade = professionals.find(
-          p => p.type === 'foto' && p.city_id.toString() === prev.city_id
-        );
-        
-        // Se encontrou um credenciado de foto para essa cidade, auto-preencher
-        if (fotoDaCidade) {
-          return {
-            ...prev,
-            selected_steps: [...prev.selected_steps, stepId],
-            selected_professionals: {
-              ...prev.selected_professionals,
-              [stepId]: fotoDaCidade.id
-            }
-          };
-        }
-      }
-      
-      return {
-        ...prev,
-        selected_steps: prev.selected_steps.includes(stepId)
-          ? prev.selected_steps.filter(id => id !== stepId)
-          : [...prev.selected_steps, stepId]
-      };
-    });
+    setFormData(prev => ({
+      ...prev,
+      selected_steps: prev.selected_steps.includes(stepId)
+        ? prev.selected_steps.filter(id => id !== stepId)
+        : [...prev.selected_steps, stepId]
+    }));
   };
 
   const handleProfessionalSelectChange = (stepId: number, selectedValue: string) => {
