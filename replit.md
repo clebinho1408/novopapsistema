@@ -43,7 +43,7 @@ Do not make changes to the `worker/` folder unless explicitly instructed, as it 
 - **Fee Configuration**: Fixed sequence of fees (value-editable only, non-deletable):
     1. Emissão da CNH
     2. Transferência
-    3. Prova (linked to 'prova' credenciado)
+    3. Prova
     4. Médico (linked to 'medico' credenciado)
     5. Psicólogo (linked to 'psicologo' credenciado)
 - **Step-by-Step Processes**: Create, track, and manage individual driver's license application workflows.

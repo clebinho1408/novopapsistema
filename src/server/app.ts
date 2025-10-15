@@ -157,7 +157,7 @@ app.post('/api/auth/register', async (c) => {
     const defaultFees = [
       { name: 'Emissão da CNH', amount: 101.51, sort_order: 1, linked_professional_type: null },
       { name: 'Transferência', amount: 53.37, sort_order: 2, linked_professional_type: null },
-      { name: 'Prova', amount: 0, sort_order: 3, linked_professional_type: 'prova' },
+      { name: 'Prova', amount: 0, sort_order: 3, linked_professional_type: null },
       { name: 'Médico', amount: 0, sort_order: 4, linked_professional_type: 'medico' },
       { name: 'Psicólogo', amount: 0, sort_order: 5, linked_professional_type: 'psicologo' },
     ];
