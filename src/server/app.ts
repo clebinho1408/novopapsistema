@@ -153,16 +153,19 @@ app.post('/api/auth/register', async (c) => {
       ).bind(agencyResult.id, step.name, step.type, step.sort_order, true).run();
     }
 
-    // Create default fees
+    // Create default fees (fixed sequence)
     const defaultFees = [
-      { name: 'Emissão da CNH', amount: 101.51 },
-      { name: 'Transferência', amount: 53.37 },
+      { name: 'Emissão da CNH', amount: 101.51, sort_order: 1, linked_professional_type: null },
+      { name: 'Transferência', amount: 53.37, sort_order: 2, linked_professional_type: null },
+      { name: 'Prova', amount: 0, sort_order: 3, linked_professional_type: 'prova' },
+      { name: 'Médico', amount: 0, sort_order: 4, linked_professional_type: 'medico' },
+      { name: 'Psicólogo', amount: 0, sort_order: 5, linked_professional_type: 'psicologo' },
     ];
 
     for (const fee of defaultFees) {
       await mockEnv.DB.prepare(
-        "INSERT INTO fees (agency_id, name, amount, is_active) VALUES (?, ?, ?, ?)"
-      ).bind(agencyResult.id, fee.name, fee.amount, true).run();
+        "INSERT INTO fees (agency_id, name, amount, sort_order, linked_professional_type, is_active) VALUES (?, ?, ?, ?, ?, ?)"
+      ).bind(agencyResult.id, fee.name, fee.amount, fee.sort_order, fee.linked_professional_type, true).run();
     }
 
     // Create session for the new user
