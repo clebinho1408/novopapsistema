@@ -104,6 +104,7 @@ export const fees = pgTable('fees', {
   name: text('name').notNull(),
   amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
   isActive: boolean('is_active').default(true),
+  sortOrder: integer('sort_order').default(0),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
   linkedProfessionalType: text('linked_professional_type'),
