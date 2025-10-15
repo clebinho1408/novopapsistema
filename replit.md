@@ -34,10 +34,16 @@ Do not make changes to the `worker/` folder unless explicitly instructed, as it 
 - **User Management**: Administrator and collaborator roles with distinct permissions.
 - **City Management**: Register and manage cities associated with agencies.
 - **Credenciado Management**: Management of accredited professionals (doctors, psychologists, testing centers).
-- **Process Step Configuration**: Define and configure workflow steps for driver's license applications.
+- **Process Step Configuration**: Fixed sequence of workflow steps (non-editable, non-reorderable, always active):
+    1. Foto
+    2. Taxa
+    3. Exame Psicológico
+    4. Exame Médico
+    5. Prova
 - **Fee Configuration**: Set up and manage various fees and taxes.
 - **Step-by-Step Processes**: Create, track, and manage individual driver's license application workflows.
 - **Dynamic Forms**: "Serviço" dropdown (Renovação, Renovação + Transferência) in step process form.
+- **Print Optimization**: Intelligent font sizing for instructions that auto-adjusts based on available space while ensuring single-page output (max height controls prevent second page generation).
 
 ### System Design Choices
 - **Backend Framework**: Hono on Node.js for API services.

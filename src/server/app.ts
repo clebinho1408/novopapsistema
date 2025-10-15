@@ -138,12 +138,12 @@ app.post('/api/auth/register', async (c) => {
       return c.json({ error: "Erro ao criar usuário administrador" }, 500);
     }
 
-    // Create default process steps
+    // Create default process steps (fixed sequence)
     const defaultSteps = [
       { name: 'Foto', type: 'foto', sort_order: 1 },
       { name: 'Taxa', type: 'taxa', sort_order: 2 },
-      { name: 'Exame Médico', type: 'medico', sort_order: 3 },
-      { name: 'Exame Psicológico', type: 'psicologo', sort_order: 4 },
+      { name: 'Exame Psicológico', type: 'psicologo', sort_order: 3 },
+      { name: 'Exame Médico', type: 'medico', sort_order: 4 },
       { name: 'Prova', type: 'prova', sort_order: 5 },
     ];
 

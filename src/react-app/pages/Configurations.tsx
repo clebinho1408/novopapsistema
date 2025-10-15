@@ -83,7 +83,7 @@ export default function Configurations() {
           </div>
 
           {/* Tab Content */}
-          {activeTab === 'steps' && <StepsConfiguration steps={processSteps} onUpdate={fetchProcessSteps} />}
+          {activeTab === 'steps' && <StepsConfiguration steps={processSteps} />}
           {activeTab === 'fees' && <FeesConfiguration fees={fees} onUpdate={fetchFees} />}
           {activeTab === 'instructions' && <InstructionsConfiguration />}
           {activeTab === 'users' && <UserManagement />}
@@ -95,86 +95,20 @@ export default function Configurations() {
   );
 }
 
-function StepsConfiguration({ steps, onUpdate }: { steps: ProcessStep[], onUpdate: () => void }) {
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleStepToggle = async (stepId: number, checked: boolean) => {
-    setIsLoading(true);
-    try {
-      const response = await fetch(`/api/process-steps/${stepId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ is_active: checked })
-      });
-
-      if (response.ok) {
-        onUpdate();
-      } else {
-        alert('Erro ao atualizar etapa');
-      }
-    } catch (error) {
-      console.error('Error updating step:', error);
-      alert('Erro ao atualizar etapa');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleOrderChange = async (stepId: number, direction: 'up' | 'down') => {
-    setIsLoading(true);
-    try {
-      const response = await fetch(`/api/process-steps/${stepId}/reorder`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ direction })
-      });
-
-      if (response.ok) {
-        onUpdate();
-      } else {
-        alert('Erro ao reordenar etapa');
-      }
-    } catch (error) {
-      console.error('Error reordering step:', error);
-      alert('Erro ao reordenar etapa');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+function StepsConfiguration({ steps }: { steps: ProcessStep[] }) {
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
       <div className="px-6 py-4 border-b border-gray-200">
         <h2 className="text-lg font-medium text-gray-900">Etapas do Processo</h2>
-        <p className="text-sm text-gray-600">Configure as etapas disponíveis e sua ordem de exibição nos processos de habilitação</p>
+        <p className="text-sm text-gray-600">Sequência fixa das etapas nos processos de habilitação</p>
       </div>
       <div className="p-6">
         <div className="space-y-4">
-          {steps.map((step, index) => (
+          {steps.map((step) => (
             <div key={step.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
               <div className="flex items-center space-x-4">
-                <div className="flex flex-col items-center space-y-1">
-                  <button 
-                    onClick={() => handleOrderChange(step.id, 'up')}
-                    disabled={index === 0 || isLoading}
-                    className="text-gray-400 hover:text-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                    </svg>
-                  </button>
-                  <span className="text-sm font-medium text-gray-700 min-w-[24px] text-center">#{step.sort_order}</span>
-                  <button 
-                    onClick={() => handleOrderChange(step.id, 'down')}
-                    disabled={index === steps.length - 1 || isLoading}
-                    className="text-gray-400 hover:text-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
+                <div className="flex items-center justify-center w-10 h-10 bg-orange-100 text-orange-600 rounded-full font-bold">
+                  {step.sort_order}
                 </div>
                 <div>
                   <h3 className="font-medium text-gray-900">{step.name}</h3>
@@ -189,28 +123,13 @@ function StepsConfiguration({ steps, onUpdate }: { steps: ProcessStep[], onUpdat
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={step.is_active} 
-                    onChange={(e) => handleStepToggle(step.id, e.target.checked)}
-                    disabled={isLoading}
-                    className="sr-only peer" 
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  Ativa
+                </span>
               </div>
             </div>
           ))}
         </div>
-        {isLoading && (
-          <div className="mt-4 text-center">
-            <div className="inline-flex items-center space-x-2 text-sm text-gray-600">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-600"></div>
-              <span>Atualizando...</span>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
