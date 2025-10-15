@@ -787,7 +787,7 @@ app.get("/api/fees", systemAuthMiddleware, async (c) => {
   if (!user) return c.json({ error: "User not found" }, 404);
 
   const { results } = await mockEnv.DB.prepare(
-    "SELECT * FROM fees WHERE agency_id = ? ORDER BY name"
+    "SELECT * FROM fees WHERE agency_id = ? ORDER BY sort_order, id"
   ).bind(user.agency_id).all();
 
   return c.json(results);
@@ -819,48 +819,23 @@ app.patch("/api/fees/:id", systemAuthMiddleware, async (c) => {
   const feeId = c.req.param("id");
   const body = await c.req.json();
 
-  // Verificar se é uma taxa obrigatória
+  // Verificar se a taxa existe
   const fee = await mockEnv.DB.prepare(
-    "SELECT name FROM fees WHERE id = ? AND agency_id = ?"
+    "SELECT id FROM fees WHERE id = ? AND agency_id = ?"
   ).bind(feeId, user.agency_id).first();
 
   if (!fee) {
     return c.json({ error: "Taxa não encontrada" }, 404);
   }
 
-  const isMandatoryFee = (fee as any).name === 'Emissão da CNH' || (fee as any).name === 'Transferência';
-
-  const updateFields = [];
-  const updateValues = [];
-
-  // Taxas obrigatórias: apenas permitir alteração de valor
-  if (body.name !== undefined && !isMandatoryFee) {
-    updateFields.push("name = ?");
-    updateValues.push(body.name);
+  // Taxas fixas do sistema: apenas permitir alteração de valor
+  if (body.amount === undefined) {
+    return c.json({ error: "Apenas o valor pode ser alterado" }, 400);
   }
-  if (body.amount !== undefined) {
-    updateFields.push("amount = ?");
-    updateValues.push(body.amount);
-  }
-  if (body.linked_professional_type !== undefined && !isMandatoryFee) {
-    updateFields.push("linked_professional_type = ?");
-    updateValues.push(body.linked_professional_type || null);
-  }
-  if (body.is_active !== undefined && !isMandatoryFee) {
-    updateFields.push("is_active = ?");
-    updateValues.push(body.is_active ? 1 : 0);
-  }
-
-  if (updateFields.length === 0) {
-    return c.json({ error: "Nenhum campo para atualizar" }, 400);
-  }
-
-  updateFields.push("updated_at = CURRENT_TIMESTAMP");
-  updateValues.push(feeId, user.agency_id);
 
   const result = await mockEnv.DB.prepare(
-    `UPDATE fees SET ${updateFields.join(", ")} WHERE id = ? AND agency_id = ? RETURNING *`
-  ).bind(...updateValues).first();
+    "UPDATE fees SET amount = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND agency_id = ? RETURNING *"
+  ).bind(body.amount, feeId, user.agency_id).first();
 
   if (!result) {
     return c.json({ error: "Taxa não encontrada" }, 404);
@@ -874,26 +849,8 @@ app.delete("/api/fees/:id", systemAuthMiddleware, async (c) => {
   if (!user) return c.json({ error: "User not found" }, 404);
   if (user.role !== 'administrator') return c.json({ error: "Acesso negado" }, 403);
 
-  const feeId = c.req.param("id");
-
-  // Verificar se a taxa é obrigatória (não pode ser excluída)
-  const fee = await mockEnv.DB.prepare(
-    "SELECT name FROM fees WHERE id = ? AND agency_id = ?"
-  ).bind(feeId, user.agency_id).first();
-
-  if (!fee) {
-    return c.json({ error: "Taxa não encontrada" }, 404);
-  }
-
-  if ((fee as any).name === 'Emissão da CNH' || (fee as any).name === 'Transferência') {
-    return c.json({ error: "Esta taxa não pode ser excluída" }, 400);
-  }
-
-  await mockEnv.DB.prepare(
-    "UPDATE fees SET is_active = false WHERE id = ? AND agency_id = ?"
-  ).bind(feeId, user.agency_id).run();
-
-  return c.json({ success: true });
+  // Taxas do sistema são fixas e não podem ser excluídas
+  return c.json({ error: "As taxas do sistema não podem ser excluídas" }, 400);
 });
 
 // Email sending function
