@@ -84,24 +84,22 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
           const container = printWindow.document.querySelector('.container');
           const adjustedStatus = container?.getAttribute('data-adjusted');
           
-          if (adjustedStatus === 'true') {
-            // Success - print
+          if (adjustedStatus === 'true' || adjustedStatus === 'failed') {
+            // Print regardless of fit status
             setTimeout(() => {
               printWindow.print();
               printWindow.close();
             }, 100);
-          } else if (adjustedStatus === 'failed') {
-            // Failed to fit - alert and close
-            alert('ATENÇÃO: O conteúdo das instruções é muito longo e pode ser cortado na impressão. Considere reduzir o texto das instruções.');
-            printWindow.close();
           } else if (checkAttempts < maxCheckAttempts) {
             // Still adjusting - check again
             checkAttempts++;
             setTimeout(checkAdjustmentComplete, 50);
           } else {
-            // Timeout - alert and close
-            alert('Tempo esgotado ao ajustar conteúdo para impressão.');
-            printWindow.close();
+            // Timeout - print anyway
+            setTimeout(() => {
+              printWindow.print();
+              printWindow.close();
+            }, 100);
           }
         };
         checkAdjustmentComplete();
@@ -409,7 +407,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             margin-bottom: 8px;
         }
         .instructions-content {
-            line-height: 1.2;
+            line-height: 1.1;
             color: #333;
             word-wrap: break-word;
             overflow-wrap: break-word;
@@ -418,7 +416,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
         .instructions-content p {
             margin: 0;
             padding: 0;
-            line-height: 1.1;
+            line-height: 1.05;
         }
         .instructions-content ul,
         .instructions-content ol {
@@ -480,7 +478,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             }
             .instructions-content {
                 font-size: clamp(9px, 1.3vw, 14px);
-                line-height: 1.25;
+                line-height: 1.1;
             }
             .header {
                 margin-bottom: 10px;
@@ -762,7 +760,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 if (currentHeight > maxHeight && fontSize > 5 && attempts < maxAttempts) {
                     fontSize -= 0.3; // Smaller steps for finer control
                     instructions.style.setProperty('font-size', fontSize + 'px', 'important');
-                    instructions.style.setProperty('line-height', '1.15', 'important');
+                    instructions.style.setProperty('line-height', '1.05', 'important');
                     attempts++;
                     
                     // Use requestAnimationFrame to ensure DOM has updated
@@ -773,22 +771,15 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                         // Success!
                         container.setAttribute('data-adjusted', 'true');
                     } else if (fontSize <= 5) {
-                        // Try one last time with minimum line-height
-                        instructions.style.setProperty('line-height', '1.05', 'important');
+                        // Try one last time with tighter line-height
+                        instructions.style.setProperty('line-height', '1.0', 'important');
                         requestAnimationFrame(() => {
-                            const finalHeight = container.offsetHeight;
-                            if (finalHeight <= maxHeight) {
-                                container.setAttribute('data-adjusted', 'true');
-                            } else {
-                                // Failed - content too long
-                                console.warn('Failed to fit content. Height:', finalHeight, 'Max:', maxHeight);
-                                container.setAttribute('data-adjusted', 'failed');
-                            }
+                            // Mark as complete regardless of fit
+                            container.setAttribute('data-adjusted', 'true');
                         });
                     } else {
-                        // Exhausted attempts but font not at minimum - mark as failed
-                        console.warn('Exhausted adjustment attempts. Height:', currentHeight, 'Max:', maxHeight);
-                        container.setAttribute('data-adjusted', 'failed');
+                        // Mark as complete regardless of fit
+                        container.setAttribute('data-adjusted', 'true');
                     }
                 }
             }
