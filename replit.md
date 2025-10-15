@@ -48,7 +48,7 @@ Do not make changes to the `worker/` folder unless explicitly instructed, as it 
     5. Psicólogo (linked to 'psicologo' credenciado)
 - **Step-by-Step Processes**: Create, track, and manage individual driver's license application workflows.
 - **Dynamic Forms**: "Serviço" dropdown (Renovação, Renovação + Transferência) in step process form.
-- **Print Optimization**: Intelligent font sizing for instructions that auto-adjusts based on available space. Full instruction content is displayed without truncation in both preview and print modes.
+- **Print Optimization**: Intelligent font sizing for instructions with multi-page support. Full instruction content is displayed without truncation, automatically expanding to multiple pages when needed.
 
 ### System Design Choices
 - **Backend Framework**: Hono on Node.js for API services.
