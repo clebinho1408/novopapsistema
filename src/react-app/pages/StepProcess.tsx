@@ -568,7 +568,7 @@ export default function StepProcess() {
                   <div>
                     <h2 className="text-lg font-medium text-gray-900 mb-4">Selecione as Etapas Necessárias</h2>
                     <div className="space-y-3">
-                      {processSteps.map(step => (
+                      {[...processSteps].sort((a, b) => a.sort_order - b.sort_order).map(step => (
                         <label key={step.id} className="flex items-center space-x-3">
                           <input
                             type="checkbox"
