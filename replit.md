@@ -49,6 +49,7 @@ Do not make changes to the `worker/` folder unless explicitly instructed, as it 
 - **Step-by-Step Processes**: Create, track, and manage individual driver's license application workflows.
 - **Dynamic Forms**: "Serviço" dropdown (Renovação, Renovação + Transferência) in step process form.
 - **Print Optimization**: Intelligent auto-sizing system that automatically reduces instruction font size (14px → 5px) and line-height (1.1 → 1.0) to fit all content on a single page. Reduced line spacing for more compact display.
+- **Print Instructions**: Hide semicolons (;) in print view only, no user warnings, always proceed with print.
 
 ### System Design Choices
 - **Backend Framework**: Hono on Node.js for API services.

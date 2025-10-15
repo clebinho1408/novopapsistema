@@ -514,6 +514,12 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 page-break-before: avoid;
             }
         }
+        @media print {
+            /* Ocultar ponto e vírgula na impressão */
+            .hide-semicolon-print {
+                display: none;
+            }
+        }
         @page {
             margin: 5mm;
             size: A4;
@@ -785,6 +791,46 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             }
             
             adjustFontSize();
+        });
+
+        // Ocultar ponto e vírgula apenas na impressão
+        window.addEventListener('load', function() {
+            const container = document.querySelector('.container');
+            if (container) {
+                const walker = document.createTreeWalker(
+                    container,
+                    NodeFilter.SHOW_TEXT,
+                    null
+                );
+                
+                const nodesToReplace = [];
+                let node;
+                
+                while (node = walker.nextNode()) {
+                    if (node.textContent.includes(';')) {
+                        nodesToReplace.push(node);
+                    }
+                }
+                
+                nodesToReplace.forEach(textNode => {
+                    const parent = textNode.parentNode;
+                    const text = textNode.textContent;
+                    const parts = text.split(';');
+                    
+                    const fragment = document.createDocumentFragment();
+                    parts.forEach((part, index) => {
+                        fragment.appendChild(document.createTextNode(part));
+                        if (index < parts.length - 1) {
+                            const semicolon = document.createElement('span');
+                            semicolon.className = 'hide-semicolon-print';
+                            semicolon.textContent = ';';
+                            fragment.appendChild(semicolon);
+                        }
+                    });
+                    
+                    parent.replaceChild(fragment, textNode);
+                });
+            }
         });
     </script>
 </body>
