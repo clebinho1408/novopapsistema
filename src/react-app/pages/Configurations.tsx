@@ -133,31 +133,28 @@ function StepsConfiguration({ steps }: { steps: ProcessStep[] }) {
 function FeesConfiguration({ fees, onUpdate }: { fees: Fee[], onUpdate: () => void }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingFee, setEditingFee] = useState<Fee | null>(null);
-  const [formData, setFormData] = useState({ name: '', amount: '', linked_professional_type: '' });
+  const [formData, setFormData] = useState({ amount: '' });
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!editingFee) return;
+    
     setIsLoading(true);
     
     try {
-      const url = editingFee ? `/api/fees/${editingFee.id}` : '/api/fees';
-      const method = editingFee ? 'PATCH' : 'POST';
-      
-      const response = await fetch(url, {
-        method,
+      const response = await fetch(`/api/fees/${editingFee.id}`, {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          name: formData.name,
-          amount: parseFloat(formData.amount),
-          linked_professional_type: formData.linked_professional_type || null
+          amount: parseFloat(formData.amount)
         })
       });
 
       if (response.ok) {
         setIsModalOpen(false);
-        setFormData({ name: '', amount: '', linked_professional_type: '' });
+        setFormData({ amount: '' });
         setEditingFee(null);
         onUpdate();
       } else {
@@ -172,172 +169,82 @@ function FeesConfiguration({ fees, onUpdate }: { fees: Fee[], onUpdate: () => vo
     }
   };
 
-  const handleFeeToggle = async (feeId: number, checked: boolean) => {
-    try {
-      const response = await fetch(`/api/fees/${feeId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ is_active: checked })
-      });
-
-      if (response.ok) {
-        onUpdate();
-      } else {
-        alert('Erro ao atualizar taxa');
-      }
-    } catch (error) {
-      console.error('Error updating fee:', error);
-      alert('Erro ao atualizar taxa');
-    }
-  };
-
-  const handleDeleteFee = async (feeId: number) => {
-    if (!confirm('Tem certeza que deseja excluir esta taxa?')) return;
-
-    try {
-      const response = await fetch(`/api/fees/${feeId}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        onUpdate();
-      } else {
-        alert('Erro ao excluir taxa');
-      }
-    } catch (error) {
-      console.error('Error deleting fee:', error);
-      alert('Erro ao excluir taxa');
-    }
-  };
-
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-          <div>
-            <h2 className="text-lg font-medium text-gray-900">Taxas</h2>
-            <p className="text-sm text-gray-600">Configure as taxas disponíveis para os processos</p>
-          </div>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 flex items-center space-x-2"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Nova Taxa</span>
-          </button>
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h2 className="text-lg font-medium text-gray-900">Taxas</h2>
+          <p className="text-sm text-gray-600">Sequência fixa das taxas no sistema</p>
         </div>
         <div className="p-6">
           {fees.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <DollarSign className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-              <p>Nenhuma taxa cadastrada ainda</p>
-              <p className="text-sm mt-1">Clique em "Nova Taxa" para adicionar</p>
+              <p>Nenhuma taxa cadastrada</p>
             </div>
           ) : (
             <div className="space-y-4">
-              {fees.map((fee) => (
+              {fees.map((fee, index) => (
                 <div key={fee.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                  <div>
-                    <h3 className="font-medium text-gray-900">{fee.name}</h3>
-                    <p className="text-lg font-semibold text-green-600">R$ {parseFloat(fee.amount).toFixed(2)}</p>
-                    {fee.linked_professional_type && (
-                      <div className="mt-1">
-                        <span className="inline-flex px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
-                          Vinculada: {PROFESSIONAL_TYPE_LABELS[fee.linked_professional_type as ProfessionalType]}
-                        </span>
-                      </div>
-                    )}
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center justify-center w-10 h-10 bg-orange-100 text-orange-600 rounded-full font-bold">
+                      {index + 1}
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-gray-900">{fee.name}</h3>
+                      <p className="text-lg font-semibold text-green-600">R$ {parseFloat(fee.amount).toFixed(2)}</p>
+                      {fee.linked_professional_type && (
+                        <div className="mt-1">
+                          <span className="inline-flex px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                            Vinculada: {PROFESSIONAL_TYPE_LABELS[fee.linked_professional_type as ProfessionalType]}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    {fee.name !== 'Emissão da CNH' && fee.name !== 'Transferência' && (
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input 
-                          type="checkbox" 
-                          checked={fee.is_active} 
-                          onChange={(e) => handleFeeToggle(fee.id, e.target.checked)}
-                          className="sr-only peer" 
-                        />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                      </label>
-                    )}
-                    <button 
-                      onClick={() => {
-                        setEditingFee(fee);
-                        setFormData({ name: fee.name, amount: fee.amount, linked_professional_type: fee.linked_professional_type || '' });
-                        setIsModalOpen(true);
-                      }}
-                      className="p-1 text-gray-400 hover:text-blue-600"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    {fee.name !== 'Emissão da CNH' && fee.name !== 'Transferência' && (
-                      <button 
-                        onClick={() => handleDeleteFee(fee.id)}
-                        className="p-1 text-gray-400 hover:text-red-600"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
+                  <button 
+                    onClick={() => {
+                      setEditingFee(fee);
+                      setFormData({ amount: fee.amount });
+                      setIsModalOpen(true);
+                    }}
+                    className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  >
+                    <Edit className="w-5 h-5" />
+                  </button>
                 </div>
               ))}
             </div>
         )}
       </div>
 
-      {isModalOpen && (
+      {isModalOpen && editingFee && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              {editingFee ? 'Editar Taxa' : 'Nova Taxa'}
+              Editar Valor da Taxa
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Nome da Taxa</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Taxa</label>
                 <input
                   type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  disabled={!!(editingFee && (editingFee.name === 'Emissão da CNH' || editingFee.name === 'Transferência'))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  required
+                  value={editingFee.name}
+                  disabled
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed text-gray-600"
                 />
-                {editingFee && (editingFee.name === 'Emissão da CNH' || editingFee.name === 'Transferência') && (
-                  <p className="text-xs text-gray-500 mt-1">O nome desta taxa não pode ser alterado</p>
-                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Valor (R$)</label>
                 <input
                   type="number"
                   step="0.01"
+                  min="0"
                   value={formData.amount}
-                  onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
+                  onChange={(e) => setFormData({ amount: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
+                  autoFocus
                 />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Vincular ao Tipo de Credenciado (opcional)</label>
-                <select
-                  value={formData.linked_professional_type}
-                  onChange={(e) => setFormData(prev => ({ ...prev, linked_professional_type: e.target.value }))}
-                  disabled={!!(editingFee && (editingFee.name === 'Emissão da CNH' || editingFee.name === 'Transferência'))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
-                >
-                  <option value="">Nenhum vínculo</option>
-                  {Object.entries(PROFESSIONAL_TYPE_LABELS).map(([value, label]) => (
-                    <option key={value} value={value}>{label}</option>
-                  ))}
-                </select>
-                {editingFee && (editingFee.name === 'Emissão da CNH' || editingFee.name === 'Transferência') ? (
-                  <p className="text-xs text-gray-500 mt-1">O vínculo desta taxa não pode ser alterado</p>
-                ) : (
-                  <p className="text-xs text-gray-500 mt-1">
-                    Taxa só aparecerá no processo se houver credenciado deste tipo selecionado
-                  </p>
-                )}
               </div>
               <div className="flex justify-end space-x-3">
                 <button
@@ -345,7 +252,7 @@ function FeesConfiguration({ fees, onUpdate }: { fees: Fee[], onUpdate: () => vo
                   onClick={() => {
                     setIsModalOpen(false);
                     setEditingFee(null);
-                    setFormData({ name: '', amount: '', linked_professional_type: '' });
+                    setFormData({ amount: '' });
                   }}
                   className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
                 >
