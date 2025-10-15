@@ -378,8 +378,6 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             border-top: 2px solid black;
             padding-top: 12px;
             page-break-inside: avoid;
-            max-height: 35vh;
-            overflow: hidden;
         }
         .instructions h3 {
             font-size: 14px;
@@ -455,8 +453,6 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             }
             .instructions {
                 page-break-inside: avoid;
-                max-height: 250px;
-                overflow: hidden;
             }
             .instructions-content {
                 font-size: clamp(9px, 1.3vw, 14px) !important;
@@ -708,7 +704,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
         ${generalInstructions ? `
         <div class="instructions">
             <div class="instructions-content">
-                ${generalInstructions.replace(/;/g, '')}
+                ${generalInstructions}
             </div>
         </div>
         ` : ''}
@@ -1238,12 +1234,10 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
 
             {/* General Instructions */}
             {generalInstructions && (
-              <div className="border-t-2 border-black pt-6 max-h-[35vh] overflow-hidden">
+              <div className="border-t-2 border-black pt-6">
                 <div className="leading-[1.2]" style={{ fontSize: 'clamp(10px, 1.5vw, 15px)' }}>
                   <div dangerouslySetInnerHTML={{ 
                     __html: generalInstructions
-                      .replace(/;/g, ';<br>') // Add line break after each semicolon
-                      .replace(/\n/g, '<br>') 
                   }} />
                 </div>
               </div>
