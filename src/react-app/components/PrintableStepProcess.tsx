@@ -423,6 +423,8 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             padding-top: 6px;
             border-top: 1px solid black;
             text-align: center;
+            page-break-after: avoid;
+            page-break-before: avoid;
         }
         .footer p {
             font-size: 10px;
@@ -433,10 +435,14 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 margin: 0;
                 padding: 0;
                 font-size: 13px;
+                height: 100%;
+                overflow: hidden;
             }
             .container { 
                 max-width: none;
                 margin: 5mm;
+                max-height: calc(297mm - 10mm);
+                overflow: hidden;
             }
             .step-card {
                 page-break-inside: avoid;
@@ -484,13 +490,17 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 font-size: 12px;
             }
             .footer {
-                margin-top: 8px;
+                margin-top: 6px;
                 page-break-inside: avoid;
+                page-break-after: avoid;
+                page-break-before: avoid;
             }
         }
         @page {
             margin: 5mm;
             size: A4;
+            orphans: 4;
+            widows: 4;
         }
     </style>
 </head>
