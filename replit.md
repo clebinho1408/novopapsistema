@@ -40,7 +40,12 @@ Do not make changes to the `worker/` folder unless explicitly instructed, as it 
     3. Exame Psicológico
     4. Exame Médico
     5. Prova
-- **Fee Configuration**: Set up and manage various fees and taxes.
+- **Fee Configuration**: Fixed sequence of fees (value-editable only, non-deletable):
+    1. Emissão da CNH
+    2. Transferência
+    3. Prova (linked to 'prova' credenciado)
+    4. Médico (linked to 'medico' credenciado)
+    5. Psicólogo (linked to 'psicologo' credenciado)
 - **Step-by-Step Processes**: Create, track, and manage individual driver's license application workflows.
 - **Dynamic Forms**: "Serviço" dropdown (Renovação, Renovação + Transferência) in step process form.
 - **Print Optimization**: Intelligent font sizing for instructions that auto-adjusts based on available space while ensuring single-page output (max height controls prevent second page generation).
