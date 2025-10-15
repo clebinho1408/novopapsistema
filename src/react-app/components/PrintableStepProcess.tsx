@@ -648,6 +648,10 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                                     <div class="fee-item"><strong>${fee.name}: R$ ${parseFloat(fee.amount).toFixed(2)}</strong></div>
                                 `).join('')}
                             </div>
+                        ` : step.type === 'psicologo' ? `
+                            <div style="display: flex; align-items: center; justify-content: center; height: 80px; padding: 8px;">
+                                <div style="font-size: 20px; font-weight: bold; color: black; line-height: 1.2; text-align: center;">SERVIÇO SEM O EAR</div>
+                            </div>
                         ` : `
                             <div style="display: flex; align-items: center; justify-content: center; height: 80px;">
                                 <div style="font-size: 60px; font-weight: bold; color: black; line-height: 1;">✕</div>
