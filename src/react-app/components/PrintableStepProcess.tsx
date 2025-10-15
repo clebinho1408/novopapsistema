@@ -75,12 +75,36 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
       printWindow.document.write(printContent);
       printWindow.document.close();
       
-      // Wait for content to load, then print
+      // Wait for content to load and font adjustment to complete, then print
       printWindow.onload = () => {
-        setTimeout(() => {
-          printWindow.print();
-          printWindow.close();
-        }, 100);
+        let checkAttempts = 0;
+        const maxCheckAttempts = 100; // 5 seconds max
+        
+        const checkAdjustmentComplete = () => {
+          const container = printWindow.document.querySelector('.container');
+          const adjustedStatus = container?.getAttribute('data-adjusted');
+          
+          if (adjustedStatus === 'true') {
+            // Success - print
+            setTimeout(() => {
+              printWindow.print();
+              printWindow.close();
+            }, 100);
+          } else if (adjustedStatus === 'failed') {
+            // Failed to fit - alert and close
+            alert('ATENÇÃO: O conteúdo das instruções é muito longo e pode ser cortado na impressão. Considere reduzir o texto das instruções.');
+            printWindow.close();
+          } else if (checkAttempts < maxCheckAttempts) {
+            // Still adjusting - check again
+            checkAttempts++;
+            setTimeout(checkAdjustmentComplete, 50);
+          } else {
+            // Timeout - alert and close
+            alert('Tempo esgotado ao ajustar conteúdo para impressão.');
+            printWindow.close();
+          }
+        };
+        checkAdjustmentComplete();
       };
     }
   };
@@ -433,10 +457,14 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 margin: 0;
                 padding: 0;
                 font-size: 13px;
+                height: 100%;
+                overflow: hidden;
             }
             .container { 
                 max-width: none;
                 margin: 5mm;
+                max-height: calc(297mm - 10mm);
+                overflow: hidden;
             }
             .step-card {
                 page-break-inside: avoid;
@@ -448,11 +476,11 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 position: relative;
             }
             .instructions {
-                page-break-inside: auto;
+                page-break-inside: avoid;
             }
             .instructions-content {
-                font-size: clamp(9px, 1.3vw, 14px) !important;
-                line-height: 1.25 !important;
+                font-size: clamp(9px, 1.3vw, 14px);
+                line-height: 1.25;
             }
             .header {
                 margin-bottom: 10px;
@@ -711,6 +739,63 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             ${currentUserName ? `<p style="margin-top: 4px;">Impresso por: ${currentUserName}</p>` : ''}
         </div>
     </div>
+    <script>
+        // Auto-adjust font size to fit content in one page
+        window.addEventListener('load', function() {
+            const container = document.querySelector('.container');
+            const instructions = document.querySelector('.instructions-content');
+            
+            if (!container || !instructions) {
+                if (container) container.setAttribute('data-adjusted', 'true');
+                return;
+            }
+            
+            // Maximum height in pixels (287mm = ~1084px at 96dpi)
+            const maxHeight = 1084;
+            let fontSize = 14; // Start with default size
+            let attempts = 0;
+            const maxAttempts = 50; // Increased attempts
+            
+            function adjustFontSize() {
+                const currentHeight = container.offsetHeight;
+                
+                if (currentHeight > maxHeight && fontSize > 5 && attempts < maxAttempts) {
+                    fontSize -= 0.3; // Smaller steps for finer control
+                    instructions.style.setProperty('font-size', fontSize + 'px', 'important');
+                    instructions.style.setProperty('line-height', '1.15', 'important');
+                    attempts++;
+                    
+                    // Use requestAnimationFrame to ensure DOM has updated
+                    requestAnimationFrame(adjustFontSize);
+                } else {
+                    // Check if we succeeded or exhausted attempts
+                    if (currentHeight <= maxHeight) {
+                        // Success!
+                        container.setAttribute('data-adjusted', 'true');
+                    } else if (fontSize <= 5) {
+                        // Try one last time with minimum line-height
+                        instructions.style.setProperty('line-height', '1.05', 'important');
+                        requestAnimationFrame(() => {
+                            const finalHeight = container.offsetHeight;
+                            if (finalHeight <= maxHeight) {
+                                container.setAttribute('data-adjusted', 'true');
+                            } else {
+                                // Failed - content too long
+                                console.warn('Failed to fit content. Height:', finalHeight, 'Max:', maxHeight);
+                                container.setAttribute('data-adjusted', 'failed');
+                            }
+                        });
+                    } else {
+                        // Exhausted attempts but font not at minimum - mark as failed
+                        console.warn('Exhausted adjustment attempts. Height:', currentHeight, 'Max:', maxHeight);
+                        container.setAttribute('data-adjusted', 'failed');
+                    }
+                }
+            }
+            
+            adjustFontSize();
+        });
+    </script>
 </body>
 </html>`;
   };
