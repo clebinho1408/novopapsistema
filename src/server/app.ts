@@ -702,6 +702,8 @@ app.get("/api/process-steps", systemAuthMiddleware, async (c) => {
     : "SELECT * FROM process_steps WHERE agency_id = ? ORDER BY sort_order";
 
   const { results } = await mockEnv.DB.prepare(query).bind(user.agency_id).all();
+  
+  console.log('Process steps returned:', JSON.stringify(results, null, 2));
 
   return c.json(results);
 });
