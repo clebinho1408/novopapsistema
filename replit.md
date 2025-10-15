@@ -60,17 +60,18 @@ Do not make changes to the `worker/` folder unless explicitly instructed, as it 
 - **Backend Libraries**: Hono, `@hono/node-server/serve-static`.
 - **Utility Libraries**: `bcryptjs` for password hashing, `tsx` for running TypeScript in Node.js.
 
-## Database Configuration (October 14, 2025)
-**Migration to Neon PostgreSQL 16 (São Paulo, Brazil)**
+## Database Configuration (October 15, 2025)
+**Consolidated to Single Neon PostgreSQL Database**
 
-**Issue**: Replit PostgreSQL experiencing persistent instability (Control plane errors, connection timeouts). Initial Neon deployment in US East region also experienced outages.
+**Issue**: Previously had two databases (Replit PostgreSQL + Neon PostgreSQL) causing confusion and data inconsistency.
 
-**Solution**: Migrated to external Neon PostgreSQL 16 in São Paulo region for improved stability and low latency.
+**Solution**: Consolidated to use only Neon PostgreSQL 16 in São Paulo region for stability, low latency, and data consistency.
 
 **Current Setup**:
-- **Database**: Neon PostgreSQL 16 (South America - São Paulo, sa-east-1)
-- **Connection**: NEON_DATABASE_URL environment variable
+- **Database**: Neon PostgreSQL 16 (South America - São Paulo, sa-east-1) - SINGLE database only
+- **Connection**: NEON_DATABASE_URL environment variable (only)
 - **Admin user**: admin@bcamboriu.com / admin123
-- **Data**: All production data migrated (28 credenciados, 7 cidades, 5 etapas, 5 taxas)
+- **Data**: All production data (28 credenciados, 7 cidades, 5 etapas, 5 taxas)
 - **Retry logic**: 3 attempts with exponential backoff for connection errors
 - **Status**: ✅ Stable and operational
+- **Important**: Removed DATABASE_URL fallback to prevent dual-database issues

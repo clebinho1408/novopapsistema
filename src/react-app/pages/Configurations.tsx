@@ -114,11 +114,6 @@ function StepsConfiguration({ steps }: { steps: ProcessStep[] }) {
                   <h3 className="font-medium text-gray-900">{step.name}</h3>
                   <div className="flex items-center space-x-4 text-sm text-gray-500">
                     <span>Tipo: {step.type}</span>
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      step.is_required ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {step.is_required ? 'Obrigatória' : 'Opcional'}
-                    </span>
                   </div>
                 </div>
               </div>
