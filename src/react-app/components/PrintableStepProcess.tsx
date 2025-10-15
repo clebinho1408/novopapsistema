@@ -433,14 +433,10 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 margin: 0;
                 padding: 0;
                 font-size: 13px;
-                height: 100%;
-                overflow: hidden;
             }
             .container { 
                 max-width: none;
                 margin: 5mm;
-                max-height: calc(297mm - 10mm);
-                overflow: hidden;
             }
             .step-card {
                 page-break-inside: avoid;
@@ -452,7 +448,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 position: relative;
             }
             .instructions {
-                page-break-inside: avoid;
+                page-break-inside: auto;
             }
             .instructions-content {
                 font-size: clamp(9px, 1.3vw, 14px) !important;
