@@ -649,7 +649,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                                 `).join('')}
                             </div>
                         ` : step.type === 'psicologo' ? `
-                            <div style="display: flex; align-items: center; justify-content: center; height: 80px; padding: 8px;">
+                            <div style="display: flex; align-items: center; justify-content: center; min-height: 120px; padding: 12px;">
                                 <div style="font-size: 24px; font-weight: bold; color: black; line-height: 1.2; text-align: center;">ATENÇÃO: O CONDUTOR OPTOU POR NÃO COLOCAR O EAR NA SUA CNH</div>
                             </div>
                         ` : `
@@ -1003,6 +1003,21 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
     content += `VALOR TOTAL: R$ ${parseFloat(processData.total_amount).toFixed(2)}\n`;
     content += `======================================\n\n`;
 
+    // Verificar se exame psicológico não foi selecionado
+    const allStepsForEmail = processData.all_steps || processData.selected_steps;
+    const psicologoStep = allStepsForEmail.find(step => step.type === 'psicologo');
+    
+    if (psicologoStep) {
+      const isPsicologoSelected = processData.selected_steps.find(s => s.id === psicologoStep.id);
+      const hasPsicologoProfessional = isPsicologoSelected ? processData.selected_professionals[psicologoStep.id.toString()] : null;
+      
+      if (!hasPsicologoProfessional) {
+        content += `⚠️  AVISO IMPORTANTE:\n`;
+        content += `ATENÇÃO: O CONDUTOR OPTOU POR NÃO COLOCAR O EAR NA SUA CNH\n`;
+        content += `${'-'.repeat(40)}\n\n`;
+      }
+    }
+
     // Instruções gerais
     if (generalInstructions) {
       content += `INSTRUÇÕES GERAIS:\n`;
@@ -1246,6 +1261,10 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                               {fee.name}: R$ {parseFloat(fee.amount).toFixed(2)}
                             </div>
                           ))}
+                        </div>
+                      ) : step.type === 'psicologo' ? (
+                        <div className="flex items-center justify-center min-h-[120px] p-3">
+                          <div className="text-2xl font-bold text-black leading-tight text-center">ATENÇÃO: O CONDUTOR OPTOU POR NÃO COLOCAR O EAR NA SUA CNH</div>
                         </div>
                       ) : (
                         <div className="flex items-center justify-center h-16">
