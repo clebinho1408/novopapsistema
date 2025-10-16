@@ -28,6 +28,7 @@ export default function StepProcess() {
     professionalId: 0
   });
 
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     city_id: '',
     client_name: '',
@@ -353,6 +354,7 @@ export default function StepProcess() {
         return;
       }
 
+      setIsSaving(true);
       console.log('Submitting form data:', formData);
 
       // Incluir taxas vinculadas automaticamente
@@ -446,6 +448,8 @@ export default function StepProcess() {
     } catch (error) {
       console.error('Error creating process:', error);
       alert('Erro de conexão. Verifique sua internet e tente novamente.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -804,11 +808,23 @@ export default function StepProcess() {
                     ) : (
                       <button
                         onClick={handleSubmit}
-                        disabled={formData.selected_steps.length === 0}
+                        disabled={formData.selected_steps.length === 0 || isSaving}
                         className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 font-medium"
                       >
-                        <CheckCircle className="w-5 h-5" />
-                        <span>Salvar e Imprimir</span>
+                        {isSaving ? (
+                          <>
+                            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span>Salvando...</span>
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle className="w-5 h-5" />
+                            <span>Salvar e Imprimir</span>
+                          </>
+                        )}
                       </button>
                     )}
                   </div>
