@@ -29,6 +29,7 @@ export default function StepProcess() {
   });
 
   const [isSaving, setIsSaving] = useState(false);
+  const [instructions, setInstructions] = useState<{ general_instructions?: string; required_documents?: string }>({});
   const [formData, setFormData] = useState({
     city_id: '',
     client_name: '',
@@ -133,24 +134,27 @@ export default function StepProcess() {
 
   const fetchData = async () => {
     try {
-      const [citiesRes, stepsRes, feesRes, profRes] = await Promise.all([
+      const [citiesRes, stepsRes, feesRes, profRes, instructionsRes] = await Promise.all([
         fetch('/api/cities', { credentials: 'include' }),
         fetch('/api/process-steps?active_only=true', { credentials: 'include' }),
         fetch('/api/fees', { credentials: 'include' }),
-        fetch('/api/professionals', { credentials: 'include' })
+        fetch('/api/professionals', { credentials: 'include' }),
+        fetch('/api/instructions', { credentials: 'include' })
       ]);
 
-      const [citiesData, stepsData, feesData, profData] = await Promise.all([
+      const [citiesData, stepsData, feesData, profData, instructionsData] = await Promise.all([
         citiesRes.json(),
         stepsRes.json(),
         feesRes.json(),
-        profRes.json()
+        profRes.json(),
+        instructionsRes.json()
       ]);
 
       setCities(citiesData);
       setProcessSteps(stepsData);
       setFees(feesData);
       setProfessionals(profData);
+      setInstructions(instructionsData);
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -421,7 +425,8 @@ export default function StepProcess() {
           selected_professionals: selectedProfessionals,
           selected_fees: selectedFees,
           total_amount: calculateTotal(),
-          show_toxicologico_message: formData.show_toxicologico_message
+          show_toxicologico_message: formData.show_toxicologico_message,
+          general_instructions: instructions.general_instructions || ''
         };
 
         // Show print modal immediately
@@ -470,7 +475,8 @@ export default function StepProcess() {
           selected_professionals: data.professionals || {},
           selected_fees: data.fees || [],
           total_amount: process.total_amount || 0,
-          show_toxicologico_message: data.show_toxicologico_message || false
+          show_toxicologico_message: data.show_toxicologico_message || false,
+          general_instructions: instructions.general_instructions || ''
         };
         setCurrentPrintData(printData);
         setShowPrintModal(true);
@@ -485,7 +491,8 @@ export default function StepProcess() {
           all_steps: processSteps, // Todas as etapas disponíveis
           selected_professionals: {},
           selected_fees: [],
-          total_amount: process.total_amount || 0
+          total_amount: process.total_amount || 0,
+          general_instructions: instructions.general_instructions || ''
         };
         setCurrentPrintData(printData);
         setShowPrintModal(true);
