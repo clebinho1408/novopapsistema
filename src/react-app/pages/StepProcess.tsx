@@ -677,25 +677,43 @@ export default function StepProcess() {
                 {currentStep === 3 && (
                   <div>
                     <h2 className="text-lg font-medium text-gray-900 mb-4">Selecione as Taxas Aplicáveis</h2>
-                    <div className="space-y-3">
-                      {fees.filter(fee => {
-                        // Mostrar taxas sem vínculo OU taxa da prova
-                        // Taxas vinculadas a médico/psicólogo NÃO aparecem (são automáticas)
-                        return !fee.linked_professional_type || fee.linked_professional_type === 'prova';
-                      }).map(fee => (
-                        <label key={fee.id} className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
-                            <input
-                              type="checkbox"
-                              checked={formData.selected_fees.includes(fee.id)}
-                              onChange={() => handleFeeToggle(fee.id)}
-                              className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                            />
-                            <span className="text-gray-900">{fee.name}</span>
+                    {(() => {
+                      const taxaStep = processSteps.find(step => step.type === 'taxa');
+                      const isTaxaStepSelected = taxaStep && formData.selected_steps.includes(taxaStep.id);
+                      
+                      return (
+                        <>
+                          {!isTaxaStepSelected && (
+                            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                              <p className="text-sm text-yellow-800">
+                                ⚠️ A etapa "Taxa" não está selecionada. Selecione-a no passo anterior para habilitar as taxas.
+                              </p>
+                            </div>
+                          )}
+                          <div className="space-y-3">
+                            {fees.filter(fee => {
+                              // Mostrar taxas sem vínculo OU taxa da prova
+                              // Taxas vinculadas a médico/psicólogo NÃO aparecem (são automáticas)
+                              return !fee.linked_professional_type || fee.linked_professional_type === 'prova';
+                            }).map(fee => (
+                              <label key={fee.id} className={`flex items-center justify-between ${!isTaxaStepSelected ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                <div className="flex items-center space-x-3">
+                                  <input
+                                    type="checkbox"
+                                    checked={formData.selected_fees.includes(fee.id)}
+                                    onChange={() => handleFeeToggle(fee.id)}
+                                    disabled={!isTaxaStepSelected}
+                                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 disabled:cursor-not-allowed"
+                                  />
+                                  <span className="text-gray-900">{fee.name}</span>
+                                </div>
+                                <span className="text-gray-600 font-medium">R$ {parseFloat(fee.amount).toFixed(2)}</span>
+                              </label>
+                            ))}
                           </div>
-                          <span className="text-gray-600 font-medium">R$ {parseFloat(fee.amount).toFixed(2)}</span>
-                        </label>
-                      ))}
+                        </>
+                      );
+                    })()}
                     </div>
                     <div className="mt-6 p-4 bg-gray-50 rounded-lg">
                       <div className="flex justify-between items-center">
