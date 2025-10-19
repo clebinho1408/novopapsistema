@@ -20,8 +20,17 @@ Do not make changes to the `worker/` folder unless explicitly instructed, as it 
 - **Multi-tenancy**: Isolated data for each agency.
 - **User Roles**: Three-tier permission system: Administrator (full access), Supervisor (access to specific pages, create/edit but no delete), and Collaborator (access to own processes).
 - **Process Automation**:
-    - Automatic "Taxa" step selection when any "Serviço" is selected.
-    - Intelligent fee auto-selection based on service name keywords: "Renovação" → "Emissão da CNH", "Transferência" → "Transferência" fee, "2º Via" → "2º Via" fee (combinations work automatically, e.g., "Transferência + Renovação" selects both fees).
+    - Intelligent auto-selection of steps and fees based on selected service:
+        * **Alteração de Dados**: Auto-selects Foto, Taxa steps + Emissão da CNH fee
+        * **Alteração de Dados + EAR**: Auto-selects Foto, Taxa, Exame Psicológico steps + Emissão da CNH fee
+        * **Renovação**: Auto-selects Foto, Taxa, Exame Médico steps + Emissão da CNH fee
+        * **Renovação + EAR**: Auto-selects Foto, Taxa, Exame Psicológico, Exame Médico steps + Emissão da CNH fee
+        * **Transferência + Renovação**: Auto-selects Foto, Taxa, Exame Médico steps + Emissão da CNH, Transferência fees
+        * **Transferência + Renovação + EAR**: Auto-selects Foto, Taxa, Exame Psicológico, Exame Médico steps + Emissão da CNH, Transferência fees
+        * **Transferência + Alteração de Dados**: Auto-selects Foto, Taxa steps + Emissão da CNH, Transferência fees
+        * **Transferência + Alteração de Dados + EAR**: Auto-selects Foto, Taxa, Exame Psicológico steps + Emissão da CNH, Transferência fees
+        * **Transferência + Definitiva**: Auto-selects Foto, Taxa steps + Emissão da CNH, Transferência fees
+        * **Transferência + 2º Via**: Auto-selects Foto, Taxa steps + 2º Via, Transferência fees
     - Automatic selection of "Foto" professional for a city if available and the "Foto" step is selected.
     - Automatic selection/deselection of "Prova" fee when a "Prova" credenciado is chosen/unchosen (fee is always disabled for manual selection).
     - Fee selection disabled when "Taxa" step is not selected.

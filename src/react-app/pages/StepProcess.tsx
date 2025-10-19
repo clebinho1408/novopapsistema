@@ -51,40 +51,87 @@ export default function StepProcess() {
     const transferenciaFee = fees.find(f => f.name === 'Transferência');
     const segundaViaFee = fees.find(f => f.name === '2º Via');
     
+    const fotoStep = processSteps.find(step => step.type === 'foto');
+    const taxaStep = processSteps.find(step => step.type === 'taxa');
+    const psicologicoStep = processSteps.find(step => step.type === 'psicologo');
+    const medicoStep = processSteps.find(step => step.type === 'medico');
+    
     if (!emissaoCNHFee || !transferenciaFee) return;
     
     setFormData(prev => {
-      let newSelectedFees = [...prev.selected_fees];
-      let newSelectedSteps = [...prev.selected_steps];
-      
       const serviceName = prev.client_name;
-      const taxaStep = processSteps.find(step => step.type === 'taxa');
+      let newSelectedFees: number[] = [];
+      let newSelectedSteps: number[] = [];
       
-      // Auto-selecionar etapa Taxa sempre que houver serviço selecionado
-      if (taxaStep && !newSelectedSteps.includes(taxaStep.id)) {
-        newSelectedSteps.push(taxaStep.id);
-      }
+      // Definir regras de auto-seleção para cada serviço
+      const serviceRules: Record<string, { steps: string[], fees: string[] }> = {
+        'Alteração de Dados': {
+          steps: ['foto', 'taxa'],
+          fees: ['Emissão da CNH']
+        },
+        'Alteração de Dados + EAR': {
+          steps: ['foto', 'taxa', 'psicologo'],
+          fees: ['Emissão da CNH']
+        },
+        'Renovação': {
+          steps: ['foto', 'taxa', 'medico'],
+          fees: ['Emissão da CNH']
+        },
+        'Renovação + EAR': {
+          steps: ['foto', 'taxa', 'psicologo', 'medico'],
+          fees: ['Emissão da CNH']
+        },
+        'Transferência + Renovação': {
+          steps: ['foto', 'taxa', 'medico'],
+          fees: ['Emissão da CNH', 'Transferência']
+        },
+        'Transferência + Renovação + EAR': {
+          steps: ['foto', 'taxa', 'psicologo', 'medico'],
+          fees: ['Emissão da CNH', 'Transferência']
+        },
+        'Transferência + Alteração de Dados': {
+          steps: ['foto', 'taxa'],
+          fees: ['Emissão da CNH', 'Transferência']
+        },
+        'Transferência + Alteração de Dados + EAR': {
+          steps: ['foto', 'taxa', 'psicologo'],
+          fees: ['Emissão da CNH', 'Transferência']
+        },
+        'Transferência + Definitiva': {
+          steps: ['foto', 'taxa'],
+          fees: ['Emissão da CNH', 'Transferência']
+        },
+        'Transferência + 2º Via': {
+          steps: ['foto', 'taxa'],
+          fees: ['2º Via', 'Transferência']
+        }
+      };
       
-      // Remover todas as taxas automáticas primeiro
-      newSelectedFees = newSelectedFees.filter(id => 
-        id !== emissaoCNHFee.id && id !== transferenciaFee.id && (!segundaViaFee || id !== segundaViaFee.id)
-      );
+      const rule = serviceRules[serviceName];
       
-      // Auto-selecionar taxas baseado no nome do serviço
-      if (serviceName.includes('Renovação')) {
-        if (!newSelectedFees.includes(emissaoCNHFee.id)) {
+      if (rule) {
+        // Auto-selecionar etapas baseado na regra
+        if (rule.steps.includes('foto') && fotoStep) {
+          newSelectedSteps.push(fotoStep.id);
+        }
+        if (rule.steps.includes('taxa') && taxaStep) {
+          newSelectedSteps.push(taxaStep.id);
+        }
+        if (rule.steps.includes('psicologo') && psicologicoStep) {
+          newSelectedSteps.push(psicologicoStep.id);
+        }
+        if (rule.steps.includes('medico') && medicoStep) {
+          newSelectedSteps.push(medicoStep.id);
+        }
+        
+        // Auto-selecionar taxas baseado na regra
+        if (rule.fees.includes('Emissão da CNH')) {
           newSelectedFees.push(emissaoCNHFee.id);
         }
-      }
-      
-      if (serviceName.includes('Transferência')) {
-        if (!newSelectedFees.includes(transferenciaFee.id)) {
+        if (rule.fees.includes('Transferência')) {
           newSelectedFees.push(transferenciaFee.id);
         }
-      }
-      
-      if (serviceName.includes('2º Via') && segundaViaFee) {
-        if (!newSelectedFees.includes(segundaViaFee.id)) {
+        if (rule.fees.includes('2º Via') && segundaViaFee) {
           newSelectedFees.push(segundaViaFee.id);
         }
       }
