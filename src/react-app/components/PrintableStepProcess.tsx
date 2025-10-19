@@ -447,7 +447,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             page-break-before: avoid;
         }
         .footer p {
-            font-size: 10px;
+            font-size: 11px;
             margin: 0;
         }
         @media print {
