@@ -54,21 +54,12 @@ export default function StepProcess() {
     
     setFormData(prev => {
       let newSelectedFees = [...prev.selected_fees];
-      let newSelectedSteps = [...prev.selected_steps];
-      
-      // Encontrar a etapa "Taxa"
-      const taxaStep = processSteps.find(step => step.type === 'taxa');
       
       if (prev.client_name === 'Renovação') {
         if (!newSelectedFees.includes(emissaoCNHFee.id)) {
           newSelectedFees.push(emissaoCNHFee.id);
         }
         newSelectedFees = newSelectedFees.filter(id => id !== transferenciaFee.id);
-        
-        // Auto-selecionar etapa Taxa se houver
-        if (taxaStep && !newSelectedSteps.includes(taxaStep.id)) {
-          newSelectedSteps.push(taxaStep.id);
-        }
       } else if (prev.client_name === 'Renovação + Transferência') {
         if (!newSelectedFees.includes(emissaoCNHFee.id)) {
           newSelectedFees.push(emissaoCNHFee.id);
@@ -76,20 +67,15 @@ export default function StepProcess() {
         if (!newSelectedFees.includes(transferenciaFee.id)) {
           newSelectedFees.push(transferenciaFee.id);
         }
-        
-        // Auto-selecionar etapa Taxa se houver
-        if (taxaStep && !newSelectedSteps.includes(taxaStep.id)) {
-          newSelectedSteps.push(taxaStep.id);
-        }
       } else {
         newSelectedFees = newSelectedFees.filter(id => 
           id !== emissaoCNHFee.id && id !== transferenciaFee.id
         );
       }
       
-      return { ...prev, selected_fees: newSelectedFees, selected_steps: newSelectedSteps };
+      return { ...prev, selected_fees: newSelectedFees };
     });
-  }, [formData.client_name, fees, processSteps]);
+  }, [formData.client_name, fees]);
 
   // Auto-selecionar credenciado de Foto quando a cidade mudar
   useEffect(() => {
@@ -711,31 +697,30 @@ export default function StepProcess() {
                               </label>
                             ))}
                           </div>
+                          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                            <div className="flex justify-between items-center">
+                              <span className="text-lg font-medium text-gray-900">Total:</span>
+                              <span className="text-2xl font-bold text-blue-600">R$ {calculateTotal().toFixed(2)}</span>
+                            </div>
+                            {/* Mostrar informação sobre taxas vinculadas */}
+                            {fees.some(fee => {
+                              if (!fee.linked_professional_type) return false;
+                              const hasLinkedProfessional = formData.selected_steps.some(stepId => {
+                                const step = processSteps.find(s => s.id === stepId);
+                                const professionalId = formData.selected_professionals[stepId];
+                                const professional = professionals.find(p => p.id === professionalId);
+                                return step?.type === fee.linked_professional_type && professional;
+                              });
+                              return hasLinkedProfessional;
+                            }) && (
+                              <div className="mt-2 text-sm text-gray-600">
+                                * Total inclui taxas vinculadas aos profissionais selecionados
+                              </div>
+                            )}
+                          </div>
                         </>
                       );
                     })()}
-                    </div>
-                    <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                      <div className="flex justify-between items-center">
-                        <span className="text-lg font-medium text-gray-900">Total:</span>
-                        <span className="text-2xl font-bold text-blue-600">R$ {calculateTotal().toFixed(2)}</span>
-                      </div>
-                      {/* Mostrar informação sobre taxas vinculadas */}
-                      {fees.some(fee => {
-                        if (!fee.linked_professional_type) return false;
-                        const hasLinkedProfessional = formData.selected_steps.some(stepId => {
-                          const step = processSteps.find(s => s.id === stepId);
-                          const professionalId = formData.selected_professionals[stepId];
-                          const professional = professionals.find(p => p.id === professionalId);
-                          return step?.type === fee.linked_professional_type && professional;
-                        });
-                        return hasLinkedProfessional;
-                      }) && (
-                        <div className="mt-2 text-sm text-gray-600">
-                          * Total inclui taxas vinculadas aos profissionais selecionados
-                        </div>
-                      )}
-                    </div>
                   </div>
                 )}
 
