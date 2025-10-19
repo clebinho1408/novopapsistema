@@ -700,21 +700,31 @@ export default function StepProcess() {
                               // Mostrar taxas sem vínculo OU taxa da prova
                               // Taxas vinculadas a médico/psicólogo NÃO aparecem (são automáticas)
                               return !fee.linked_professional_type || fee.linked_professional_type === 'prova';
-                            }).map(fee => (
-                              <label key={fee.id} className={`flex items-center justify-between ${!isTaxaStepSelected ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                                <div className="flex items-center space-x-3">
-                                  <input
-                                    type="checkbox"
-                                    checked={formData.selected_fees.includes(fee.id)}
-                                    onChange={() => handleFeeToggle(fee.id)}
-                                    disabled={!isTaxaStepSelected}
-                                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 disabled:cursor-not-allowed"
-                                  />
-                                  <span className="text-gray-900">{fee.name}</span>
-                                </div>
-                                <span className="text-gray-600 font-medium">R$ {parseFloat(fee.amount).toFixed(2)}</span>
-                              </label>
-                            ))}
+                            }).map(fee => {
+                              const isProvaFee = fee.name === 'Prova';
+                              const isFeeDisabled = !isTaxaStepSelected || isProvaFee;
+                              
+                              return (
+                                <label key={fee.id} className={`flex items-center justify-between ${isFeeDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                  <div className="flex items-center space-x-3">
+                                    <input
+                                      type="checkbox"
+                                      checked={formData.selected_fees.includes(fee.id)}
+                                      onChange={() => handleFeeToggle(fee.id)}
+                                      disabled={isFeeDisabled}
+                                      className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 disabled:cursor-not-allowed"
+                                    />
+                                    <span className="text-gray-900">
+                                      {fee.name}
+                                      {isProvaFee && (
+                                        <span className="ml-2 text-xs text-gray-500">(automática)</span>
+                                      )}
+                                    </span>
+                                  </div>
+                                  <span className="text-gray-600 font-medium">R$ {parseFloat(fee.amount).toFixed(2)}</span>
+                                </label>
+                              );
+                            })}
                           </div>
                           <div className="mt-6 p-4 bg-gray-50 rounded-lg">
                             <div className="flex justify-between items-center">
