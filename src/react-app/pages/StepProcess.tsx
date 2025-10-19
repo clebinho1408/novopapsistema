@@ -171,6 +171,7 @@ export default function StepProcess() {
 
       setCities(citiesData);
       setProcessSteps(stepsData);
+      console.log('📊 Taxas carregadas:', feesData.length, feesData.map((f: Fee) => f.name));
       setFees(feesData);
       setProfessionals(profData);
       setInstructions(instructionsData);

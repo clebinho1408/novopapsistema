@@ -33,6 +33,7 @@ export default function Configurations() {
     try {
       const response = await fetch('/api/fees', { credentials: 'include' });
       const data = await response.json();
+      console.log('💰 Taxas recebidas em Configurações:', data.length, data.map((f: Fee) => f.name));
       setFees(data);
     } catch (error) {
       console.error('Error fetching fees:', error);
