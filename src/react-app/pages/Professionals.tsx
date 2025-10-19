@@ -132,7 +132,7 @@ export default function Professionals() {
       });
 
       if (response.ok) {
-        const result = await response.json();
+        await response.json();
         fetchProfessionals();
         setIsModalOpen(false);
         resetForm();
