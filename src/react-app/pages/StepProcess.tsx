@@ -156,7 +156,7 @@ export default function StepProcess() {
       const [citiesRes, stepsRes, feesRes, profRes, instructionsRes] = await Promise.all([
         fetch('/api/cities', { credentials: 'include' }),
         fetch('/api/process-steps?active_only=true', { credentials: 'include' }),
-        fetch('/api/fees', { credentials: 'include' }),
+        fetch(`/api/fees?t=${Date.now()}`, { credentials: 'include', cache: 'no-cache' }),
         fetch('/api/professionals', { credentials: 'include' }),
         fetch('/api/instructions', { credentials: 'include' })
       ]);

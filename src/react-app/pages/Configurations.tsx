@@ -31,7 +31,7 @@ export default function Configurations() {
 
   const fetchFees = async () => {
     try {
-      const response = await fetch('/api/fees', { credentials: 'include' });
+      const response = await fetch(`/api/fees?t=${Date.now()}`, { credentials: 'include', cache: 'no-cache' });
       const data = await response.json();
       console.log('💰 Taxas recebidas em Configurações:', data.length, data.map((f: Fee) => f.name));
       setFees(data);

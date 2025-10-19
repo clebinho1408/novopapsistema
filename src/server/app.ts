@@ -794,6 +794,7 @@ app.get("/api/fees", systemAuthMiddleware, async (c) => {
     "SELECT * FROM fees WHERE agency_id = ? ORDER BY id"
   ).bind(user.agency_id).all();
 
+  console.log('🔥 API /api/fees retornando:', results.length, 'taxas:', results.map((f: any) => f.name));
   return c.json(results);
 });
 
