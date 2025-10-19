@@ -43,11 +43,12 @@ Do not make changes to the `worker/` folder unless explicitly instructed, as it 
     4. Exame Médico
     5. Prova
 - **Fee Configuration**: Fixed sequence of fees (value-editable only, non-deletable):
-    1. Emissão da CNH
-    2. Transferência
-    3. Prova
+    1. Emissão da CNH (no linkage)
+    2. Transferência (no linkage)
+    3. Prova (auto-managed, linked to 'prova' credenciado selection)
     4. Médico (linked to 'medico' credenciado)
     5. Psicólogo (linked to 'psicologo' credenciado)
+    6. 2º Via (no linkage, default system tax)
 - **Step-by-Step Processes**: Create, track, and manage individual driver's license application workflows.
 - **Dynamic Forms**: "Serviço" dropdown (Renovação, Renovação + Transferência) in step process form.
 - **Print Optimization**: Intelligent auto-sizing system that automatically reduces instruction font size (14px → 5px) and line-height (1.1 → 1.0) to fit all content on a single page. Reduced line spacing for more compact display.
@@ -80,7 +81,7 @@ Do not make changes to the `worker/` folder unless explicitly instructed, as it 
 - **Database**: Neon PostgreSQL 16 (South America - São Paulo, sa-east-1) - SINGLE database only
 - **Connection**: NEON_DATABASE_URL environment variable (only)
 - **Admin user**: admin@bcamboriu.com / admin123
-- **Data**: All production data (28 credenciados, 7 cidades, 5 etapas, 5 taxas)
+- **Data**: All production data (28 credenciados, 7 cidades, 5 etapas, 6 taxas)
 - **Retry logic**: 3 attempts with exponential backoff for connection errors
 - **Status**: ✅ Stable and operational
 - **Important**: Removed DATABASE_URL fallback to prevent dual-database issues

@@ -155,17 +155,18 @@ app.post('/api/auth/register', async (c) => {
 
     // Create default fees (fixed sequence)
     const defaultFees = [
-      { name: 'Emissão da CNH', amount: 101.51, sort_order: 1, linked_professional_type: null },
-      { name: 'Transferência', amount: 53.37, sort_order: 2, linked_professional_type: null },
-      { name: 'Prova', amount: 0, sort_order: 3, linked_professional_type: null },
-      { name: 'Médico', amount: 0, sort_order: 4, linked_professional_type: 'medico' },
-      { name: 'Psicólogo', amount: 0, sort_order: 5, linked_professional_type: 'psicologo' },
+      { name: 'Emissão da CNH', amount: 101.51, linked_professional_type: null },
+      { name: 'Transferência', amount: 53.37, linked_professional_type: null },
+      { name: 'Prova', amount: 0, linked_professional_type: null },
+      { name: 'Médico', amount: 0, linked_professional_type: 'medico' },
+      { name: 'Psicólogo', amount: 0, linked_professional_type: 'psicologo' },
+      { name: '2º Via', amount: 0, linked_professional_type: null },
     ];
 
     for (const fee of defaultFees) {
       await mockEnv.DB.prepare(
-        "INSERT INTO fees (agency_id, name, amount, sort_order, linked_professional_type, is_active) VALUES (?, ?, ?, ?, ?, ?)"
-      ).bind(agencyResult.id, fee.name, fee.amount, fee.sort_order, fee.linked_professional_type, true).run();
+        "INSERT INTO fees (agency_id, name, amount, linked_professional_type, is_active) VALUES (?, ?, ?, ?, ?)"
+      ).bind(agencyResult.id, fee.name, fee.amount, fee.linked_professional_type, true).run();
     }
 
     // Create session for the new user
@@ -790,7 +791,7 @@ app.get("/api/fees", systemAuthMiddleware, async (c) => {
   if (!user) return c.json({ error: "User not found" }, 404);
 
   const { results } = await mockEnv.DB.prepare(
-    "SELECT * FROM fees WHERE agency_id = ? ORDER BY sort_order, id"
+    "SELECT * FROM fees WHERE agency_id = ? ORDER BY id"
   ).bind(user.agency_id).all();
 
   return c.json(results);

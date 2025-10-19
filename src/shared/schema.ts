@@ -103,11 +103,10 @@ export const fees = pgTable('fees', {
   agencyId: integer('agency_id').notNull().references(() => agencies.id),
   name: text('name').notNull(),
   amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
+  linkedProfessionalType: text('linked_professional_type'),
   isActive: boolean('is_active').default(true),
-  sortOrder: integer('sort_order').default(0),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
-  linkedProfessionalType: text('linked_professional_type'),
 }, (table) => ({
   agencyIdx: index('idx_fees_agency_id').on(table.agencyId),
 }));
