@@ -563,24 +563,10 @@ app.post("/api/professionals", systemAuthMiddleware, async (c) => {
   if (user.role !== 'administrator' && user.role !== 'supervisor') return c.json({ error: "Acesso negado" }, 403);
 
   try {
-    // Parse the raw request body for detailed debugging
-    const rawBody = await c.req.text();
-    console.log('=== BACKEND DEBUGGING ===');
-    console.log('Raw request body:', rawBody);
+    const body = await c.req.json();
 
-    let body;
-    try {
-      body = JSON.parse(rawBody);
-      console.log('Parsed body:', body);
-    } catch (parseError) {
-      console.error('JSON parse error:', parseError);
-      return c.json({ error: "Dados JSON inválidos" }, 400);
-    }
-
-    // Validate with Zod manually to get detailed error messages
     const validation = CreateProfessionalRequestSchema.safeParse(body);
     if (!validation.success) {
-      console.error('Validation failed:', validation.error.format());
       const errorMessages = validation.error.issues.map(issue => 
         `${issue.path.join('.')}: ${issue.message}`
       ).join(', ');
@@ -591,7 +577,6 @@ app.post("/api/professionals", systemAuthMiddleware, async (c) => {
     }
 
     const validatedBody = validation.data;
-    console.log('Validated body:', validatedBody);
 
     const result = await mockEnv.DB.prepare(
       "INSERT INTO professionals (agency_id, name, type, city_id, phone, email, address, observations, attendance_type, working_days, working_hours) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *"
@@ -794,7 +779,6 @@ app.get("/api/fees", systemAuthMiddleware, async (c) => {
     "SELECT * FROM fees WHERE agency_id = ? ORDER BY id"
   ).bind(user.agency_id).all();
 
-  console.log('🔥 API /api/fees retornando:', results.length, 'taxas:', results.map((f: any) => f.name));
   return c.json(results);
 });
 

@@ -120,11 +120,6 @@ export default function Professionals() {
       if (trimmedWorkingHours) {
         requestData.working_hours = trimmedWorkingHours;
       }
-
-      console.log('=== DEBUGGING PROFESSIONAL CREATION ===');
-      console.log('Request URL:', url);
-      console.log('Request method:', method);
-      console.log('Request data:', requestData);
       
       const response = await fetch(url, {
         method,
@@ -136,34 +131,16 @@ export default function Professionals() {
         body: JSON.stringify(requestData),
       });
 
-      console.log('Response status:', response.status);
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-
-      // Primeiro tentar ler como texto para debug
-      const responseText = await response.text();
-      console.log('Raw response text:', responseText);
-
       if (response.ok) {
-        try {
-          const result = JSON.parse(responseText);
-          console.log('Parsed success result:', result);
-          fetchProfessionals();
-          setIsModalOpen(false);
-          resetForm();
-        } catch (parseError) {
-          console.error('Failed to parse success response:', parseError);
-          alert('Credenciado salvo, mas erro ao processar resposta');
-          fetchProfessionals();
-          setIsModalOpen(false);
-          resetForm();
-        }
+        const result = await response.json();
+        fetchProfessionals();
+        setIsModalOpen(false);
+        resetForm();
       } else {
         let errorMessage = 'Erro ao salvar credenciado';
         
         try {
-          const errorData = JSON.parse(responseText);
-          console.error('Parsed error response:', errorData);
-          
+          const errorData = await response.json();
           if (errorData && typeof errorData === 'object') {
             if (typeof errorData.error === 'string') {
               errorMessage = errorData.error;
@@ -174,22 +151,12 @@ export default function Professionals() {
             }
           }
         } catch (parseError) {
-          console.error('Failed to parse error response:', parseError);
           errorMessage = `Erro HTTP ${response.status}: ${response.statusText || 'Erro desconhecido'}`;
         }
         
-        console.error('Final error message:', errorMessage);
         alert(errorMessage);
       }
     } catch (networkError: any) {
-      console.error('=== NETWORK ERROR ===');
-      console.error('Network error details:', {
-        name: networkError?.name,
-        message: networkError?.message,
-        stack: networkError?.stack,
-        toString: networkError?.toString?.()
-      });
-      
       let errorMessage = 'Erro de conexão com o servidor';
       
       if (networkError instanceof Error) {
@@ -200,7 +167,6 @@ export default function Professionals() {
         errorMessage = 'Erro de conexão desconhecido';
       }
       
-      console.error('Final network error message:', errorMessage);
       alert(errorMessage);
     } finally {
       setIsLoading(false);
@@ -220,12 +186,9 @@ export default function Professionals() {
         fetchProfessionals();
         alert('Credenciado excluído com sucesso!');
       } else {
-        const errorData = await response.text();
-        console.error('Delete error:', errorData);
         alert('Erro ao excluir credenciado. Tente novamente.');
       }
     } catch (error) {
-      console.error('Error deleting professional:', error);
       const errorMessage = error instanceof Error ? error.message : 'Erro de conexão';
       alert(`Erro ao excluir credenciado: ${errorMessage}`);
     }
