@@ -59,7 +59,7 @@ Do not make changes to the `worker/` folder unless explicitly instructed, as it 
     5. Psicólogo (linked to 'psicologo' credenciado)
     6. 2º Via (no linkage, default system tax)
 - **Step-by-Step Processes**: Create, track, and manage individual driver's license application workflows.
-- **Dynamic Forms**: "Serviço" dropdown with 10 service options (Alteração de Dados, Alteração de Dados + EAR, Renovação, Renovação + EAR, Transferência + 2º Via, Transferência + Alteração de Dados, Transferência + Alteração de Dados + EAR, Transferência + Definitiva, Transferência + Renovação, Transferência + Renovação + EAR) in alphabetical order.
+- **Dynamic Forms**: "Serviço" dropdown with 10 service options in specific order: Alteração de Dados, Alteração de Dados + EAR, Renovação, Renovação + EAR, Transferência + Renovação, Transferência + Renovação + EAR, Transferência + Alteração de Dados, Transferência + Alteração de Dados + EAR, Transferência + Definitiva, Transferência + 2º Via.
 - **Print Optimization**: Intelligent auto-sizing system that automatically reduces instruction font size (14px → 5px) and line-height (1.1 → 1.0) to fit all content on a single page. Reduced line spacing for more compact display.
 - **Print Instructions**: Hide semicolons (;) in print view only, no user warnings, always proceed with print.
 - **Special Messages**: When Exame Psicológico is not selected, displays "ATENÇÃO: O CONDUTOR OPTOU POR NÃO COLOCAR O EAR NA SUA CNH" instead of X mark.
