@@ -624,7 +624,8 @@ export default function StepProcess() {
                       ))}
                     </select>
                     <div className="mt-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Serviço (opcional)</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Serviço (opcional)</label>
+                      <p className="text-xs text-gray-500 mb-2">Este campo preencherá automaticamente as Etapas e Taxas, conforme o Serviço selecionado</p>
                       <select
                         value={formData.client_name}
                         onChange={(e) => setFormData(prev => ({ ...prev, client_name: e.target.value }))}
