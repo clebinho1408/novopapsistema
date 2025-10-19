@@ -23,7 +23,8 @@ Do not make changes to the `worker/` folder unless explicitly instructed, as it 
     - Automatic "Taxa" step selection based on "Serviço" (e.g., "Renovação" or "Renovação + Transferência" automatically selects the "Taxa" step).
     - Automatic fee selection based on "Serviço" (e.g., "Renovação" selects "Emissão da CNH", "Renovação + Transferência" selects both "Emissão da CNH" and "Transferência").
     - Automatic selection of "Foto" professional for a city if available and the "Foto" step is selected.
-    - Automatic selection/deselection of "Prova" fee when a "Prova" credenciado is chosen/unchosen.
+    - Automatic selection/deselection of "Prova" fee when a "Prova" credenciado is chosen/unchosen (fee is always disabled for manual selection).
+    - Fee selection disabled when "Taxa" step is not selected.
 - **Authentication**: Custom session-based system with HTTP-only cookies, bcryptjs for password hashing, and 30-day session expiration.
 - **Development Architecture**: Dual server setup: Vite for frontend (port 5000) and Hono/Node.js for backend API (port 3000), with Vite proxying `/api/*` requests.
 - **Production Architecture**: Single Node.js server (port 5000) serving both static frontend files (from `dist/client/`) and API endpoints via Hono, using `@hono/node-server/serve-static`.
