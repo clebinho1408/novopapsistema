@@ -22,14 +22,28 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
   const [generalInstructions, setGeneralInstructions] = useState<string>('');
   const [emailModal, setEmailModal] = useState({ isOpen: false, email: '' });
   const [currentUserName, setCurrentUserName] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (isOpen) {
-      checkAgencyLogo();
-      fetchInstructions();
-      fetchCurrentUser();
+      loadAllData();
     }
   }, [isOpen]);
+
+  const loadAllData = async () => {
+    setIsLoading(true);
+    try {
+      await Promise.all([
+        checkAgencyLogo(),
+        fetchInstructions(),
+        fetchCurrentUser()
+      ]);
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const checkAgencyLogo = async () => {
     try {
@@ -1063,16 +1077,21 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
         <div className="flex justify-between items-center p-4 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-900">Passo a Passo - Visualização</h2>
           <div className="flex items-center space-x-2">
+            {isLoading && (
+              <span className="text-sm text-gray-600 mr-2">Carregando instruções...</span>
+            )}
             <button
               onClick={() => setEmailModal({ isOpen: true, email: '' })}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              disabled={isLoading}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Mail className="w-4 h-4" />
               <span>Enviar por Email</span>
             </button>
             <button
               onClick={handlePrint}
-              className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              disabled={isLoading}
+              className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Printer className="w-4 h-4" />
               <span>Imprimir</span>
