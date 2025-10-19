@@ -69,7 +69,7 @@ export default function StepProcess() {
         if (taxaStep && !newSelectedSteps.includes(taxaStep.id)) {
           newSelectedSteps.push(taxaStep.id);
         }
-      } else if (prev.client_name === 'Renovação + Transferência') {
+      } else if (prev.client_name === 'Transferência + Renovação') {
         if (!newSelectedFees.includes(emissaoCNHFee.id)) {
           newSelectedFees.push(emissaoCNHFee.id);
         }
@@ -588,7 +588,7 @@ export default function StepProcess() {
                       >
                         <option value="">Selecione um serviço</option>
                         <option value="Renovação">Renovação</option>
-                        <option value="Renovação + Transferência">Renovação + Transferência</option>
+                        <option value="Transferência + Renovação">Transferência + Renovação</option>
                       </select>
                     </div>
                   </div>

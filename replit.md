@@ -20,8 +20,8 @@ Do not make changes to the `worker/` folder unless explicitly instructed, as it 
 - **Multi-tenancy**: Isolated data for each agency.
 - **User Roles**: Three-tier permission system: Administrator (full access), Supervisor (access to specific pages, create/edit but no delete), and Collaborator (access to own processes).
 - **Process Automation**:
-    - Automatic "Taxa" step selection based on "Serviço" (e.g., "Renovação" or "Renovação + Transferência" automatically selects the "Taxa" step).
-    - Automatic fee selection based on "Serviço" (e.g., "Renovação" selects "Emissão da CNH", "Renovação + Transferência" selects both "Emissão da CNH" and "Transferência").
+    - Automatic "Taxa" step selection based on "Serviço" (e.g., "Renovação" or "Transferência + Renovação" automatically selects the "Taxa" step).
+    - Automatic fee selection based on "Serviço" (e.g., "Renovação" selects "Emissão da CNH", "Transferência + Renovação" selects both "Emissão da CNH" and "Transferência").
     - Automatic selection of "Foto" professional for a city if available and the "Foto" step is selected.
     - Automatic selection/deselection of "Prova" fee when a "Prova" credenciado is chosen/unchosen (fee is always disabled for manual selection).
     - Fee selection disabled when "Taxa" step is not selected.
@@ -50,7 +50,7 @@ Do not make changes to the `worker/` folder unless explicitly instructed, as it 
     5. Psicólogo (linked to 'psicologo' credenciado)
     6. 2º Via (no linkage, default system tax)
 - **Step-by-Step Processes**: Create, track, and manage individual driver's license application workflows.
-- **Dynamic Forms**: "Serviço" dropdown (Renovação, Renovação + Transferência) in step process form.
+- **Dynamic Forms**: "Serviço" dropdown (Renovação, Transferência + Renovação) in step process form.
 - **Print Optimization**: Intelligent auto-sizing system that automatically reduces instruction font size (14px → 5px) and line-height (1.1 → 1.0) to fit all content on a single page. Reduced line spacing for more compact display.
 - **Print Instructions**: Hide semicolons (;) in print view only, no user warnings, always proceed with print.
 - **Special Messages**: When Exame Psicológico is not selected, displays "ATENÇÃO: O CONDUTOR OPTOU POR NÃO COLOCAR O EAR NA SUA CNH" instead of X mark.
