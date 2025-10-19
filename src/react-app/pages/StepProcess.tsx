@@ -45,10 +45,11 @@ export default function StepProcess() {
   }, []);
 
   useEffect(() => {
-    if (fees.length === 0 || processSteps.length === 0) return;
+    if (fees.length === 0 || processSteps.length === 0 || !formData.client_name) return;
     
     const emissaoCNHFee = fees.find(f => f.name === 'Emissão da CNH');
     const transferenciaFee = fees.find(f => f.name === 'Transferência');
+    const segundaViaFee = fees.find(f => f.name === '2º Via');
     
     if (!emissaoCNHFee || !transferenciaFee) return;
     
@@ -56,39 +57,35 @@ export default function StepProcess() {
       let newSelectedFees = [...prev.selected_fees];
       let newSelectedSteps = [...prev.selected_steps];
       
-      // Encontrar a etapa "Taxa"
+      const serviceName = prev.client_name;
       const taxaStep = processSteps.find(step => step.type === 'taxa');
       
-      if (prev.client_name === 'Renovação') {
+      // Auto-selecionar etapa Taxa sempre que houver serviço selecionado
+      if (taxaStep && !newSelectedSteps.includes(taxaStep.id)) {
+        newSelectedSteps.push(taxaStep.id);
+      }
+      
+      // Remover todas as taxas automáticas primeiro
+      newSelectedFees = newSelectedFees.filter(id => 
+        id !== emissaoCNHFee.id && id !== transferenciaFee.id && (!segundaViaFee || id !== segundaViaFee.id)
+      );
+      
+      // Auto-selecionar taxas baseado no nome do serviço
+      if (serviceName.includes('Renovação')) {
         if (!newSelectedFees.includes(emissaoCNHFee.id)) {
           newSelectedFees.push(emissaoCNHFee.id);
         }
-        newSelectedFees = newSelectedFees.filter(id => id !== transferenciaFee.id);
-        
-        // Auto-selecionar etapa Taxa se houver
-        if (taxaStep && !newSelectedSteps.includes(taxaStep.id)) {
-          newSelectedSteps.push(taxaStep.id);
-        }
-      } else if (prev.client_name === 'Transferência + Renovação') {
-        if (!newSelectedFees.includes(emissaoCNHFee.id)) {
-          newSelectedFees.push(emissaoCNHFee.id);
-        }
+      }
+      
+      if (serviceName.includes('Transferência')) {
         if (!newSelectedFees.includes(transferenciaFee.id)) {
           newSelectedFees.push(transferenciaFee.id);
         }
-        
-        // Auto-selecionar etapa Taxa se houver
-        if (taxaStep && !newSelectedSteps.includes(taxaStep.id)) {
-          newSelectedSteps.push(taxaStep.id);
-        }
-      } else {
-        newSelectedFees = newSelectedFees.filter(id => 
-          id !== emissaoCNHFee.id && id !== transferenciaFee.id
-        );
-        
-        // Remover etapa Taxa se nenhum serviço estiver selecionado
-        if (taxaStep) {
-          newSelectedSteps = newSelectedSteps.filter(id => id !== taxaStep.id);
+      }
+      
+      if (serviceName.includes('2º Via') && segundaViaFee) {
+        if (!newSelectedFees.includes(segundaViaFee.id)) {
+          newSelectedFees.push(segundaViaFee.id);
         }
       }
       
@@ -587,8 +584,16 @@ export default function StepProcess() {
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
                         <option value="">Selecione um serviço</option>
+                        <option value="Alteração de Dados">Alteração de Dados</option>
+                        <option value="Alteração de Dados + EAR">Alteração de Dados + EAR</option>
                         <option value="Renovação">Renovação</option>
+                        <option value="Renovação + EAR">Renovação + EAR</option>
+                        <option value="Transferência + 2º Via">Transferência + 2º Via</option>
+                        <option value="Transferência + Alteração de Dados">Transferência + Alteração de Dados</option>
+                        <option value="Transferência + Alteração de Dados + EAR">Transferência + Alteração de Dados + EAR</option>
+                        <option value="Transferência + Definitiva">Transferência + Definitiva</option>
                         <option value="Transferência + Renovação">Transferência + Renovação</option>
+                        <option value="Transferência + Renovação + EAR">Transferência + Renovação + EAR</option>
                       </select>
                     </div>
                   </div>
