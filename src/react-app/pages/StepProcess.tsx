@@ -45,7 +45,7 @@ export default function StepProcess() {
   }, []);
 
   useEffect(() => {
-    if (fees.length === 0) return;
+    if (fees.length === 0 || processSteps.length === 0) return;
     
     const emissaoCNHFee = fees.find(f => f.name === 'Emissão da CNH');
     const transferenciaFee = fees.find(f => f.name === 'Transferência');
@@ -54,12 +54,21 @@ export default function StepProcess() {
     
     setFormData(prev => {
       let newSelectedFees = [...prev.selected_fees];
+      let newSelectedSteps = [...prev.selected_steps];
+      
+      // Encontrar a etapa "Taxa"
+      const taxaStep = processSteps.find(step => step.type === 'taxa');
       
       if (prev.client_name === 'Renovação') {
         if (!newSelectedFees.includes(emissaoCNHFee.id)) {
           newSelectedFees.push(emissaoCNHFee.id);
         }
         newSelectedFees = newSelectedFees.filter(id => id !== transferenciaFee.id);
+        
+        // Auto-selecionar etapa Taxa se houver
+        if (taxaStep && !newSelectedSteps.includes(taxaStep.id)) {
+          newSelectedSteps.push(taxaStep.id);
+        }
       } else if (prev.client_name === 'Renovação + Transferência') {
         if (!newSelectedFees.includes(emissaoCNHFee.id)) {
           newSelectedFees.push(emissaoCNHFee.id);
@@ -67,15 +76,25 @@ export default function StepProcess() {
         if (!newSelectedFees.includes(transferenciaFee.id)) {
           newSelectedFees.push(transferenciaFee.id);
         }
+        
+        // Auto-selecionar etapa Taxa se houver
+        if (taxaStep && !newSelectedSteps.includes(taxaStep.id)) {
+          newSelectedSteps.push(taxaStep.id);
+        }
       } else {
         newSelectedFees = newSelectedFees.filter(id => 
           id !== emissaoCNHFee.id && id !== transferenciaFee.id
         );
+        
+        // Remover etapa Taxa se nenhum serviço estiver selecionado
+        if (taxaStep) {
+          newSelectedSteps = newSelectedSteps.filter(id => id !== taxaStep.id);
+        }
       }
       
-      return { ...prev, selected_fees: newSelectedFees };
+      return { ...prev, selected_fees: newSelectedFees, selected_steps: newSelectedSteps };
     });
-  }, [formData.client_name, fees]);
+  }, [formData.client_name, fees, processSteps]);
 
   // Auto-selecionar credenciado de Foto quando a cidade mudar
   useEffect(() => {

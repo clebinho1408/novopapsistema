@@ -20,7 +20,8 @@ Do not make changes to the `worker/` folder unless explicitly instructed, as it 
 - **Multi-tenancy**: Isolated data for each agency.
 - **User Roles**: Three-tier permission system: Administrator (full access), Supervisor (access to specific pages, create/edit but no delete), and Collaborator (access to own processes).
 - **Process Automation**:
-    - Automatic fee selection based on "Serviço" (e.g., "Renovação" selects "Emissão da CNH").
+    - Automatic "Taxa" step selection based on "Serviço" (e.g., "Renovação" or "Renovação + Transferência" automatically selects the "Taxa" step).
+    - Automatic fee selection based on "Serviço" (e.g., "Renovação" selects "Emissão da CNH", "Renovação + Transferência" selects both "Emissão da CNH" and "Transferência").
     - Automatic selection of "Foto" professional for a city if available and the "Foto" step is selected.
     - Automatic selection/deselection of "Prova" fee when a "Prova" credenciado is chosen/unchosen.
 - **Authentication**: Custom session-based system with HTTP-only cookies, bcryptjs for password hashing, and 30-day session expiration.
