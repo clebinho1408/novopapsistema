@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect, lazy } from 'react';
 import type { ProcessStep, Professional, Fee, City } from '@/shared/types';
 
 // Lazy load ícones apenas quando necessário
