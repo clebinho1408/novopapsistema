@@ -115,7 +115,7 @@ export const fees = pgTable('fees', {
 export const stepProcesses = pgTable('step_processes', {
   id: serial('id').primaryKey(),
   agencyId: integer('agency_id').notNull().references(() => agencies.id),
-  userId: integer('user_id').notNull().references(() => systemUsers.id),
+  userId: integer('user_id').notNull().references(() => systemUsers.id, { onDelete: 'cascade' }),
   cityId: integer('city_id').notNull().references(() => cities.id),
   clientName: text('client_name'),
   totalAmount: decimal('total_amount', { precision: 10, scale: 2 }).default('0'),
