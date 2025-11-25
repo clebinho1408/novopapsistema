@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { MapPin, Plus, Edit, Trash2, Search } from 'lucide-react';
 import type { City } from '@/shared/types';
 
-export default function Cities() {
+function Cities() {
   const [cities, setCities] = useState<City[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -196,3 +196,5 @@ export default function Cities() {
     </Layout>
   );
 }
+
+export default Cities;

@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Otimização de fontes */
+@layer base {
+  * {
+    font-display: swap;
+  }
+}
+
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
 }

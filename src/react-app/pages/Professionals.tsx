@@ -1,5 +1,5 @@
 import Layout from '@/react-app/components/Layout';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Users, Plus, Edit, Trash2, Search, Phone, MapPin } from 'lucide-react';
 import type { Professional, City, ProfessionalType, AttendanceType } from '@/shared/types';
 import { PROFESSIONAL_TYPE_LABELS } from '@/shared/types';

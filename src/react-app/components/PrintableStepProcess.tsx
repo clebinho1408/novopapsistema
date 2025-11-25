@@ -1,6 +1,10 @@
-import { X, Printer, Mail } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import type { ProcessStep, Professional, Fee, City } from '@/shared/types';
+
+// Lazy load ícones apenas quando necessário
+const X = lazy(() => import('lucide-react').then(mod => ({ default: mod.X })));
+const Printer = lazy(() => import('lucide-react').then(mod => ({ default: mod.Printer })));
+const Mail = lazy(() => import('lucide-react').then(mod => ({ default: mod.Mail })));
 
 interface PrintableStepProcessProps {
   isOpen: boolean;
