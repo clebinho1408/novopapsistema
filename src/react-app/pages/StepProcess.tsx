@@ -101,10 +101,6 @@ export default function StepProcess() {
         'Transferência + Definitiva': {
           steps: ['foto', 'taxa'],
           fees: ['Emissão da CNH', 'Transferência']
-        },
-        'Transferência + 2º Via': {
-          steps: ['foto', 'taxa'],
-          fees: ['2º Via', 'Transferência']
         }
       };
       
@@ -642,7 +638,6 @@ export default function StepProcess() {
                         <option value="Transferência + Alteração de Dados">Transferência + Alteração de Dados</option>
                         <option value="Transferência + Alteração de Dados + EAR">Transferência + Alteração de Dados + EAR</option>
                         <option value="Transferência + Definitiva">Transferência + Definitiva</option>
-                        <option value="Transferência + 2º Via">Transferência + 2º Via</option>
                       </select>
                     </div>
                   </div>
