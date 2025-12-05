@@ -692,9 +692,12 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
               
               if (!provaStep || !isSelected || !professional) {
                 return `
-                  <div style="width: 100%; display: flex; justify-content: flex-end;">
+                  <div style="width: 100%; display: flex; justify-content: flex-end; flex-direction: column; align-items: flex-end;">
                     <div class="total-amount-box">
                       <div class="total-amount-text"><strong>VALOR TOTAL: R$ ${parseFloat(processData.total_amount).toFixed(2)}</strong></div>
+                    </div>
+                    <div style="background-color: #ffc107; border: 2px solid #ff6b6b; padding: 10px; margin-top: 12px; border-radius: 4px; text-align: center; max-width: 500px;">
+                      <div style="font-size: 11px; font-weight: bold; color: #333; line-height: 1.4;">⚠️ ATENÇÃO: PRAZO PARA RETIRAR A CNH FÍSICA SERÁ DE 180 DIAS, CONTANDO A PARTIR DA DATA DA ABERTURA DO PROCESSO</div>
                     </div>
                   </div>
                 `;
@@ -715,36 +718,41 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
               stepNumber++; // Incrementar para o passo atual (prova)
               
               return `
-                <div class="prova-card">
-                    <div class="prova-header">
-                        <div class="step-icon">📝</div>
-                        <div class="prova-title">
-                            <p class="step-number-text"><strong>(${stepNumber}°) PASSO</strong></p>
-                            <div class="step-title"><strong>PROVA</strong></div>
-                        </div>
-                    </div>
-                    <div class="prova-content">
-                        <div class="professional-name"><strong>${professional.name}</strong></div>
-                        ${professional.attendance_type ? `
-                            <div class="schedule-info">
-                                <div class="schedule-label"><strong>${professional.attendance_type}:</strong></div>
-                                ${professional.phone ? `
-                                    <div class="professional-info" style="font-size: 11px;"><strong>${professional.phone}</strong> - Somente mensagem WhatsApp</div>
-                                ` : ''}
-                            </div>
-                        ` : ''}
-                        ${professional.email ? `
-                            <div class="professional-info"><strong>Email:</strong> ${professional.email}</div>
-                        ` : ''}
-                        ${professional.observations ? `
-                            <div class="professional-info"><strong>OBS:</strong> ${professional.observations}</div>
-                        ` : ''}
-                    </div>
-                </div>
-                <div class="total-amount-card">
+                <div style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
+                  <div class="prova-card">
+                      <div class="prova-header">
+                          <div class="step-icon">📝</div>
+                          <div class="prova-title">
+                              <p class="step-number-text"><strong>(${stepNumber}°) PASSO</strong></p>
+                              <div class="step-title"><strong>PROVA</strong></div>
+                          </div>
+                      </div>
+                      <div class="prova-content">
+                          <div class="professional-name"><strong>${professional.name}</strong></div>
+                          ${professional.attendance_type ? `
+                              <div class="schedule-info">
+                                  <div class="schedule-label"><strong>${professional.attendance_type}:</strong></div>
+                                  ${professional.phone ? `
+                                      <div class="professional-info" style="font-size: 11px;"><strong>${professional.phone}</strong> - Somente mensagem WhatsApp</div>
+                                  ` : ''}
+                              </div>
+                          ` : ''}
+                          ${professional.email ? `
+                              <div class="professional-info"><strong>Email:</strong> ${professional.email}</div>
+                          ` : ''}
+                          ${professional.observations ? `
+                              <div class="professional-info"><strong>OBS:</strong> ${professional.observations}</div>
+                          ` : ''}
+                      </div>
+                  </div>
+                  <div class="total-amount-card">
                     <div class="total-amount-box">
                         <div class="total-amount-text"><strong>VALOR TOTAL: R$ ${parseFloat(processData.total_amount).toFixed(2)}</strong></div>
                     </div>
+                  </div>
+                  <div style="background-color: #ffc107; border: 2px solid #ff6b6b; padding: 10px; border-radius: 4px; text-align: center; max-width: 500px; width: 100%;">
+                    <div style="font-size: 11px; font-weight: bold; color: #333; line-height: 1.4;">⚠️ ATENÇÃO: PRAZO PARA RETIRAR A CNH FÍSICA SERÁ DE 180 DIAS, CONTANDO A PARTIR DA DATA DA ABERTURA DO PROCESSO</div>
+                  </div>
                 </div>
               `;
             })()}
@@ -1020,6 +1028,11 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
     content += `======================================\n`;
     content += `VALOR TOTAL: R$ ${parseFloat(processData.total_amount).toFixed(2)}\n`;
     content += `======================================\n\n`;
+
+    // Aviso sobre prazo para retirada da CNH
+    content += `⚠️  AVISO IMPORTANTE:\n`;
+    content += `ATENÇÃO: PRAZO PARA RETIRAR A CNH FÍSICA SERÁ DE 180 DIAS, CONTANDO A PARTIR DA DATA DA ABERTURA DO PROCESSO\n`;
+    content += `${'-'.repeat(40)}\n\n`;
 
     // Verificar se exame psicológico não foi selecionado
     const allStepsForEmail = processData.all_steps || processData.selected_steps;
@@ -1310,10 +1323,15 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 
                 if (!provaStep || !isSelected) {
                   return (
-                    <div className="w-full flex justify-end">
+                    <div className="w-full flex flex-col items-end gap-3">
                       <div className="bg-gray-100 border-2 border-black p-3 rounded-lg text-center">
                         <div className="text-sm font-bold text-black">
                           <strong>VALOR TOTAL: R$ {parseFloat(processData.total_amount).toFixed(2)}</strong>
+                        </div>
+                      </div>
+                      <div className="bg-yellow-100 border-2 border-red-500 p-3 rounded-lg text-center max-w-md">
+                        <div className="text-xs font-bold text-gray-800 leading-tight">
+                          ⚠️ ATENÇÃO: PRAZO PARA RETIRAR A CNH FÍSICA SERÁ DE 180 DIAS, CONTANDO A PARTIR DA DATA DA ABERTURA DO PROCESSO
                         </div>
                       </div>
                     </div>
@@ -1384,10 +1402,15 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                       </div>
                     </div>
                     
-                    <div className="flex-shrink-0 ml-auto">
+                    <div className="flex-shrink-0 ml-auto flex flex-col gap-3 items-end">
                       <div className="bg-gray-100 border-2 border-black p-3 rounded-lg text-center">
                         <div className="text-sm font-bold text-black">
                           VALOR TOTAL: R$ {parseFloat(processData.total_amount).toFixed(2)}
+                        </div>
+                      </div>
+                      <div className="bg-yellow-100 border-2 border-red-500 p-3 rounded-lg text-center max-w-md">
+                        <div className="text-xs font-bold text-gray-800 leading-tight">
+                          ⚠️ ATENÇÃO: PRAZO PARA RETIRAR A CNH FÍSICA SERÁ DE 180 DIAS, CONTANDO A PARTIR DA DATA DA ABERTURA DO PROCESSO
                         </div>
                       </div>
                     </div>
