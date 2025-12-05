@@ -692,7 +692,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
               
               if (!provaStep || !isSelected || !professional) {
                 return `
-                  <div style="width: 100%; display: flex; justify-content: flex-end; align-items: center; gap: 12px;">
+                  <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px;">
                     <div style="background-color: white; border: 2px solid black; padding: 10px; border-radius: 4px; text-align: center; max-width: 400px;">
                       <div style="font-size: 11px; font-weight: bold; color: black; line-height: 1.4;">⚠️ ATENÇÃO: PRAZO PARA RETIRAR A CNH FÍSICA SERÁ DE 180 DIAS, CONTANDO A PARTIR DA DATA DA ABERTURA DO PROCESSO</div>
                     </div>
@@ -745,8 +745,8 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                           ` : ''}
                       </div>
                   </div>
-                  <div style="display: flex; gap: 12px; align-items: center;">
-                    <div style="background-color: white; border: 2px solid black; padding: 10px; border-radius: 4px; text-align: center; max-width: 400px; flex: 1;">
+                  <div style="display: flex; gap: 12px; align-items: center; justify-content: space-between; width: 100%;">
+                    <div style="background-color: white; border: 2px solid black; padding: 10px; border-radius: 4px; text-align: center; max-width: 400px;">
                       <div style="font-size: 11px; font-weight: bold; color: black; line-height: 1.4;">⚠️ ATENÇÃO: PRAZO PARA RETIRAR A CNH FÍSICA SERÁ DE 180 DIAS, CONTANDO A PARTIR DA DATA DA ABERTURA DO PROCESSO</div>
                     </div>
                     <div class="total-amount-card">
@@ -1325,7 +1325,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 
                 if (!provaStep || !isSelected) {
                   return (
-                    <div className="w-full flex items-center gap-3 justify-end">
+                    <div className="w-full flex items-center gap-3 justify-between">
                       <div className="bg-white border-2 border-black p-3 rounded-lg text-center max-w-sm">
                         <div className="text-xs font-bold text-black leading-tight">
                           ⚠️ ATENÇÃO: PRAZO PARA RETIRAR A CNH FÍSICA SERÁ DE 180 DIAS, CONTANDO A PARTIR DA DATA DA ABERTURA DO PROCESSO
@@ -1404,7 +1404,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                       </div>
                     </div>
                     
-                    <div className="flex-shrink-0 ml-auto flex gap-3 items-center">
+                    <div className="w-full flex gap-3 items-center justify-between">
                       <div className="bg-white border-2 border-black p-3 rounded-lg text-center max-w-sm">
                         <div className="text-xs font-bold text-black leading-tight">
                           ⚠️ ATENÇÃO: PRAZO PARA RETIRAR A CNH FÍSICA SERÁ DE 180 DIAS, CONTANDO A PARTIR DA DATA DA ABERTURA DO PROCESSO
