@@ -694,7 +694,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 return `
                   <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px;">
                     <div style="background-color: white; border: 2px solid black; padding: 10px; border-radius: 4px; text-align: center; max-width: 400px;">
-                      <div style="font-size: 11px; font-weight: bold; color: black; line-height: 1.4;">⚠️ ATENÇÃO: PRAZO PARA RETIRAR A CNH FÍSICA SERÁ DE 180 DIAS, CONTANDO A PARTIR DA DATA DA ABERTURA DO PROCESSO</div>
+                      <div style="font-size: 11px; font-weight: bold; color: black; line-height: 1.4;">⚠️ ATENÇÃO: PRAZO PARA RETIRAR A CNH/PID FÍSICA SERÁ DE 180 DIAS, CONTANDO A PARTIR DA DATA DA SUA EMISSÃO</div>
                     </div>
                     <div class="total-amount-box">
                       <div class="total-amount-text"><strong>VALOR TOTAL: R$ ${parseFloat(processData.total_amount).toFixed(2)}</strong></div>
@@ -747,7 +747,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                   </div>
                   <div style="display: flex; gap: 12px; align-items: center; justify-content: space-between; width: 100%;">
                     <div style="background-color: white; border: 2px solid black; padding: 10px; border-radius: 4px; text-align: center; max-width: 400px;">
-                      <div style="font-size: 11px; font-weight: bold; color: black; line-height: 1.4;">⚠️ ATENÇÃO: PRAZO PARA RETIRAR A CNH FÍSICA SERÁ DE 180 DIAS, CONTANDO A PARTIR DA DATA DA ABERTURA DO PROCESSO</div>
+                      <div style="font-size: 11px; font-weight: bold; color: black; line-height: 1.4;">⚠️ ATENÇÃO: PRAZO PARA RETIRAR A CNH/PID FÍSICA SERÁ DE 180 DIAS, CONTANDO A PARTIR DA DATA DA SUA EMISSÃO</div>
                     </div>
                     <div class="total-amount-card">
                       <div class="total-amount-box">
@@ -1033,7 +1033,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
 
     // Aviso sobre prazo para retirada da CNH
     content += `⚠️  AVISO IMPORTANTE:\n`;
-    content += `ATENÇÃO: PRAZO PARA RETIRAR A CNH FÍSICA SERÁ DE 180 DIAS, CONTANDO A PARTIR DA DATA DA ABERTURA DO PROCESSO\n`;
+    content += `ATENÇÃO: PRAZO PARA RETIRAR A CNH/PID FÍSICA SERÁ DE 180 DIAS, CONTANDO A PARTIR DA DATA DA SUA EMISSÃO\n`;
     content += `${'-'.repeat(40)}\n\n`;
 
     // Verificar se exame psicológico não foi selecionado
@@ -1328,7 +1328,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                     <div className="w-full flex items-center gap-3 justify-between">
                       <div className="bg-white border-2 border-black p-3 rounded-lg text-center max-w-sm">
                         <div className="text-xs font-bold text-black leading-tight">
-                          ⚠️ ATENÇÃO: PRAZO PARA RETIRAR A CNH FÍSICA SERÁ DE 180 DIAS, CONTANDO A PARTIR DA DATA DA ABERTURA DO PROCESSO
+                          ⚠️ ATENÇÃO: PRAZO PARA RETIRAR A CNH/PID FÍSICA SERÁ DE 180 DIAS, CONTANDO A PARTIR DA DATA DA SUA EMISSÃO
                         </div>
                       </div>
                       <div className="bg-gray-100 border-2 border-black p-3 rounded-lg text-center flex-shrink-0">
@@ -1407,7 +1407,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                     <div className="w-full flex gap-3 items-center justify-between">
                       <div className="bg-white border-2 border-black p-3 rounded-lg text-center max-w-sm">
                         <div className="text-xs font-bold text-black leading-tight">
-                          ⚠️ ATENÇÃO: PRAZO PARA RETIRAR A CNH FÍSICA SERÁ DE 180 DIAS, CONTANDO A PARTIR DA DATA DA ABERTURA DO PROCESSO
+                          ⚠️ ATENÇÃO: PRAZO PARA RETIRAR A CNH/PID FÍSICA SERÁ DE 180 DIAS, CONTANDO A PARTIR DA DATA DA SUA EMISSÃO
                         </div>
                       </div>
                       <div className="bg-gray-100 border-2 border-black p-3 rounded-lg text-center flex-shrink-0">
