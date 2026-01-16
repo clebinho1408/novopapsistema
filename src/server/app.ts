@@ -1131,27 +1131,8 @@ app.delete("/api/step-processes/delete-all", systemAuthMiddleware, async (c) => 
   if (user.role !== 'administrator') return c.json({ error: "Acesso negado" }, 403);
 
   try {
-    // Get all process IDs for this agency
-    const { results: processes } = await mockEnv.DB.prepare(
-      "SELECT id FROM step_processes WHERE agency_id = ?"
-    ).bind(user.agency_id).all();
-
-    if (!processes || processes.length === 0) {
-      return c.json({ success: true, deleted: 0 });
-    }
-
-    // Delete related data for each process
-    for (const process of processes as any[]) {
-      await mockEnv.DB.prepare(
-        "DELETE FROM process_selected_steps WHERE process_id = ?"
-      ).bind(process.id).run();
-
-      await mockEnv.DB.prepare(
-        "DELETE FROM process_selected_fees WHERE process_id = ?"
-      ).bind(process.id).run();
-    }
-
-    // Delete all processes
+    // Delete all processes - due to CASCADE in schema.ts, 
+    // process_selected_steps and process_selected_fees will be deleted automatically
     const result = await mockEnv.DB.prepare(
       "DELETE FROM step_processes WHERE agency_id = ?"
     ).bind(user.agency_id).run();
