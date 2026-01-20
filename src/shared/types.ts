@@ -48,7 +48,7 @@ export const CitySchema = z.object({
 export type City = z.infer<typeof CitySchema>;
 
 // Professional types
-export const ProfessionalTypeSchema = z.enum(['foto', 'medico', 'psicologo', 'prova']);
+export const ProfessionalTypeSchema = z.enum(['foto', 'medico', 'psicologo', 'prova', 'curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica']);
 
 export const AttendanceTypeSchema = z.enum(['AGENDAMENTO', 'POR ORDEM DE CHEGADA']);
 
@@ -108,11 +108,11 @@ export type Fee = z.infer<typeof FeeSchema>;
 export const StepProcessSchema = z.object({
   id: z.number(),
   agency_id: z.number(),
-  user_id: z.number(),
-  city_id: z.number(),
-  client_name: z.string().optional(),
-  total_amount: z.string(), // Database returns as string (decimal/numeric)
-  status: z.string(),
+  name: z.string(),
+  type: z.string(),
+  is_required: z.boolean(),
+  is_active: z.boolean(),
+  sort_order: z.number(),
   created_at: z.string(),
   updated_at: z.string(),
 });
@@ -151,9 +151,13 @@ export type CreateProfessionalRequest = z.infer<typeof CreateProfessionalRequest
 export type CreateStepProcessRequest = z.infer<typeof CreateStepProcessRequestSchema>;
 
 // Professional type labels for UI
-export const PROFESSIONAL_TYPE_LABELS: Record<ProfessionalType, string> = {
+export const PROFESSIONAL_TYPE_LABELS: Record<string, string> = {
   foto: 'Foto',
   medico: 'Médico',
   psicologo: 'Psicólogo',
   prova: 'Prova',
+  curso_teorico: 'Curso Teórico',
+  prova_teorica: 'Prova Teórica',
+  curso_pratico: 'Curso Prático',
+  prova_pratica: 'Prova Prática'
 };

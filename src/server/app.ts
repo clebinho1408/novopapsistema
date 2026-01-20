@@ -1208,6 +1208,10 @@ function generateEmailHTML(processData: any, logoUrl: string | null, generalInst
       case 'medico': return '👨‍⚕️';
       case 'psicologo': return '🧠';
       case 'prova': return '📝';
+      case 'curso_teorico': return '📚';
+      case 'prova_teorica': return '📋';
+      case 'curso_pratico': return '🚗';
+      case 'prova_pratica': return '🏁';
       case 'toxicologico': return '🧪';
       default: return '📋';
     }
