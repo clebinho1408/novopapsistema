@@ -21,8 +21,9 @@ export default function Configurations() {
 
   const fetchProcessSteps = async () => {
     try {
-      const response = await fetch('/api/process-steps?active_only=true', { credentials: 'include' });
+      const response = await fetch(`/api/process-steps?active_only=true&t=${Date.now()}`, { credentials: 'include', cache: 'no-cache' });
       const data = await response.json();
+      console.log('📋 Etapas recebidas em Configurações:', data.length, data.map((s: ProcessStep) => s.name));
       setProcessSteps(data);
     } catch (error) {
       console.error('Error fetching process steps:', error);

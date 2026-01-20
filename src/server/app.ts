@@ -692,7 +692,9 @@ app.get("/api/process-steps", systemAuthMiddleware, async (c) => {
 
   const { results } = await mockEnv.DB.prepare(query).bind(user.agency_id).all();
 
-  return c.json(results);
+  console.log(`📋 [Steps API] Agency ${user.agency_id}, active_only=${activeOnly}, found ${results?.length || 0} steps:`, results?.map((s: any) => s.name));
+
+  return c.json(results || []);
 });
 
 app.patch("/api/process-steps/:id", systemAuthMiddleware, async (c) => {
