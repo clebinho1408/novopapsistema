@@ -91,6 +91,9 @@ export const processSteps = pgTable('process_steps', {
   isRequired: boolean('is_required').default(false),
   isActive: boolean('is_active').default(true),
   sortOrder: integer('sort_order').default(0),
+  title: text('title'),
+  description: text('description'),
+  obs: text('obs'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 }, (table) => ({

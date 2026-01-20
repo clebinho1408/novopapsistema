@@ -84,6 +84,9 @@ export const ProcessStepSchema = z.object({
   is_required: z.boolean(),
   is_active: z.boolean(),
   sort_order: z.number(),
+  title: z.string().optional().nullable(),
+  description: z.string().optional().nullable(),
+  obs: z.string().optional().nullable(),
   created_at: z.string(),
   updated_at: z.string(),
 });

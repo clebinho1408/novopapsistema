@@ -711,6 +711,33 @@ app.patch("/api/process-steps/:id", systemAuthMiddleware, async (c) => {
     ).bind(body.is_active, stepId, user.agency_id).run();
   }
 
+  if (body.title !== undefined || body.description !== undefined || body.obs !== undefined) {
+    const updates: string[] = [];
+    const params: any[] = [];
+    
+    if (body.title !== undefined) {
+      updates.push("title = ?");
+      params.push(body.title || null);
+    }
+    if (body.description !== undefined) {
+      updates.push("description = ?");
+      params.push(body.description || null);
+    }
+    if (body.obs !== undefined) {
+      updates.push("obs = ?");
+      params.push(body.obs || null);
+    }
+    
+    if (updates.length > 0) {
+      updates.push("updated_at = CURRENT_TIMESTAMP");
+      params.push(stepId, user.agency_id);
+      
+      await mockEnv.DB.prepare(
+        `UPDATE process_steps SET ${updates.join(", ")} WHERE id = ? AND agency_id = ?`
+      ).bind(...params).run();
+    }
+  }
+
   return c.json({ success: true });
 });
 

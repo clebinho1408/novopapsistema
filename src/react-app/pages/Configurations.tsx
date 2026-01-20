@@ -85,7 +85,7 @@ export default function Configurations() {
           </div>
 
           {/* Tab Content */}
-          {activeTab === 'steps' && <StepsConfiguration steps={processSteps} />}
+          {activeTab === 'steps' && <StepsConfiguration steps={processSteps} onUpdate={fetchProcessSteps} />}
           {activeTab === 'fees' && <FeesConfiguration fees={fees} onUpdate={fetchFees} />}
           {activeTab === 'instructions' && <InstructionsConfiguration />}
           {activeTab === 'users' && <UserManagement />}
@@ -97,7 +97,59 @@ export default function Configurations() {
   );
 }
 
-function StepsConfiguration({ steps }: { steps: ProcessStep[] }) {
+const EDITABLE_STEP_TYPES = ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'];
+
+function StepsConfiguration({ steps, onUpdate }: { steps: ProcessStep[], onUpdate: () => void }) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingStep, setEditingStep] = useState<ProcessStep | null>(null);
+  const [formData, setFormData] = useState({ title: '', description: '', obs: '' });
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleEdit = (step: ProcessStep) => {
+    setEditingStep(step);
+    setFormData({
+      title: step.title || '',
+      description: step.description || '',
+      obs: step.obs || ''
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingStep) return;
+    
+    setIsLoading(true);
+    
+    try {
+      const response = await fetch(`/api/process-steps/${editingStep.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          title: formData.title,
+          description: formData.description,
+          obs: formData.obs
+        })
+      });
+
+      if (response.ok) {
+        setIsModalOpen(false);
+        setFormData({ title: '', description: '', obs: '' });
+        setEditingStep(null);
+        onUpdate();
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Erro ao salvar etapa');
+      }
+    } catch (error) {
+      console.error('Error saving step:', error);
+      alert('Erro ao salvar etapa');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
       <div className="px-6 py-4 border-b border-gray-200">
@@ -106,28 +158,114 @@ function StepsConfiguration({ steps }: { steps: ProcessStep[] }) {
       </div>
       <div className="p-6">
         <div className="space-y-4">
-          {steps.map((step) => (
-            <div key={step.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center justify-center w-10 h-10 bg-orange-100 text-orange-600 rounded-full font-bold">
-                  {step.sort_order}
-                </div>
-                <div>
-                  <h3 className="font-medium text-gray-900">{step.name}</h3>
-                  <div className="flex items-center space-x-4 text-sm text-gray-500">
-                    <span>Tipo: {step.type}</span>
+          {steps.map((step) => {
+            const isEditable = EDITABLE_STEP_TYPES.includes(step.type);
+            return (
+              <div key={step.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center justify-center w-10 h-10 bg-orange-100 text-orange-600 rounded-full font-bold">
+                    {step.sort_order}
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-gray-900">{step.name}</h3>
+                    <div className="flex items-center space-x-4 text-sm text-gray-500">
+                      <span>Tipo: {step.type}</span>
+                    </div>
+                    {step.title && (
+                      <p className="text-sm text-blue-600 mt-1">Título: {step.title}</p>
+                    )}
+                    {step.description && (
+                      <p className="text-sm text-gray-600 mt-1">Descrição: {step.description.substring(0, 50)}...</p>
+                    )}
                   </div>
                 </div>
+                <div className="flex items-center space-x-2">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    Ativa
+                  </span>
+                  {isEditable && (
+                    <button
+                      onClick={() => handleEdit(step)}
+                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    >
+                      <Edit className="w-5 h-5" />
+                    </button>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                  Ativa
-                </span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
+
+      {isModalOpen && editingStep && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              Editar Etapa: {editingStep.name}
+            </h2>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Título
+                </label>
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  placeholder="Ex: Curso de Legislação de Trânsito"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Descrição
+                </label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  placeholder="Descreva os detalhes da etapa..."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Obs.:
+                </label>
+                <textarea
+                  value={formData.obs}
+                  onChange={(e) => setFormData({ ...formData, obs: e.target.value })}
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  placeholder="Observações adicionais..."
+                />
+              </div>
+              <div className="flex justify-end space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    setEditingStep(null);
+                  }}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                  disabled={isLoading}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 flex items-center space-x-2"
+                  disabled={isLoading}
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{isLoading ? 'Salvando...' : 'Salvar'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
