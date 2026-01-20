@@ -66,6 +66,10 @@ export default function StepProcess() {
       
       // Definir regras de auto-seleção para cada serviço
       const serviceRules: Record<string, { steps: string[], fees: string[] }> = {
+        '1º Habilitação': {
+          steps: ['foto', 'taxa', 'psicologo', 'medico', 'prova'],
+          fees: ['Emissão da CNH', 'Prova']
+        },
         'Alteração de Dados': {
           steps: ['foto', 'taxa'],
           fees: ['Emissão da CNH']
@@ -629,6 +633,7 @@ export default function StepProcess() {
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
                         <option value="">Selecione um serviço</option>
+                        <option value="1º Habilitação">1º Habilitação</option>
                         <option value="Alteração de Dados">Alteração de Dados</option>
                         <option value="Alteração de Dados + EAR">Alteração de Dados + EAR</option>
                         <option value="Renovação">Renovação</option>
