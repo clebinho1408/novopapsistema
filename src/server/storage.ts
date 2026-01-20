@@ -8,11 +8,13 @@ let _db: ReturnType<typeof drizzle> | null = null;
 function initClient() {
   if (_client) return _client;
   
-  // Use only NEON_DATABASE_URL (external Neon database)
-  const connectionString = process.env.NEON_DATABASE_URL;
+  // Use DATABASE_URL (local Replit) or fallback to NEON_DATABASE_URL (external Neon)
+  const connectionString = process.env.DATABASE_URL || process.env.NEON_DATABASE_URL;
   if (!connectionString) {
-    throw new Error('NEON_DATABASE_URL environment variable is not set');
+    throw new Error('DATABASE_URL or NEON_DATABASE_URL environment variable is not set');
   }
+  
+  console.log('🔌 Connecting to database:', connectionString.includes('neon') ? 'Neon (external)' : 'Replit (local)');
   
   _client = postgres(connectionString, {
     prepare: false,
