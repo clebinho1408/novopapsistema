@@ -171,20 +171,20 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             padding: 0; 
             background: white;
             color: black;
-            line-height: 1.2;
+            line-height: 1.25;
             height: 100%;
         }
         .container {
             max-width: none;
-            margin: 10px;
+            margin: 12px;
             padding: 0;
         }
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
-            padding-bottom: 6px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
             border-bottom: 2px solid black;
         }
         .logo-section {
@@ -192,65 +192,65 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             align-items: center;
         }
         .logo {
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
             background-color: black;
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
+            font-size: 20px;
             font-weight: bold;
-            margin-right: 10px;
+            margin-right: 12px;
         }
         .logo-text h1 {
-            font-size: 20px;
+            font-size: 22px;
             font-weight: bold;
             margin: 0;
         }
         .logo-text p {
-            font-size: 13px;
+            font-size: 14px;
             margin: 0;
         }
         .header-info {
             text-align: right;
         }
         .header-info h2 {
-            font-size: 17px;
+            font-size: 18px;
             font-weight: bold;
             margin: 0;
         }
         .header-info p {
-            font-size: 13px;
-            margin: 2px 0 0 0;
+            font-size: 14px;
+            margin: 3px 0 0 0;
         }
         .steps-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 6px;
-            margin-bottom: 6px;
+            gap: 8px;
+            margin-bottom: 8px;
         }
         .step-card {
             border: 2px solid black;
-            min-height: 150px;
+            min-height: 165px;
             page-break-inside: avoid;
         }
         .step-card-with-fee {
             border: 2px solid black;
-            min-height: 180px;
+            min-height: 195px;
             page-break-inside: avoid;
             position: relative;
         }
         .step-header {
             background-color: #f5f5f5;
-            padding: 5px 6px;
+            padding: 6px 8px;
             border-bottom: 2px solid black;
             display: flex;
             align-items: center;
         }
         .step-icon {
-            font-size: 30px;
-            margin-right: 8px;
+            font-size: 34px;
+            margin-right: 10px;
         }
         .step-number-and-title {
             flex: 1;
@@ -259,81 +259,81 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             align-items: center;
         }
         .step-number-text {
-            font-size: 15px;
+            font-size: 16px;
             font-weight: bold;
             margin: 0;
             text-align: center;
         }
         .step-title {
-            font-size: 13px;
+            font-size: 14px;
             font-weight: bold;
             text-transform: uppercase;
             text-align: center;
             margin-top: 2px;
         }
         .step-content {
-            padding: 7px;
+            padding: 8px;
             position: relative;
         }
         .step-content-with-fee {
-            padding: 7px 7px 40px 7px;
+            padding: 8px 8px 44px 8px;
             position: relative;
-            min-height: 130px;
+            min-height: 145px;
         }
         .fee-badge {
             position: absolute;
-            bottom: 6px;
-            right: 6px;
-            font-size: 13px;
+            bottom: 7px;
+            right: 7px;
+            font-size: 14px;
             font-weight: bold;
             color: black;
             background-color: #f5f5f5;
-            padding: 5px 10px;
+            padding: 6px 12px;
             border: 2px solid black;
             border-radius: 4px;
         }
         .professional-name {
-            font-size: 11px;
+            font-size: 12px;
             font-weight: bold;
             text-transform: uppercase;
-            margin-bottom: 3px;
+            margin-bottom: 4px;
         }
         .professional-info {
-            font-size: 10px;
+            font-size: 11px;
             margin-bottom: 3px;
         }
         .schedule-info {
-            margin-top: 5px;
+            margin-top: 6px;
         }
         .schedule-label {
-            font-size: 10px;
+            font-size: 11px;
             font-weight: bold;
             margin-bottom: 2px;
         }
         .fee-section h4 {
-            font-size: 14px;
+            font-size: 15px;
             font-weight: bold;
             text-transform: uppercase;
-            margin: 0 0 6px 0;
+            margin: 0 0 7px 0;
         }
         .fee-item {
-            font-size: 12px;
-            margin-bottom: 3px;
+            font-size: 13px;
+            margin-bottom: 4px;
         }
         .fee-total {
-            margin-top: 6px;
-            padding-top: 6px;
+            margin-top: 7px;
+            padding-top: 7px;
             border-top: 1px solid black;
         }
         .fee-total-text {
-            font-size: 14px;
+            font-size: 15px;
             font-weight: bold;
         }
         .total-and-prova-container {
             display: flex;
             align-items: flex-start;
-            gap: 6px;
-            margin: 6px 0;
+            gap: 8px;
+            margin: 8px 0;
             justify-content: space-between;
         }
         .total-amount-card {
@@ -346,32 +346,32 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
         .total-amount-box {
             background-color: #f5f5f5;
             border: 2px solid black;
-            padding: 6px 12px;
+            padding: 8px 14px;
             border-radius: 5px;
             text-align: center;
         }
         .total-amount-text {
-            font-size: 14px;
+            font-size: 15px;
             font-weight: bold;
             color: black;
             margin: 0;
         }
         .prova-card {
             border: 2px solid black;
-            min-height: 95px;
-            width: 460px;
+            min-height: 105px;
+            width: 480px;
             flex-shrink: 0;
         }
         .prova-header {
             background-color: #f5f5f5;
-            padding: 4px 6px;
+            padding: 5px 8px;
             border-bottom: 2px solid black;
             display: flex;
             align-items: center;
         }
         .prova-header .step-icon {
-            font-size: 20px;
-            margin-right: 6px;
+            font-size: 22px;
+            margin-right: 8px;
         }
         .prova-title {
             flex: 1;
@@ -380,65 +380,65 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             align-items: center;
         }
         .prova-title .step-number-text {
-            font-size: 13px;
+            font-size: 14px;
             font-weight: bold;
             margin: 0;
             text-align: center;
         }
         .prova-title .step-title {
-            font-size: 13px;
+            font-size: 14px;
             font-weight: bold;
             text-transform: uppercase;
             text-align: center;
-            margin-top: 1px;
+            margin-top: 2px;
         }
         .prova-content {
-            padding: 5px 6px;
+            padding: 6px 8px;
         }
         .prova-content .professional-name {
-            font-size: 12px;
+            font-size: 13px;
             font-weight: bold;
             text-transform: uppercase;
-            margin-bottom: 3px;
+            margin-bottom: 4px;
         }
         .prova-content .schedule-info {
-            margin-top: 3px;
+            margin-top: 4px;
         }
         .prova-content .schedule-label {
-            font-size: 11px;
+            font-size: 12px;
             font-weight: bold;
-            margin-bottom: 1px;
+            margin-bottom: 2px;
         }
         .prova-content .professional-info {
-            font-size: 11px;
+            font-size: 12px;
             margin-bottom: 2px;
         }
         .instructions {
             border-top: 2px solid black;
-            padding-top: 10px;
+            padding-top: 12px;
             page-break-inside: avoid;
         }
         .instructions h3 {
-            font-size: 13px;
+            font-size: 14px;
             font-weight: bold;
-            margin-bottom: 6px;
+            margin-bottom: 7px;
         }
         .instructions-content {
-            line-height: 1.15;
+            line-height: 1.2;
             color: #333;
             word-wrap: break-word;
             overflow-wrap: break-word;
-            font-size: clamp(10px, 1.4vw, 14px);
+            font-size: clamp(11px, 1.5vw, 15px);
         }
         .instructions-content p {
             margin: 0;
             padding: 0;
-            line-height: 1.1;
+            line-height: 1.15;
         }
         .instructions-content ul,
         .instructions-content ol {
-            margin: 2px 0;
-            padding-left: 20px;
+            margin: 3px 0;
+            padding-left: 22px;
         }
         .instructions-content li {
             margin: 0;
@@ -568,10 +568,10 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
         <div class="header">
             <div class="logo-section">
                 ${logoUrl ? `
-                    <img src="${logoUrl}" alt="Logo da Agência" style="max-height: 70px; max-width: 140px; margin-right: 10px;" />
+                    <img src="${logoUrl}" alt="Logo da Agência" style="max-height: 80px; max-width: 160px; margin-right: 12px;" />
                 ` : ''}
                 <div class="logo-text">
-                    <h1 style="font-size: 26px; font-weight: bold; margin: 0;">SIGA O PASSO A PASSO</h1>
+                    <h1 style="font-size: 30px; font-weight: bold; margin: 0;">SIGA O PASSO A PASSO</h1>
                 </div>
             </div>
         </div>
@@ -704,12 +704,12 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                                 `).join('')}
                             </div>
                         ` : step.type === 'psicologo' ? `
-                            <div style="display: flex; align-items: center; justify-content: center; min-height: 60px; padding: 6px;">
-                                <div style="font-size: 14px; font-weight: bold; color: black; line-height: 1.15; text-align: center;">ATENÇÃO: O CONDUTOR OPTOU POR NÃO COLOCAR O EAR NA SUA CNH</div>
+                            <div style="display: flex; align-items: center; justify-content: center; min-height: 70px; padding: 8px;">
+                                <div style="font-size: 16px; font-weight: bold; color: black; line-height: 1.2; text-align: center;">ATENÇÃO: O CONDUTOR OPTOU POR NÃO COLOCAR O EAR NA SUA CNH</div>
                             </div>
                         ` : `
-                            <div style="display: flex; align-items: center; justify-content: center; height: 60px;">
-                                <div style="font-size: 48px; font-weight: bold; color: black; line-height: 1;">✕</div>
+                            <div style="display: flex; align-items: center; justify-content: center; height: 70px;">
+                                <div style="font-size: 54px; font-weight: bold; color: black; line-height: 1;">✕</div>
                             </div>
                         `}
                     </div>
@@ -729,9 +729,9 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
               
               if (!provaStep || !isSelected || !professional) {
                 return `
-                  <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 8px;">
-                    <div style="background-color: white; border: 1px solid black; padding: 7px; border-radius: 4px; text-align: center; max-width: 380px;">
-                      <div style="font-size: 10px; font-weight: bold; color: black; line-height: 1.25;">⚠️ ATENÇÃO: PRAZO PARA RETIRAR A CNH/PID FÍSICA SERÁ DE 180 DIAS, CONTANDO A PARTIR DA DATA DA SUA EMISSÃO</div>
+                  <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                    <div style="background-color: white; border: 2px solid black; padding: 9px; border-radius: 5px; text-align: center; max-width: 400px;">
+                      <div style="font-size: 12px; font-weight: bold; color: black; line-height: 1.3;">⚠️ ATENÇÃO: PRAZO PARA RETIRAR A CNH/PID FÍSICA SERÁ DE 180 DIAS, CONTANDO A PARTIR DA DATA DA SUA EMISSÃO</div>
                     </div>
                     <div class="total-amount-box">
                       <div class="total-amount-text"><strong>VALOR TOTAL: R$ ${parseFloat(processData.total_amount).toFixed(2)}</strong></div>
@@ -784,9 +784,9 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                           ` : ''}
                       </div>
                   </div>
-                  <div style="display: flex; gap: 8px; align-items: center; justify-content: space-between; width: 100%;">
-                    <div style="background-color: white; border: 1px solid black; padding: 7px; border-radius: 4px; text-align: center; max-width: 380px;">
-                      <div style="font-size: 10px; font-weight: bold; color: black; line-height: 1.25;">⚠️ ATENÇÃO: PRAZO PARA RETIRAR A CNH/PID FÍSICA SERÁ DE 180 DIAS, CONTANDO A PARTIR DA DATA DA SUA EMISSÃO</div>
+                  <div style="display: flex; gap: 10px; align-items: center; justify-content: space-between; width: 100%;">
+                    <div style="background-color: white; border: 2px solid black; padding: 9px; border-radius: 5px; text-align: center; max-width: 400px;">
+                      <div style="font-size: 12px; font-weight: bold; color: black; line-height: 1.3;">⚠️ ATENÇÃO: PRAZO PARA RETIRAR A CNH/PID FÍSICA SERÁ DE 180 DIAS, CONTANDO A PARTIR DA DATA DA SUA EMISSÃO</div>
                     </div>
                     <div class="total-amount-card">
                       <div class="total-amount-box">
