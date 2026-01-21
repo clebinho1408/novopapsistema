@@ -725,7 +725,7 @@ export default function StepProcess() {
                           <span className="text-gray-900">
                             {step.name}
                             {step.type === 'curso_teorico' && (
-                              <span className="ml-2 text-xs text-blue-600 font-medium italic">
+                              <span className="ml-2 text-xs text-red-600 font-medium italic">
                                 Obs.: Se o candidato já realizou o curso teórico pelo aplicativo CNH do Brasil, esta etapa deve ser desmarcada.
                               </span>
                             )}
