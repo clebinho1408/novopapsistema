@@ -149,7 +149,7 @@ export default function StepProcess() {
         }
         
         // Regra para 1º Habilitação: Marcar Prova Teórica, LADV e Prova Prática
-        if (rule.name === '1º Habilitação') {
+        if (serviceName === '1º Habilitação') {
           const ptFee = fees.find(f => f.name === 'Prova Teórica');
           const ladvFee = fees.find(f => f.name === 'LADV');
           const ppFee = fees.find(f => f.name === 'Prova Prática');
