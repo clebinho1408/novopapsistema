@@ -293,22 +293,22 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             border-radius: 4px;
         }
         .professional-name {
-            font-size: 14.5px;
+            font-size: 15.5px;
             font-weight: bold;
             text-transform: uppercase;
-            margin-bottom: 4px;
+            margin-bottom: 5px;
         }
         .professional-info {
-            font-size: 11px;
-            margin-bottom: 3px;
+            font-size: 12px;
+            margin-bottom: 4px;
         }
         .schedule-info {
             margin-top: 6px;
         }
         .schedule-label {
-            font-size: 11px;
+            font-size: 12px;
             font-weight: bold;
-            margin-bottom: 2px;
+            margin-bottom: 3px;
         }
         .fee-section h4 {
             font-size: 15px;
@@ -396,22 +396,22 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             padding: 6px 8px;
         }
         .prova-content .professional-name {
-            font-size: 14.5px;
+            font-size: 15.5px;
             font-weight: bold;
             text-transform: uppercase;
-            margin-bottom: 4px;
+            margin-bottom: 5px;
         }
         .prova-content .schedule-info {
-            margin-top: 4px;
+            margin-top: 5px;
         }
         .prova-content .schedule-label {
-            font-size: 12px;
+            font-size: 13px;
             font-weight: bold;
-            margin-bottom: 2px;
+            margin-bottom: 3px;
         }
         .prova-content .professional-info {
-            font-size: 12px;
-            margin-bottom: 2px;
+            font-size: 13px;
+            margin-bottom: 3px;
         }
         .instructions {
             border-top: 2px solid black;
@@ -428,7 +428,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             color: #333;
             word-wrap: break-word;
             overflow-wrap: break-word;
-            font-size: 13.5px;
+            font-size: 14.5px;
         }
         .instructions-content p {
             margin: 0;
@@ -637,7 +637,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                                 <div class="schedule-info">
                                     <div class="schedule-label"><strong>${professional.attendance_type}:</strong></div>
                                     ${professional.phone ? `
-                                        <div class="professional-info" style="font-size: 9px;"><strong>${professional.phone}</strong> - Somente mensagem WhatsApp</div>
+                                        <div class="professional-info" style="font-size: 12px;"><strong>${professional.phone}</strong> - Somente mensagem WhatsApp</div>
                                     ` : ''}
                                 </div>
                             ` : ''}
@@ -688,10 +688,10 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                               </div>
                             ` : ''}
                         ` : isNoProfessionalStep ? `
-                            <div style="padding: 6px;">
-                                ${step.description ? `<div style="font-size: 10px; font-weight: bold; color: black; margin-bottom: 4px; line-height: 1.2;">${step.description}</div>` : ''}
-                                ${step.obs ? `<div style="font-size: 9px; font-weight: bold; color: black;">Obs.: ${step.obs}</div>` : ''}
-                                ${!step.description && !step.obs ? `<div style="font-size: 10px; color: #666; text-align: center;">Etapa selecionada</div>` : ''}
+                            <div style="padding: 8px;">
+                                ${step.description ? `<div style="font-size: 14px; font-weight: bold; color: black; margin-bottom: 5px; line-height: 1.25;">${step.description}</div>` : ''}
+                                ${step.obs ? `<div style="font-size: 13px; font-weight: bold; color: black;">Obs.: ${step.obs}</div>` : ''}
+                                ${!step.description && !step.obs ? `<div style="font-size: 13px; color: #666; text-align: center;">Etapa selecionada</div>` : ''}
                             </div>
                         ` : (step.type === 'taxa' && hasTaxesSelected) ? `
                             <div class="fee-section">
