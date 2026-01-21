@@ -887,7 +887,22 @@ export default function StepProcess() {
                               const hasConflictStepSelected = ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'].some(type => currentStepTypes.includes(type));
                               const isTransferenciaFee = fee.name === 'Transferência';
                               
-                              const isFeeDisabled = !isTaxaStepSelected || isProvaFee || (isTransferenciaFee && hasConflictStepSelected);
+                              // Verificar se as etapas correspondentes estão selecionadas para as taxas específicas
+                              const isProvaTeoricoFee = fee.name === 'Prova Teórica';
+                              const isLadvFee = fee.name === 'LADV';
+                              const isProvaPraticaFee = fee.name === 'Prova Prática';
+                              
+                              const hasProvaTeoricoStep = currentStepTypes.includes('prova_teorica');
+                              const hasCursoPraticoStep = currentStepTypes.includes('curso_pratico');
+                              const hasProvaPraticaStep = currentStepTypes.includes('prova_pratica');
+                              
+                              // Desabilitar taxas se as etapas correspondentes não estiverem selecionadas
+                              const isSpecificFeeDisabled = 
+                                (isProvaTeoricoFee && !hasProvaTeoricoStep) ||
+                                (isLadvFee && !hasCursoPraticoStep) ||
+                                (isProvaPraticaFee && !hasProvaPraticaStep);
+                              
+                              const isFeeDisabled = !isTaxaStepSelected || isProvaFee || (isTransferenciaFee && hasConflictStepSelected) || isSpecificFeeDisabled;
                               
                               return (
                                 <label key={fee.id} className={`flex items-center justify-between ${isFeeDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
