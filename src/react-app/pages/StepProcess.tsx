@@ -67,8 +67,8 @@ export default function StepProcess() {
       // Definir regras de auto-seleção para cada serviço
       const serviceRules: Record<string, { steps: string[], fees: string[] }> = {
         '1º Habilitação': {
-          steps: ['foto', 'taxa', 'psicologo', 'medico', 'prova'],
-          fees: ['Emissão da CNH', 'Prova']
+          steps: ['foto', 'taxa', 'psicologo', 'medico', 'curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'],
+          fees: ['Emissão da CNH']
         },
         'Alteração de Dados': {
           steps: ['foto', 'taxa'],
@@ -236,12 +236,32 @@ export default function StepProcess() {
   };
 
   const handleStepToggle = (stepId: number) => {
-    setFormData(prev => ({
-      ...prev,
-      selected_steps: prev.selected_steps.includes(stepId)
-        ? prev.selected_steps.filter(id => id !== stepId)
-        : [...prev.selected_steps, stepId]
-    }));
+    const step = processSteps.find(s => s.id === stepId);
+    
+    setFormData(prev => {
+      const isCurrentlySelected = prev.selected_steps.includes(stepId);
+      
+      // Se está selecionando Curso Teórico, também selecionar as outras novas etapas
+      if (!isCurrentlySelected && step?.type === 'curso_teorico') {
+        const newStepTypes = ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'];
+        const newStepIds = processSteps
+          .filter(s => newStepTypes.includes(s.type))
+          .map(s => s.id);
+        
+        const combinedSteps = [...new Set([...prev.selected_steps, ...newStepIds])];
+        return {
+          ...prev,
+          selected_steps: combinedSteps
+        };
+      }
+      
+      return {
+        ...prev,
+        selected_steps: isCurrentlySelected
+          ? prev.selected_steps.filter(id => id !== stepId)
+          : [...prev.selected_steps, stepId]
+      };
+    });
   };
 
   const handleProfessionalSelectChange = (stepId: number, selectedValue: string) => {
