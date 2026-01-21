@@ -182,10 +182,10 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
     };
     
     const sizesWithoutExtra = {
-      professionalName: '24px',
-      professionalInfo: '20px',
-      scheduleLabel: '14px',
-      instructions: '13px',
+      professionalName: '28px',
+      professionalInfo: '24px',
+      scheduleLabel: '16px',
+      instructions: '15px',
       stepNumber: '22px',
       stepTitle: '20px',
       stepIcon: '48px',
