@@ -192,7 +192,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
       cardWithFeeMinHeight: '260px',
       headerTitle: '38px',
       feeItem: '14px',
-      feeBadge: '29px',
+      feeBadge: '32px',
       totalAmount: '15px',
     };
     
