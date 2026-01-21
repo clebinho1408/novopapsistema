@@ -147,6 +147,17 @@ export default function StepProcess() {
         if (rule.fees.includes('Transferência')) {
           newSelectedFees.push(transferenciaFee.id);
         }
+        
+        // Regra para 1º Habilitação: Marcar Prova Teórica, LADV e Prova Prática
+        if (rule.name === '1º Habilitação') {
+          const ptFee = fees.find(f => f.name === 'Prova Teórica');
+          const ladvFee = fees.find(f => f.name === 'LADV');
+          const ppFee = fees.find(f => f.name === 'Prova Prática');
+          
+          if (ptFee && !newSelectedFees.includes(ptFee.id)) newSelectedFees.push(ptFee.id);
+          if (ladvFee && !newSelectedFees.includes(ladvFee.id)) newSelectedFees.push(ladvFee.id);
+          if (ppFee && !newSelectedFees.includes(ppFee.id)) newSelectedFees.push(ppFee.id);
+        }
       }
       
       return { ...prev, selected_fees: newSelectedFees, selected_steps: newSelectedSteps };
@@ -306,14 +317,20 @@ export default function StepProcess() {
         }
       }
 
-      // Regra de exclusão da Prova PCD
+      // Regra de exclusão da Prova PCD e Transferência
       const newStepTypes = newSteps.map(id => processSteps.find(s => s.id === id)?.type);
       const hasConflictStep = ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'].some(type => newStepTypes.includes(type));
       
       if (hasConflictStep) {
+        // Desmarcar Prova PCD
         const provaPCDStep = processSteps.find(s => s.type === 'prova');
         if (provaPCDStep) {
           newSteps = newSteps.filter(id => id !== provaPCDStep.id);
+        }
+        // Desmarcar Transferência
+        const transferenciaFee = fees.find(f => f.name === 'Transferência');
+        if (transferenciaFee) {
+          newFees = newFees.filter(id => id !== transferenciaFee.id);
         }
       } else if (step?.type === 'prova') {
         // Se estiver tentando marcar Prova PCD mas já tem etapas conflitantes
@@ -866,7 +883,11 @@ export default function StepProcess() {
                               return !fee.linked_professional_type || fee.linked_professional_type === 'prova';
                             }).map(fee => {
                               const isProvaFee = fee.name === 'Prova PCD';
-                              const isFeeDisabled = !isTaxaStepSelected || isProvaFee;
+                              const currentStepTypes = formData.selected_steps.map(id => processSteps.find(s => s.id === id)?.type);
+                              const hasConflictStepSelected = ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'].some(type => currentStepTypes.includes(type));
+                              const isTransferenciaFee = fee.name === 'Transferência';
+                              
+                              const isFeeDisabled = !isTaxaStepSelected || isProvaFee || (isTransferenciaFee && hasConflictStepSelected);
                               
                               return (
                                 <label key={fee.id} className={`flex items-center justify-between ${isFeeDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
