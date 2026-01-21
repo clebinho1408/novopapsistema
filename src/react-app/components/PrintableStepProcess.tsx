@@ -563,7 +563,18 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
         <!-- Steps Grid -->
         <div class="steps-grid">
             ${(() => {
-              const filteredSteps = (processData.all_steps || processData.selected_steps).filter(step => step.type !== 'prova');
+              // Tipos de etapas que só devem aparecer se estiverem selecionadas
+              const conditionalTypes = ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'];
+              
+              const filteredSteps = (processData.all_steps || processData.selected_steps).filter(step => {
+                // Excluir prova (processada separadamente)
+                if (step.type === 'prova') return false;
+                // Para etapas condicionais, só mostrar se selecionadas
+                if (conditionalTypes.includes(step.type)) {
+                  return processData.selected_steps.find(s => s.id === step.id);
+                }
+                return true;
+              });
               let stepCounter = 0;
               
               return filteredSteps.map((step) => {
@@ -904,8 +915,18 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
     let content = `SIGA O PASSO A PASSO\n`;
     content += `\n======================================\n\n`;
 
-    // Filtrar etapas (excluindo prova para processar separadamente)
-    const filteredSteps = (processData.all_steps || processData.selected_steps).filter((step: any) => step.type !== 'prova');
+    // Tipos de etapas que só devem aparecer se estiverem selecionadas
+    const conditionalTypes = ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'];
+
+    // Filtrar etapas (excluindo prova para processar separadamente e etapas condicionais não selecionadas)
+    const filteredSteps = (processData.all_steps || processData.selected_steps).filter((step: any) => {
+      if (step.type === 'prova') return false;
+      // Para etapas condicionais, só mostrar se selecionadas
+      if (conditionalTypes.includes(step.type)) {
+        return processData.selected_steps.find((s: any) => s.id === step.id);
+      }
+      return true;
+    });
     let stepCounter = 0;
 
     // Tipos de etapas que não precisam de credenciado
