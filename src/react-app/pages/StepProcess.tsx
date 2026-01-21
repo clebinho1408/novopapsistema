@@ -778,8 +778,8 @@ export default function StepProcess() {
                         const hasConflictSelected = ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'].some(type => currentStepTypes.includes(type));
                         const isProvaPCD = step.type === 'prova';
                         
-                        // Desabilitar etapas de curso/prova se o serviço não for "1º Habilitação"
-                        const isNotPrimeiraHabilitacao = formData.client_name !== '1º Habilitação';
+                        // Desabilitar etapas de curso/prova apenas se um serviço for selecionado e não for "1º Habilitação"
+                        const isNotPrimeiraHabilitacao = formData.client_name !== '' && formData.client_name !== '1º Habilitação';
                         const isCourseOrExamStep = ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'].includes(step.type);
                         
                         // Desabilitar Prova PCD se alguma das etapas novas estiver marcada
