@@ -252,9 +252,11 @@ export default function Professionals() {
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="all">Todos os tipos</option>
-              {Object.entries(PROFESSIONAL_TYPE_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
+              {Object.entries(PROFESSIONAL_TYPE_LABELS)
+                .filter(([value]) => !['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'].includes(value))
+                .map(([value, label]) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
             </select>
             <select
               value={cityFilter}
@@ -432,9 +434,11 @@ export default function Professionals() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                   >
-                    {Object.entries(PROFESSIONAL_TYPE_LABELS).map(([value, label]) => (
-                      <option key={value} value={value}>{label}</option>
-                    ))}
+                    {Object.entries(PROFESSIONAL_TYPE_LABELS)
+                      .filter(([value]) => !['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'].includes(value))
+                      .map(([value, label]) => (
+                        <option key={value} value={value}>{label}</option>
+                      ))}
                   </select>
                 </div>
                 <div>
