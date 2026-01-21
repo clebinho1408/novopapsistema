@@ -661,10 +661,12 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                               </div>
                             ` : ''}
                         ` : isNoProfessionalStep ? `
-                            <div style="padding: 12px;">
-                                ${step.description ? `<div style="font-size: 12px; font-weight: bold; color: black; margin-bottom: 8px; line-height: 1.4;">${step.description}</div>` : ''}
-                                ${step.obs ? `<div style="font-size: 11px; font-weight: bold; color: black;">Obs.: ${step.obs}</div>` : ''}
-                                ${!step.description && !step.obs ? `<div style="font-size: 12px; color: #666; text-align: center;">Etapa selecionada</div>` : ''}
+                            <div style="padding: 12px; display: flex; flex-direction: column; height: 100%; min-height: 100px;">
+                                <div style="flex: 1;">
+                                    ${step.description ? `<div style="font-size: 12px; font-weight: bold; color: black; line-height: 1.4;">${step.description}</div>` : ''}
+                                    ${!step.description && !step.obs ? `<div style="font-size: 12px; color: #666; text-align: center;">Etapa selecionada</div>` : ''}
+                                </div>
+                                ${step.obs ? `<div style="font-size: 11px; font-weight: bold; color: black; margin-top: auto; padding-top: 8px;">Obs.: ${step.obs}</div>` : ''}
                             </div>
                         ` : (step.type === 'taxa' && hasTaxesSelected) ? `
                             <div class="fee-section">
@@ -1322,15 +1324,17 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                           )}
                         </div>
                       ) : isNoProfessionalStep ? (
-                        <div className="space-y-2 p-2">
-                          {step.description && (
-                            <p className="text-xs font-bold text-black">{step.description}</p>
-                          )}
+                        <div className="p-2 flex flex-col h-full min-h-[80px]">
+                          <div className="flex-1">
+                            {step.description && (
+                              <p className="text-xs font-bold text-black">{step.description}</p>
+                            )}
+                            {!step.description && !step.obs && (
+                              <p className="text-xs text-gray-500 text-center">Etapa selecionada</p>
+                            )}
+                          </div>
                           {step.obs && (
-                            <p className="text-xs font-bold text-black">Obs.: {step.obs}</p>
-                          )}
-                          {!step.description && !step.obs && (
-                            <p className="text-xs text-gray-500 text-center">Etapa selecionada</p>
+                            <p className="text-xs font-bold text-black mt-auto pt-2">Obs.: {step.obs}</p>
                           )}
                         </div>
                       ) : step.type === 'taxa' && isSelected ? (
