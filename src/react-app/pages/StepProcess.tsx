@@ -56,6 +56,10 @@ export default function StepProcess() {
     const taxaStep = processSteps.find(step => step.type === 'taxa');
     const psicologicoStep = processSteps.find(step => step.type === 'psicologo');
     const medicoStep = processSteps.find(step => step.type === 'medico');
+    const cursoTeoricoStep = processSteps.find(step => step.type === 'curso_teorico');
+    const provaTeoricoStep = processSteps.find(step => step.type === 'prova_teorica');
+    const cursoPraticoStep = processSteps.find(step => step.type === 'curso_pratico');
+    const provaPraticaStep = processSteps.find(step => step.type === 'prova_pratica');
     
     if (!emissaoCNHFee || !transferenciaFee) return;
     
@@ -123,6 +127,18 @@ export default function StepProcess() {
         }
         if (rule.steps.includes('medico') && medicoStep) {
           newSelectedSteps.push(medicoStep.id);
+        }
+        if (rule.steps.includes('curso_teorico') && cursoTeoricoStep) {
+          newSelectedSteps.push(cursoTeoricoStep.id);
+        }
+        if (rule.steps.includes('prova_teorica') && provaTeoricoStep) {
+          newSelectedSteps.push(provaTeoricoStep.id);
+        }
+        if (rule.steps.includes('curso_pratico') && cursoPraticoStep) {
+          newSelectedSteps.push(cursoPraticoStep.id);
+        }
+        if (rule.steps.includes('prova_pratica') && provaPraticaStep) {
+          newSelectedSteps.push(provaPraticaStep.id);
         }
         
         // Auto-selecionar taxas baseado na regra
