@@ -267,6 +267,9 @@ export default function StepProcess() {
         } else if (step?.type === 'prova_pratica') {
           const provaPraticaFee = fees.find(f => f.name === 'Prova Prática');
           if (provaPraticaFee) newFees = newFees.filter(id => id !== provaPraticaFee.id);
+        } else if (step?.type === 'taxa') {
+          const emissaoCNHFee = fees.find(f => f.name === 'Emissão da CNH');
+          if (emissaoCNHFee) newFees = newFees.filter(id => id !== emissaoCNHFee.id);
         }
         
         return {
@@ -278,6 +281,7 @@ export default function StepProcess() {
       
       // Se está marcando a etapa
       let newFees = [...prev.selected_fees];
+      let newSteps = [...prev.selected_steps, stepId];
       
       // Auto-selecionar taxa ao marcar etapa
       if (step?.type === 'prova_teorica') {
@@ -295,11 +299,34 @@ export default function StepProcess() {
         if (provaPraticaFee && !newFees.includes(provaPraticaFee.id)) {
           newFees.push(provaPraticaFee.id);
         }
+      } else if (step?.type === 'taxa') {
+        const emissaoCNHFee = fees.find(f => f.name === 'Emissão da CNH');
+        if (emissaoCNHFee && !newFees.includes(emissaoCNHFee.id)) {
+          newFees.push(emissaoCNHFee.id);
+        }
+      }
+
+      // Regra de exclusão da Prova PCD
+      const newStepTypes = newSteps.map(id => processSteps.find(s => s.id === id)?.type);
+      const hasConflictStep = ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'].some(type => newStepTypes.includes(type));
+      
+      if (hasConflictStep) {
+        const provaPCDStep = processSteps.find(s => s.type === 'prova');
+        if (provaPCDStep) {
+          newSteps = newSteps.filter(id => id !== provaPCDStep.id);
+        }
+      } else if (step?.type === 'prova') {
+        // Se estiver tentando marcar Prova PCD mas já tem etapas conflitantes
+        const currentStepTypes = prev.selected_steps.map(id => processSteps.find(s => s.id === id)?.type);
+        const alreadyHasConflict = ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'].some(type => currentStepTypes.includes(type));
+        if (alreadyHasConflict) {
+          return prev; // Não permite marcar
+        }
       }
       
       return {
         ...prev,
-        selected_steps: [...prev.selected_steps, stepId],
+        selected_steps: newSteps,
         selected_fees: newFees
       };
     });
@@ -714,24 +741,36 @@ export default function StepProcess() {
                   <div>
                     <h2 className="text-lg font-medium text-gray-900 mb-4">Selecione as Etapas Necessárias</h2>
                     <div className="space-y-3">
-                      {[...processSteps].sort((a, b) => a.sort_order - b.sort_order).map(step => (
-                        <label key={step.id} className="flex items-center space-x-3">
-                          <input
-                            type="checkbox"
-                            checked={formData.selected_steps.includes(step.id)}
-                            onChange={() => handleStepToggle(step.id)}
-                            className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                          />
-                          <span className="text-gray-900">
-                            {step.name}
-                            {step.type === 'curso_teorico' && (
-                              <span className="ml-2 text-xs text-red-600 font-medium italic">
-                                Obs.: Se o candidato já realizou o curso teórico pelo aplicativo CNH do Brasil, esta etapa deve ser desmarcada.
-                              </span>
-                            )}
-                          </span>
-                        </label>
-                      ))}
+                      {[...processSteps].sort((a, b) => a.sort_order - b.sort_order).map(step => {
+                        const currentStepTypes = formData.selected_steps.map(id => processSteps.find(s => s.id === id)?.type);
+                        const isConflictStep = ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'].includes(step.type);
+                        const hasConflictSelected = ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'].some(type => currentStepTypes.includes(type));
+                        const isProvaPCD = step.type === 'prova';
+                        
+                        // Desabilitar Prova PCD se alguma das etapas novas estiver marcada
+                        // Desabilitar as etapas novas se Prova PCD estiver marcada
+                        const isDisabled = (isProvaPCD && hasConflictSelected) || (isConflictStep && currentStepTypes.includes('prova'));
+
+                        return (
+                          <label key={step.id} className={`flex items-center space-x-3 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                            <input
+                              type="checkbox"
+                              checked={formData.selected_steps.includes(step.id)}
+                              onChange={() => !isDisabled && handleStepToggle(step.id)}
+                              disabled={isDisabled}
+                              className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            />
+                            <span className="text-gray-900">
+                              {step.name}
+                              {step.type === 'curso_teorico' && (
+                                <span className="ml-2 text-xs text-red-600 font-medium italic">
+                                  Obs.: Se o candidato já realizou o curso teórico pelo aplicativo CNH do Brasil, esta etapa deve ser desmarcada.
+                                </span>
+                              )}
+                            </span>
+                          </label>
+                        );
+                      })}
                     </div>
 
                     {/* Professional selection for selected steps (excluding taxa and new course/exam steps) */}
