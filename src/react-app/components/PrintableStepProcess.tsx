@@ -158,6 +158,44 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
   };
 
   const generatePrintHTML = () => {
+    // Verificar se as etapas de curso/prova estão selecionadas
+    const hasExtraSteps = ['prova_teorica', 'curso_pratico', 'prova_pratica'].some(type => 
+      processData.selected_steps.some(step => step.type === type)
+    );
+    
+    // Tamanhos maiores quando NÃO há etapas extras selecionadas
+    const sizes = hasExtraSteps ? {
+      // Tamanhos normais (com etapas extras)
+      professionalName: '15.5px',
+      professionalInfo: '12px',
+      scheduleLabel: '12px',
+      instructions: '14.5px',
+      stepNumber: '16px',
+      stepTitle: '14px',
+      stepIcon: '34px',
+      cardMinHeight: '165px',
+      cardWithFeeMinHeight: '195px',
+      headerTitle: '30px',
+      feeItem: '13px',
+      feeBadge: '14px',
+      totalAmount: '15px',
+    } : {
+      // Tamanhos MAIORES (sem etapas extras)
+      professionalName: '18px',
+      professionalInfo: '14px',
+      scheduleLabel: '14px',
+      instructions: '16px',
+      stepNumber: '18px',
+      stepTitle: '16px',
+      stepIcon: '40px',
+      cardMinHeight: '190px',
+      cardWithFeeMinHeight: '220px',
+      headerTitle: '34px',
+      feeItem: '15px',
+      feeBadge: '16px',
+      totalAmount: '17px',
+    };
+    
     return `
 <!DOCTYPE html>
 <html>
@@ -232,12 +270,12 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
         }
         .step-card {
             border: 2px solid black;
-            min-height: 165px;
+            min-height: ${sizes.cardMinHeight};
             page-break-inside: avoid;
         }
         .step-card-with-fee {
             border: 2px solid black;
-            min-height: 195px;
+            min-height: ${sizes.cardWithFeeMinHeight};
             page-break-inside: avoid;
             position: relative;
         }
@@ -249,7 +287,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             align-items: center;
         }
         .step-icon {
-            font-size: 34px;
+            font-size: ${sizes.stepIcon};
             margin-right: 10px;
         }
         .step-number-and-title {
@@ -259,13 +297,13 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             align-items: center;
         }
         .step-number-text {
-            font-size: 16px;
+            font-size: ${sizes.stepNumber};
             font-weight: bold;
             margin: 0;
             text-align: center;
         }
         .step-title {
-            font-size: 14px;
+            font-size: ${sizes.stepTitle};
             font-weight: bold;
             text-transform: uppercase;
             text-align: center;
@@ -284,7 +322,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             position: absolute;
             bottom: 7px;
             right: 7px;
-            font-size: 14px;
+            font-size: ${sizes.feeBadge};
             font-weight: bold;
             color: black;
             background-color: #f5f5f5;
@@ -293,31 +331,31 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             border-radius: 4px;
         }
         .professional-name {
-            font-size: 15.5px;
+            font-size: ${sizes.professionalName};
             font-weight: bold;
             text-transform: uppercase;
             margin-bottom: 5px;
         }
         .professional-info {
-            font-size: 12px;
+            font-size: ${sizes.professionalInfo};
             margin-bottom: 4px;
         }
         .schedule-info {
             margin-top: 6px;
         }
         .schedule-label {
-            font-size: 12px;
+            font-size: ${sizes.scheduleLabel};
             font-weight: bold;
             margin-bottom: 3px;
         }
         .fee-section h4 {
-            font-size: 15px;
+            font-size: ${sizes.feeItem};
             font-weight: bold;
             text-transform: uppercase;
             margin: 0 0 7px 0;
         }
         .fee-item {
-            font-size: 13px;
+            font-size: ${sizes.feeItem};
             margin-bottom: 4px;
         }
         .fee-total {
@@ -351,7 +389,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             text-align: center;
         }
         .total-amount-text {
-            font-size: 15px;
+            font-size: ${sizes.totalAmount};
             font-weight: bold;
             color: black;
             margin: 0;
@@ -428,7 +466,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             color: #333;
             word-wrap: break-word;
             overflow-wrap: break-word;
-            font-size: 14.5px;
+            font-size: ${sizes.instructions};
         }
         .instructions-content p {
             margin: 0;
@@ -571,7 +609,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                     <img src="${logoUrl}" alt="Logo da Agência" style="max-height: 80px; max-width: 160px; margin-right: 12px;" />
                 ` : ''}
                 <div class="logo-text">
-                    <h1 style="font-size: 30px; font-weight: bold; margin: 0;">SIGA O PASSO A PASSO</h1>
+                    <h1 style="font-size: ${sizes.headerTitle}; font-weight: bold; margin: 0;">SIGA O PASSO A PASSO</h1>
                 </div>
             </div>
         </div>
