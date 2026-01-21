@@ -50,7 +50,6 @@ export default function StepProcess() {
     
     const emissaoCNHFee = fees.find(f => f.name === 'Emissão da CNH');
     const transferenciaFee = fees.find(f => f.name === 'Transferência');
-    const segundaViaFee = fees.find(f => f.name === '2º Via');
     
     const fotoStep = processSteps.find(step => step.type === 'foto');
     const taxaStep = processSteps.find(step => step.type === 'taxa');
@@ -147,9 +146,6 @@ export default function StepProcess() {
         }
         if (rule.fees.includes('Transferência')) {
           newSelectedFees.push(transferenciaFee.id);
-        }
-        if (rule.fees.includes('2º Via') && segundaViaFee) {
-          newSelectedFees.push(segundaViaFee.id);
         }
       }
       
@@ -257,25 +253,54 @@ export default function StepProcess() {
     setFormData(prev => {
       const isCurrentlySelected = prev.selected_steps.includes(stepId);
       
-      // Se está selecionando Curso Teórico, também selecionar as outras novas etapas
-      if (!isCurrentlySelected && step?.type === 'curso_teorico') {
-        const newStepTypes = ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'];
-        const newStepIds = processSteps
-          .filter(s => newStepTypes.includes(s.type))
-          .map(s => s.id);
+      // Se está desmarcando a etapa
+      if (isCurrentlySelected) {
+        let newFees = [...prev.selected_fees];
         
-        const combinedSteps = [...new Set([...prev.selected_steps, ...newStepIds])];
+        // Remover taxa vinculada ao desmarcar etapa
+        if (step?.type === 'prova_teorica') {
+          const provaTeoricoFee = fees.find(f => f.name === 'Prova Teórica');
+          if (provaTeoricoFee) newFees = newFees.filter(id => id !== provaTeoricoFee.id);
+        } else if (step?.type === 'curso_pratico') {
+          const ladvFee = fees.find(f => f.name === 'LADV');
+          if (ladvFee) newFees = newFees.filter(id => id !== ladvFee.id);
+        } else if (step?.type === 'prova_pratica') {
+          const provaPraticaFee = fees.find(f => f.name === 'Prova Prática');
+          if (provaPraticaFee) newFees = newFees.filter(id => id !== provaPraticaFee.id);
+        }
+        
         return {
           ...prev,
-          selected_steps: combinedSteps
+          selected_steps: prev.selected_steps.filter(id => id !== stepId),
+          selected_fees: newFees
         };
+      }
+      
+      // Se está marcando a etapa
+      let newFees = [...prev.selected_fees];
+      
+      // Auto-selecionar taxa ao marcar etapa
+      if (step?.type === 'prova_teorica') {
+        const provaTeoricoFee = fees.find(f => f.name === 'Prova Teórica');
+        if (provaTeoricoFee && !newFees.includes(provaTeoricoFee.id)) {
+          newFees.push(provaTeoricoFee.id);
+        }
+      } else if (step?.type === 'curso_pratico') {
+        const ladvFee = fees.find(f => f.name === 'LADV');
+        if (ladvFee && !newFees.includes(ladvFee.id)) {
+          newFees.push(ladvFee.id);
+        }
+      } else if (step?.type === 'prova_pratica') {
+        const provaPraticaFee = fees.find(f => f.name === 'Prova Prática');
+        if (provaPraticaFee && !newFees.includes(provaPraticaFee.id)) {
+          newFees.push(provaPraticaFee.id);
+        }
       }
       
       return {
         ...prev,
-        selected_steps: isCurrentlySelected
-          ? prev.selected_steps.filter(id => id !== stepId)
-          : [...prev.selected_steps, stepId]
+        selected_steps: [...prev.selected_steps, stepId],
+        selected_fees: newFees
       };
     });
   };

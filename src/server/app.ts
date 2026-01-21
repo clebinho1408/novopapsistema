@@ -160,7 +160,6 @@ app.post('/api/auth/register', async (c) => {
       { name: 'Prova PCD', amount: 0, linked_professional_type: null },
       { name: 'Médico', amount: 0, linked_professional_type: 'medico' },
       { name: 'Psicólogo', amount: 0, linked_professional_type: 'psicologo' },
-      { name: '2º Via', amount: 0, linked_professional_type: null },
       { name: 'Prova Teórica', amount: 0, linked_professional_type: null },
       { name: 'LADV', amount: 0, linked_professional_type: null },
       { name: 'Prova Prática', amount: 0, linked_professional_type: null },
