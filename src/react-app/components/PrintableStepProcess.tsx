@@ -164,6 +164,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
     );
     
     // Tamanhos maiores quando NÃO há etapas extras selecionadas
+    console.log('hasExtraSteps:', hasExtraSteps, 'selected_steps:', processData.selected_steps.map(s => s.type));
     const sizes = hasExtraSteps ? {
       // Tamanhos normais (com etapas extras)
       professionalName: '15.5px',
