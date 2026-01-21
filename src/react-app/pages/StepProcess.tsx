@@ -722,7 +722,14 @@ export default function StepProcess() {
                             onChange={() => handleStepToggle(step.id)}
                             className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                           />
-                          <span className="text-gray-900">{step.name}</span>
+                          <span className="text-gray-900">
+                            {step.name}
+                            {step.type === 'curso_teorico' && (
+                              <span className="ml-2 text-xs text-blue-600 font-medium italic">
+                                Obs.: Se o candidato já realizou o curso teórico pelo aplicativo CNH do Brasil, esta etapa deve ser desmarcada.
+                              </span>
+                            )}
+                          </span>
                         </label>
                       ))}
                     </div>
