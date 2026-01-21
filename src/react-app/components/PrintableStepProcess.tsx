@@ -181,19 +181,19 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
       totalAmount: '15px',
     } : {
       // Tamanhos MAIORES (sem etapas extras)
-      professionalName: '18px',
-      professionalInfo: '14px',
-      scheduleLabel: '14px',
-      instructions: '16px',
-      stepNumber: '18px',
-      stepTitle: '16px',
-      stepIcon: '40px',
-      cardMinHeight: '190px',
-      cardWithFeeMinHeight: '220px',
-      headerTitle: '34px',
-      feeItem: '15px',
-      feeBadge: '16px',
-      totalAmount: '17px',
+      professionalName: '20px',
+      professionalInfo: '16px',
+      scheduleLabel: '16px',
+      instructions: '18px',
+      stepNumber: '20px',
+      stepTitle: '18px',
+      stepIcon: '46px',
+      cardMinHeight: '210px',
+      cardWithFeeMinHeight: '250px',
+      headerTitle: '38px',
+      feeItem: '17px',
+      feeBadge: '18px',
+      totalAmount: '19px',
     };
     
     return `
