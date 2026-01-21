@@ -559,16 +559,25 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 position: absolute;
                 bottom: 4px;
                 right: 4px;
-                font-size: 11px;
+                font-size: ${sizes.feeBadge};
                 padding: 3px 6px;
             }
             .professional-info {
-                font-size: 10px;
+                font-size: ${sizes.professionalInfo};
                 margin-bottom: 2px;
             }
             .professional-name {
-                font-size: 11px;
+                font-size: ${sizes.professionalName};
                 margin-bottom: 2px;
+            }
+            .schedule-label {
+                font-size: ${sizes.scheduleLabel};
+            }
+            .fee-section h4 {
+                font-size: ${sizes.feeItem};
+            }
+            .fee-item {
+                font-size: ${sizes.feeItem};
             }
             .step-header {
                 padding: 3px 4px;
