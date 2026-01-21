@@ -171,20 +171,20 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             padding: 0; 
             background: white;
             color: black;
-            line-height: 1.15;
+            line-height: 1.2;
             height: 100%;
         }
         .container {
             max-width: none;
-            margin: 8px;
+            margin: 10px;
             padding: 0;
         }
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 8px;
-            padding-bottom: 5px;
+            margin-bottom: 10px;
+            padding-bottom: 6px;
             border-bottom: 2px solid black;
         }
         .logo-section {
@@ -192,65 +192,65 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             align-items: center;
         }
         .logo {
-            width: 30px;
-            height: 30px;
+            width: 32px;
+            height: 32px;
             background-color: black;
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 17px;
+            font-size: 18px;
             font-weight: bold;
-            margin-right: 8px;
+            margin-right: 10px;
         }
         .logo-text h1 {
-            font-size: 18px;
+            font-size: 20px;
             font-weight: bold;
             margin: 0;
         }
         .logo-text p {
-            font-size: 12px;
+            font-size: 13px;
             margin: 0;
         }
         .header-info {
             text-align: right;
         }
         .header-info h2 {
-            font-size: 16px;
+            font-size: 17px;
             font-weight: bold;
             margin: 0;
         }
         .header-info p {
-            font-size: 12px;
+            font-size: 13px;
             margin: 2px 0 0 0;
         }
         .steps-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 5px;
-            margin-bottom: 5px;
+            gap: 6px;
+            margin-bottom: 6px;
         }
         .step-card {
-            border: 1px solid black;
-            min-height: 140px;
+            border: 2px solid black;
+            min-height: 150px;
             page-break-inside: avoid;
         }
         .step-card-with-fee {
-            border: 1px solid black;
-            min-height: 160px;
+            border: 2px solid black;
+            min-height: 180px;
             page-break-inside: avoid;
             position: relative;
         }
         .step-header {
             background-color: #f5f5f5;
-            padding: 4px 5px;
-            border-bottom: 1px solid black;
+            padding: 5px 6px;
+            border-bottom: 2px solid black;
             display: flex;
             align-items: center;
         }
         .step-icon {
-            font-size: 28px;
-            margin-right: 6px;
+            font-size: 30px;
+            margin-right: 8px;
         }
         .step-number-and-title {
             flex: 1;
@@ -259,38 +259,38 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             align-items: center;
         }
         .step-number-text {
-            font-size: 14px;
+            font-size: 15px;
             font-weight: bold;
             margin: 0;
             text-align: center;
         }
         .step-title {
-            font-size: 12px;
+            font-size: 13px;
             font-weight: bold;
             text-transform: uppercase;
             text-align: center;
-            margin-top: 1px;
+            margin-top: 2px;
         }
         .step-content {
-            padding: 6px;
+            padding: 7px;
             position: relative;
         }
         .step-content-with-fee {
-            padding: 6px 6px 36px 6px;
+            padding: 7px 7px 40px 7px;
             position: relative;
-            min-height: 115px;
+            min-height: 130px;
         }
         .fee-badge {
             position: absolute;
-            bottom: 5px;
-            right: 5px;
-            font-size: 12px;
+            bottom: 6px;
+            right: 6px;
+            font-size: 13px;
             font-weight: bold;
             color: black;
             background-color: #f5f5f5;
-            padding: 4px 8px;
-            border: 1px solid black;
-            border-radius: 3px;
+            padding: 5px 10px;
+            border: 2px solid black;
+            border-radius: 4px;
         }
         .professional-name {
             font-size: 11px;
@@ -300,40 +300,40 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
         }
         .professional-info {
             font-size: 10px;
-            margin-bottom: 2px;
+            margin-bottom: 3px;
         }
         .schedule-info {
-            margin-top: 4px;
+            margin-top: 5px;
         }
         .schedule-label {
             font-size: 10px;
             font-weight: bold;
-            margin-bottom: 1px;
-        }
-        .fee-section h4 {
-            font-size: 13px;
-            font-weight: bold;
-            text-transform: uppercase;
-            margin: 0 0 5px 0;
-        }
-        .fee-item {
-            font-size: 11px;
             margin-bottom: 2px;
         }
+        .fee-section h4 {
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin: 0 0 6px 0;
+        }
+        .fee-item {
+            font-size: 12px;
+            margin-bottom: 3px;
+        }
         .fee-total {
-            margin-top: 5px;
-            padding-top: 5px;
+            margin-top: 6px;
+            padding-top: 6px;
             border-top: 1px solid black;
         }
         .fee-total-text {
-            font-size: 13px;
+            font-size: 14px;
             font-weight: bold;
         }
         .total-and-prova-container {
             display: flex;
             align-items: flex-start;
-            gap: 5px;
-            margin: 5px 0;
+            gap: 6px;
+            margin: 6px 0;
             justify-content: space-between;
         }
         .total-amount-card {
@@ -345,33 +345,33 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
         }
         .total-amount-box {
             background-color: #f5f5f5;
-            border: 1px solid black;
-            padding: 5px 10px;
-            border-radius: 4px;
+            border: 2px solid black;
+            padding: 6px 12px;
+            border-radius: 5px;
             text-align: center;
         }
         .total-amount-text {
-            font-size: 13px;
+            font-size: 14px;
             font-weight: bold;
             color: black;
             margin: 0;
         }
         .prova-card {
-            border: 1px solid black;
-            min-height: 85px;
-            width: 440px;
+            border: 2px solid black;
+            min-height: 95px;
+            width: 460px;
             flex-shrink: 0;
         }
         .prova-header {
             background-color: #f5f5f5;
-            padding: 3px 5px;
-            border-bottom: 1px solid black;
+            padding: 4px 6px;
+            border-bottom: 2px solid black;
             display: flex;
             align-items: center;
         }
         .prova-header .step-icon {
-            font-size: 18px;
-            margin-right: 5px;
+            font-size: 20px;
+            margin-right: 6px;
         }
         .prova-title {
             flex: 1;
@@ -380,65 +380,65 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             align-items: center;
         }
         .prova-title .step-number-text {
-            font-size: 12px;
+            font-size: 13px;
             font-weight: bold;
             margin: 0;
             text-align: center;
         }
         .prova-title .step-title {
-            font-size: 12px;
+            font-size: 13px;
             font-weight: bold;
             text-transform: uppercase;
             text-align: center;
-            margin-top: 0;
+            margin-top: 1px;
         }
         .prova-content {
-            padding: 4px 5px;
+            padding: 5px 6px;
         }
         .prova-content .professional-name {
-            font-size: 11px;
+            font-size: 12px;
             font-weight: bold;
             text-transform: uppercase;
-            margin-bottom: 2px;
+            margin-bottom: 3px;
         }
         .prova-content .schedule-info {
-            margin-top: 2px;
+            margin-top: 3px;
         }
         .prova-content .schedule-label {
-            font-size: 10px;
+            font-size: 11px;
             font-weight: bold;
             margin-bottom: 1px;
         }
         .prova-content .professional-info {
-            font-size: 10px;
-            margin-bottom: 1px;
+            font-size: 11px;
+            margin-bottom: 2px;
         }
         .instructions {
-            border-top: 1px solid black;
-            padding-top: 8px;
+            border-top: 2px solid black;
+            padding-top: 10px;
             page-break-inside: avoid;
         }
         .instructions h3 {
-            font-size: 12px;
+            font-size: 13px;
             font-weight: bold;
-            margin-bottom: 5px;
+            margin-bottom: 6px;
         }
         .instructions-content {
-            line-height: 1.1;
+            line-height: 1.15;
             color: #333;
             word-wrap: break-word;
             overflow-wrap: break-word;
-            font-size: clamp(9px, 1.3vw, 12px);
+            font-size: clamp(10px, 1.4vw, 14px);
         }
         .instructions-content p {
             margin: 0;
             padding: 0;
-            line-height: 1.05;
+            line-height: 1.1;
         }
         .instructions-content ul,
         .instructions-content ol {
             margin: 2px 0;
-            padding-left: 18px;
+            padding-left: 20px;
         }
         .instructions-content li {
             margin: 0;
@@ -453,7 +453,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
         .instructions-content br {
             display: block;
             content: "";
-            margin: 1px 0;
+            margin: 2px 0;
         }
         .footer {
             margin-top: 8px;
@@ -568,10 +568,10 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
         <div class="header">
             <div class="logo-section">
                 ${logoUrl ? `
-                    <img src="${logoUrl}" alt="Logo da Agência" style="max-height: 60px; max-width: 120px; margin-right: 8px;" />
+                    <img src="${logoUrl}" alt="Logo da Agência" style="max-height: 70px; max-width: 140px; margin-right: 10px;" />
                 ` : ''}
                 <div class="logo-text">
-                    <h1 style="font-size: 22px; font-weight: bold; margin: 0;">SIGA O PASSO A PASSO</h1>
+                    <h1 style="font-size: 26px; font-weight: bold; margin: 0;">SIGA O PASSO A PASSO</h1>
                 </div>
             </div>
         </div>
