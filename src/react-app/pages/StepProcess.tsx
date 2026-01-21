@@ -261,31 +261,43 @@ export default function StepProcess() {
   const handleStepToggle = (stepId: number) => {
     const step = processSteps.find(s => s.id === stepId);
     
+    // Grupo de etapas que devem ser marcadas/desmarcadas juntas
+    const groupedTypes = ['prova_teorica', 'curso_pratico', 'prova_pratica'];
+    const isGroupedStep = step && groupedTypes.includes(step.type);
+    
     setFormData(prev => {
       const isCurrentlySelected = prev.selected_steps.includes(stepId);
       
       // Se está desmarcando a etapa
       if (isCurrentlySelected) {
         let newFees = [...prev.selected_fees];
+        let stepsToRemove = [stepId];
         
-        // Remover taxa vinculada ao desmarcar etapa
-        if (step?.type === 'prova_teorica') {
+        // Se é uma etapa do grupo, desmarcar todas do grupo
+        if (isGroupedStep) {
+          const groupedStepIds = processSteps
+            .filter(s => groupedTypes.includes(s.type))
+            .map(s => s.id);
+          stepsToRemove = groupedStepIds;
+          
+          // Remover todas as taxas vinculadas ao grupo
           const provaTeoricoFee = fees.find(f => f.name === 'Prova Teórica');
-          if (provaTeoricoFee) newFees = newFees.filter(id => id !== provaTeoricoFee.id);
-        } else if (step?.type === 'curso_pratico') {
           const ladvFee = fees.find(f => f.name === 'LADV');
-          if (ladvFee) newFees = newFees.filter(id => id !== ladvFee.id);
-        } else if (step?.type === 'prova_pratica') {
           const provaPraticaFee = fees.find(f => f.name === 'Prova Prática');
+          if (provaTeoricoFee) newFees = newFees.filter(id => id !== provaTeoricoFee.id);
+          if (ladvFee) newFees = newFees.filter(id => id !== ladvFee.id);
           if (provaPraticaFee) newFees = newFees.filter(id => id !== provaPraticaFee.id);
-        } else if (step?.type === 'taxa') {
-          const emissaoCNHFee = fees.find(f => f.name === 'Emissão da CNH');
-          if (emissaoCNHFee) newFees = newFees.filter(id => id !== emissaoCNHFee.id);
+        } else {
+          // Remover taxa vinculada ao desmarcar etapa individual
+          if (step?.type === 'taxa') {
+            const emissaoCNHFee = fees.find(f => f.name === 'Emissão da CNH');
+            if (emissaoCNHFee) newFees = newFees.filter(id => id !== emissaoCNHFee.id);
+          }
         }
         
         return {
           ...prev,
-          selected_steps: prev.selected_steps.filter(id => id !== stepId),
+          selected_steps: prev.selected_steps.filter(id => !stepsToRemove.includes(id)),
           selected_fees: newFees
         };
       }
@@ -294,22 +306,24 @@ export default function StepProcess() {
       let newFees = [...prev.selected_fees];
       let newSteps = [...prev.selected_steps, stepId];
       
-      // Auto-selecionar taxa ao marcar etapa
-      if (step?.type === 'prova_teorica') {
+      // Se é uma etapa do grupo, marcar todas do grupo
+      if (isGroupedStep) {
+        const groupedStepIds = processSteps
+          .filter(s => groupedTypes.includes(s.type))
+          .map(s => s.id);
+        groupedStepIds.forEach(id => {
+          if (!newSteps.includes(id)) {
+            newSteps.push(id);
+          }
+        });
+        
+        // Auto-selecionar todas as taxas vinculadas ao grupo
         const provaTeoricoFee = fees.find(f => f.name === 'Prova Teórica');
-        if (provaTeoricoFee && !newFees.includes(provaTeoricoFee.id)) {
-          newFees.push(provaTeoricoFee.id);
-        }
-      } else if (step?.type === 'curso_pratico') {
         const ladvFee = fees.find(f => f.name === 'LADV');
-        if (ladvFee && !newFees.includes(ladvFee.id)) {
-          newFees.push(ladvFee.id);
-        }
-      } else if (step?.type === 'prova_pratica') {
         const provaPraticaFee = fees.find(f => f.name === 'Prova Prática');
-        if (provaPraticaFee && !newFees.includes(provaPraticaFee.id)) {
-          newFees.push(provaPraticaFee.id);
-        }
+        if (provaTeoricoFee && !newFees.includes(provaTeoricoFee.id)) newFees.push(provaTeoricoFee.id);
+        if (ladvFee && !newFees.includes(ladvFee.id)) newFees.push(ladvFee.id);
+        if (provaPraticaFee && !newFees.includes(provaPraticaFee.id)) newFees.push(provaPraticaFee.id);
       } else if (step?.type === 'taxa') {
         const emissaoCNHFee = fees.find(f => f.name === 'Emissão da CNH');
         if (emissaoCNHFee && !newFees.includes(emissaoCNHFee.id)) {
