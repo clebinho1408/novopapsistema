@@ -158,7 +158,7 @@ export const PROFESSIONAL_TYPE_LABELS: Record<string, string> = {
   foto: 'Foto',
   medico: 'Médico',
   psicologo: 'Psicólogo',
-  prova: 'Prova',
+  prova: 'Prova PCD',
   curso_teorico: 'Curso Teórico',
   prova_teorica: 'Prova Teórica',
   curso_pratico: 'Curso Prático',

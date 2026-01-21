@@ -144,7 +144,7 @@ app.post('/api/auth/register', async (c) => {
       { name: 'Taxa', type: 'taxa', sort_order: 2 },
       { name: 'Exame Psicológico', type: 'psicologo', sort_order: 3 },
       { name: 'Exame Médico', type: 'medico', sort_order: 4 },
-      { name: 'Prova', type: 'prova', sort_order: 5 },
+      { name: 'Prova PCD', type: 'prova', sort_order: 5 },
     ];
 
     for (const step of defaultSteps) {
@@ -157,7 +157,7 @@ app.post('/api/auth/register', async (c) => {
     const defaultFees = [
       { name: 'Emissão da CNH', amount: 101.51, linked_professional_type: null },
       { name: 'Transferência', amount: 53.37, linked_professional_type: null },
-      { name: 'Prova', amount: 0, linked_professional_type: null },
+      { name: 'Prova PCD', amount: 0, linked_professional_type: null },
       { name: 'Médico', amount: 0, linked_professional_type: 'medico' },
       { name: 'Psicólogo', amount: 0, linked_professional_type: 'psicologo' },
       { name: '2º Via', amount: 0, linked_professional_type: null },

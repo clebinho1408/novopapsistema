@@ -293,7 +293,7 @@ export default function StepProcess() {
         
         // Se for tipo prova, remover também a "Prova" pelo nome
         if (step?.type === 'prova') {
-          const provaFee = fees.find(fee => fee.name === 'Prova');
+          const provaFee = fees.find(fee => fee.name === 'Prova PCD');
           return {
             ...prev,
             selected_professionals: newProfessionals,
@@ -794,7 +794,7 @@ export default function StepProcess() {
                               // Taxas vinculadas a médico/psicólogo NÃO aparecem (são automáticas)
                               return !fee.linked_professional_type || fee.linked_professional_type === 'prova';
                             }).map(fee => {
-                              const isProvaFee = fee.name === 'Prova';
+                              const isProvaFee = fee.name === 'Prova PCD';
                               const isFeeDisabled = !isTaxaStepSelected || isProvaFee;
                               
                               return (
