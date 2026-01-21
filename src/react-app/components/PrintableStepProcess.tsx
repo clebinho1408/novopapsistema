@@ -181,9 +181,9 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
       totalAmount: '15px',
     } : {
       // Tamanhos MAIORES (sem etapas extras)
-      professionalName: '24px',
+      professionalName: '26px',
       professionalInfo: '20px',
-      scheduleLabel: '14px',
+      scheduleLabel: '12px',
       instructions: '19px',
       stepNumber: '22px',
       stepTitle: '20px',
