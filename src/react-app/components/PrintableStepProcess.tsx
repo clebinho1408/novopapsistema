@@ -574,8 +574,12 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 const hasTaxesSelected = step.type === 'taxa' && isSelected && 
                   processData.selected_fees.filter(fee => !fee.linked_professional_type).length > 0;
                 
+                // Etapas que não precisam de credenciado (cursos e provas teóricas/práticas)
+                const noProfessionalTypes = ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'];
+                const isNoProfessionalStep = noProfessionalTypes.includes(step.type) && isSelected;
+                
                 // Incrementar contador apenas se há dados para exibir
-                const hasData = professional || hasTaxesSelected;
+                const hasData = professional || hasTaxesSelected || isNoProfessionalStep;
                 if (hasData) {
                   stepCounter++;
                 }
@@ -656,6 +660,13 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                                 </div>
                               </div>
                             ` : ''}
+                        ` : isNoProfessionalStep ? `
+                            <div style="padding: 12px;">
+                                ${step.title ? `<div style="font-size: 14px; font-weight: bold; color: black; margin-bottom: 8px;">${step.title}</div>` : ''}
+                                ${step.description ? `<div style="font-size: 12px; color: #333; margin-bottom: 8px; line-height: 1.4;">${step.description}</div>` : ''}
+                                ${step.obs ? `<div style="font-size: 11px; color: #666; font-style: italic;">Obs.: ${step.obs}</div>` : ''}
+                                ${!step.title && !step.description && !step.obs ? `<div style="font-size: 12px; color: #666; text-align: center;">Etapa selecionada</div>` : ''}
+                            </div>
                         ` : (step.type === 'taxa' && hasTaxesSelected) ? `
                             <div class="fee-section">
                                 <h4><strong>TAXAS A PAGAR:</strong></h4>
@@ -706,12 +717,14 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
               // Calcular o número do passo baseado nos passos anteriores que têm dados
               let stepNumber = 0;
               const filteredSteps = allSteps.filter(s => s.type !== 'prova');
+              const noProfTypes = ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'];
               filteredSteps.forEach(step => {
                 const stepSelected = processData.selected_steps.find(s => s.id === step.id);
                 const stepProfessional = stepSelected ? processData.selected_professionals[step.id.toString()] : null;
                 const stepHasTaxes = step.type === 'taxa' && stepSelected && 
                   processData.selected_fees.filter(fee => !fee.linked_professional_type).length > 0;
-                if (stepProfessional || stepHasTaxes) {
+                const isNoProfStep = noProfTypes.includes(step.type) && stepSelected;
+                if (stepProfessional || stepHasTaxes || isNoProfStep) {
                   stepNumber++;
                 }
               });
@@ -896,7 +909,10 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
     const filteredSteps = (processData.all_steps || processData.selected_steps).filter((step: any) => step.type !== 'prova');
     let stepCounter = 0;
 
-    // Apenas incluir steps que têm dados (profissionais selecionados ou taxas)
+    // Tipos de etapas que não precisam de credenciado
+    const noProfessionalTypes = ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'];
+
+    // Apenas incluir steps que têm dados (profissionais selecionados, taxas ou etapas sem credenciado)
     filteredSteps.forEach((step: any) => {
       const isSelected = processData.selected_steps.find((s: any) => s.id === step.id);
       const professional = isSelected ? processData.selected_professionals[step.id.toString()] : null;
@@ -905,7 +921,10 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
       const hasTaxesSelected = step.type === 'taxa' && isSelected && 
         processData.selected_fees.filter((fee: any) => !fee.linked_professional_type).length > 0;
       
-      const hasData = professional || hasTaxesSelected;
+      // Etapas que não precisam de credenciado
+      const isNoProfessionalStep = noProfessionalTypes.includes(step.type) && isSelected;
+      
+      const hasData = professional || hasTaxesSelected || isNoProfessionalStep;
       
       // Só incluir no email se tiver dados
       if (!hasData) return;
@@ -916,7 +935,21 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
       content += `(${stepCounter}° PASSO)\n`;
       content += `${'-'.repeat(40)}\n`;
 
-      if (professional) {
+      if (isNoProfessionalStep && !professional) {
+        // Etapas sem credenciado - exibir título, descrição e obs
+        if (step.title) {
+          content += `${step.title}\n`;
+        }
+        if (step.description) {
+          content += `${step.description}\n`;
+        }
+        if (step.obs) {
+          content += `Obs.: ${step.obs}\n`;
+        }
+        if (!step.title && !step.description && !step.obs) {
+          content += `Etapa selecionada\n`;
+        }
+      } else if (professional) {
         content += `${professional.name}\n`;
         
         if (professional.address || professional.city_name) {
@@ -999,7 +1032,8 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
           const stepProfessional = stepSelected ? processData.selected_professionals[step.id.toString()] : null;
           const stepHasTaxes = step.type === 'taxa' && stepSelected && 
             processData.selected_fees.filter((fee: any) => !fee.linked_professional_type).length > 0;
-          return stepProfessional || stepHasTaxes;
+          const isNoProfStep = noProfessionalTypes.includes(step.type) && stepSelected;
+          return stepProfessional || stepHasTaxes || isNoProfStep;
         }).length + 1;
         
         content += `📝 PROVA\n`;
@@ -1149,17 +1183,22 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 const filteredSteps = (processData.all_steps || processData.selected_steps).filter(step => step.type !== 'prova');
                 let stepCounter = 0;
                 
+                // Tipos de etapas que não precisam de credenciado
+                const noProfessionalTypes = ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'];
+                
                 return filteredSteps.map((step) => {
                   const isSelected = processData.selected_steps.find(s => s.id === step.id);
                   const professional = isSelected ? processData.selected_professionals[step.id.toString()] : null;
                   
                   // Para taxas, verificar se há taxas não vinculadas selecionadas
-                  // Para taxas, verificar se há taxas não vinculadas selecionadas
                   const hasTaxesSelected = step.type === 'taxa' && isSelected && 
                     processData.selected_fees.filter(fee => !fee.linked_professional_type).length > 0;
                   
+                  // Etapas que não precisam de credenciado
+                  const isNoProfessionalStep = noProfessionalTypes.includes(step.type) && isSelected;
+                  
                   // Incrementar contador apenas se há dados para exibir
-                  const hasData = professional || hasTaxesSelected;
+                  const hasData = professional || hasTaxesSelected || isNoProfessionalStep;
                   if (hasData) {
                     stepCounter++;
                   }
@@ -1286,6 +1325,21 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                             </div>
                           )}
                         </div>
+                      ) : isNoProfessionalStep ? (
+                        <div className="space-y-2 p-2">
+                          {step.title && (
+                            <h4 className="font-bold text-sm">{step.title}</h4>
+                          )}
+                          {step.description && (
+                            <p className="text-xs text-gray-700">{step.description}</p>
+                          )}
+                          {step.obs && (
+                            <p className="text-xs text-gray-600 italic">Obs.: {step.obs}</p>
+                          )}
+                          {!step.title && !step.description && !step.obs && (
+                            <p className="text-xs text-gray-500 text-center">Etapa selecionada</p>
+                          )}
+                        </div>
                       ) : step.type === 'taxa' && isSelected ? (
                         <div className="space-y-2">
                           <h4 className="font-bold text-sm uppercase">
@@ -1345,12 +1399,14 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 // Calcular o número do passo baseado nos passos anteriores que têm dados
                 let stepNumber = 0;
                 const filteredSteps = allSteps.filter(s => s.type !== 'prova');
+                const noProfTypes = ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'];
                 filteredSteps.forEach(step => {
                   const stepSelected = processData.selected_steps.find(s => s.id === step.id);
                   const stepProfessional = stepSelected ? processData.selected_professionals[step.id.toString()] : null;
                   const stepHasTaxes = step.type === 'taxa' && stepSelected && 
                     processData.selected_fees.filter(fee => !fee.linked_professional_type).length > 0;
-                  if (stepProfessional || stepHasTaxes) {
+                  const isNoProfStep = noProfTypes.includes(step.type) && stepSelected;
+                  if (stepProfessional || stepHasTaxes || isNoProfStep) {
                     stepNumber++;
                   }
                 });

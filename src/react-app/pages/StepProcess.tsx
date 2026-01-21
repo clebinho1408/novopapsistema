@@ -687,17 +687,19 @@ export default function StepProcess() {
                       })}
                     </div>
 
-                    {/* Professional selection for selected steps (excluding taxa) */}
+                    {/* Professional selection for selected steps (excluding taxa and new course/exam steps) */}
                     {formData.selected_steps.filter(stepId => {
                       const step = processSteps.find(s => s.id === stepId);
-                      return step?.type !== 'taxa';
+                      const excludedTypes = ['taxa', 'curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'];
+                      return step && !excludedTypes.includes(step.type);
                     }).length > 0 && (
                       <div className="mt-6">
                         <h3 className="font-medium text-gray-900 mb-4">Selecione o Local/Credenciado</h3>
                         <div className="space-y-4">
                           {formData.selected_steps.filter(stepId => {
                             const step = processSteps.find(s => s.id === stepId);
-                            return step?.type !== 'taxa';
+                            const excludedTypes = ['taxa', 'curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'];
+                            return step && !excludedTypes.includes(step.type);
                           }).map(stepId => {
                             const step = processSteps.find(s => s.id === stepId);
                             const stepProfessionals = getStepProfessionals(step?.type || '', formData.city_id);
