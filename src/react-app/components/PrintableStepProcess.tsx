@@ -181,9 +181,9 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
       totalAmount: '15px',
     } : {
       // Tamanhos MAIORES (sem etapas extras)
-      professionalName: '29px',
-      professionalInfo: '24px',
-      scheduleLabel: '12px',
+      professionalName: '24px',
+      professionalInfo: '20px',
+      scheduleLabel: '14px',
       instructions: '13px',
       stepNumber: '22px',
       stepTitle: '20px',
@@ -192,7 +192,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
       cardWithFeeMinHeight: '260px',
       headerTitle: '38px',
       feeItem: '14px',
-      feeBadge: '32px',
+      feeBadge: '13px',
       totalAmount: '15px',
     };
     
