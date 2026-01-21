@@ -171,9 +171,6 @@ function StepsConfiguration({ steps, onUpdate }: { steps: ProcessStep[], onUpdat
                     <div className="flex items-center space-x-4 text-sm text-gray-500">
                       <span>Tipo: {step.type}</span>
                     </div>
-                    {step.title && (
-                      <p className="text-sm text-blue-600 mt-1">Título: {step.title}</p>
-                    )}
                     {step.description && (
                       <p className="text-sm text-gray-600 mt-1">Descrição: {step.description.substring(0, 50)}...</p>
                     )}
@@ -205,18 +202,6 @@ function StepsConfiguration({ steps, onUpdate }: { steps: ProcessStep[], onUpdat
               Editar Etapa: {editingStep.name}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Título
-                </label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                  placeholder="Ex: Curso de Legislação de Trânsito"
-                />
-              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Descrição

@@ -662,10 +662,9 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                             ` : ''}
                         ` : isNoProfessionalStep ? `
                             <div style="padding: 12px;">
-                                ${step.title ? `<div style="font-size: 14px; font-weight: bold; color: black; margin-bottom: 8px;">${step.title}</div>` : ''}
-                                ${step.description ? `<div style="font-size: 12px; color: #333; margin-bottom: 8px; line-height: 1.4;">${step.description}</div>` : ''}
-                                ${step.obs ? `<div style="font-size: 11px; color: #666; font-style: italic;">Obs.: ${step.obs}</div>` : ''}
-                                ${!step.title && !step.description && !step.obs ? `<div style="font-size: 12px; color: #666; text-align: center;">Etapa selecionada</div>` : ''}
+                                ${step.description ? `<div style="font-size: 12px; font-weight: bold; color: black; margin-bottom: 8px; line-height: 1.4;">${step.description}</div>` : ''}
+                                ${step.obs ? `<div style="font-size: 11px; font-weight: bold; color: black;">Obs.: ${step.obs}</div>` : ''}
+                                ${!step.description && !step.obs ? `<div style="font-size: 12px; color: #666; text-align: center;">Etapa selecionada</div>` : ''}
                             </div>
                         ` : (step.type === 'taxa' && hasTaxesSelected) ? `
                             <div class="fee-section">
@@ -936,17 +935,14 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
       content += `${'-'.repeat(40)}\n`;
 
       if (isNoProfessionalStep && !professional) {
-        // Etapas sem credenciado - exibir título, descrição e obs
-        if (step.title) {
-          content += `${step.title}\n`;
-        }
+        // Etapas sem credenciado - exibir descrição e obs
         if (step.description) {
           content += `${step.description}\n`;
         }
         if (step.obs) {
           content += `Obs.: ${step.obs}\n`;
         }
-        if (!step.title && !step.description && !step.obs) {
+        if (!step.description && !step.obs) {
           content += `Etapa selecionada\n`;
         }
       } else if (professional) {
@@ -1327,16 +1323,13 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                         </div>
                       ) : isNoProfessionalStep ? (
                         <div className="space-y-2 p-2">
-                          {step.title && (
-                            <h4 className="font-bold text-sm">{step.title}</h4>
-                          )}
                           {step.description && (
-                            <p className="text-xs text-gray-700">{step.description}</p>
+                            <p className="text-xs font-bold text-black">{step.description}</p>
                           )}
                           {step.obs && (
-                            <p className="text-xs text-gray-600 italic">Obs.: {step.obs}</p>
+                            <p className="text-xs font-bold text-black">Obs.: {step.obs}</p>
                           )}
-                          {!step.title && !step.description && !step.obs && (
+                          {!step.description && !step.obs && (
                             <p className="text-xs text-gray-500 text-center">Etapa selecionada</p>
                           )}
                         </div>
