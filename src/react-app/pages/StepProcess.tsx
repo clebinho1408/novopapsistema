@@ -653,38 +653,17 @@ export default function StepProcess() {
                   <div>
                     <h2 className="text-lg font-medium text-gray-900 mb-4">Selecione as Etapas Necessárias</h2>
                     <div className="space-y-3">
-                      {[...processSteps].sort((a, b) => a.sort_order - b.sort_order).map(step => {
-                        const isSelected = formData.selected_steps.includes(step.id);
-                        const hasDetails = step.title || step.description || step.obs;
-                        
-                        return (
-                          <div key={step.id} className="space-y-2">
-                            <label className="flex items-center space-x-3">
-                              <input
-                                type="checkbox"
-                                checked={isSelected}
-                                onChange={() => handleStepToggle(step.id)}
-                                className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                              />
-                              <span className="text-gray-900">{step.name}</span>
-                            </label>
-                            
-                            {isSelected && hasDetails && (
-                              <div className="ml-7 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
-                                {step.title && (
-                                  <p className="font-medium text-blue-900">{step.title}</p>
-                                )}
-                                {step.description && (
-                                  <p className="text-blue-800 mt-1">{step.description}</p>
-                                )}
-                                {step.obs && (
-                                  <p className="text-blue-700 mt-1 italic">Obs.: {step.obs}</p>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
+                      {[...processSteps].sort((a, b) => a.sort_order - b.sort_order).map(step => (
+                        <label key={step.id} className="flex items-center space-x-3">
+                          <input
+                            type="checkbox"
+                            checked={formData.selected_steps.includes(step.id)}
+                            onChange={() => handleStepToggle(step.id)}
+                            className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          />
+                          <span className="text-gray-900">{step.name}</span>
+                        </label>
+                      ))}
                     </div>
 
                     {/* Professional selection for selected steps (excluding taxa and new course/exam steps) */}
@@ -925,10 +904,11 @@ export default function StepProcess() {
                           (currentStep === 1 && !formData.city_id) ||
                           (currentStep === 2 && (
                             formData.selected_steps.length === 0 ||
-                            // Verificar se todos os steps (exceto taxa) têm profissionais selecionados
+                            // Verificar se todos os steps que precisam de profissional têm profissionais selecionados
                             formData.selected_steps.filter(stepId => {
                               const step = processSteps.find(s => s.id === stepId);
-                              return step?.type !== 'taxa';
+                              const excludedTypes = ['taxa', 'curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'];
+                              return step && !excludedTypes.includes(step.type);
                             }).some(stepId => !formData.selected_professionals[stepId])
                           ))
                         }
