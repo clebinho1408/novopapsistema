@@ -293,7 +293,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             border-radius: 4px;
         }
         .professional-name {
-            font-size: 12px;
+            font-size: 13.5px;
             font-weight: bold;
             text-transform: uppercase;
             margin-bottom: 4px;
@@ -396,7 +396,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             padding: 6px 8px;
         }
         .prova-content .professional-name {
-            font-size: 13px;
+            font-size: 13.5px;
             font-weight: bold;
             text-transform: uppercase;
             margin-bottom: 4px;
@@ -428,7 +428,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             color: #333;
             word-wrap: break-word;
             overflow-wrap: break-word;
-            font-size: clamp(11px, 1.5vw, 15px);
+            font-size: 12.5px;
         }
         .instructions-content p {
             margin: 0;
