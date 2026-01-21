@@ -184,7 +184,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
       professionalName: '29px',
       professionalInfo: '24px',
       scheduleLabel: '12px',
-      instructions: '15px',
+      instructions: '13px',
       stepNumber: '22px',
       stepTitle: '20px',
       stepIcon: '48px',
