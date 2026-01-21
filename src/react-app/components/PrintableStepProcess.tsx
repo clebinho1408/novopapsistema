@@ -159,29 +159,29 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
 
   const generatePrintHTML = () => {
     // Verificar se as etapas de curso/prova estão selecionadas
-    const hasExtraSteps = ['prova_teorica', 'curso_pratico', 'prova_pratica'].some(type => 
+    const hasExtraSteps = ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'].some(type => 
       processData.selected_steps.some(step => step.type === type)
     );
     
-    // Tamanhos maiores quando NÃO há etapas extras selecionadas
-    console.log('hasExtraSteps:', hasExtraSteps, 'selected_steps:', processData.selected_steps.map(s => s.type));
-    const sizes = hasExtraSteps ? {
-      // Tamanhos normais (com etapas extras)
-      professionalName: '15.5px',
+    // COM etapas extras = tamanhos menores (X)
+    // SEM etapas extras = tamanhos maiores (Y)
+    const sizesWithExtra = {
+      professionalName: '15px',
       professionalInfo: '12px',
-      scheduleLabel: '12px',
-      instructions: '14.5px',
-      stepNumber: '16px',
-      stepTitle: '14px',
-      stepIcon: '34px',
-      cardMinHeight: '165px',
-      cardWithFeeMinHeight: '195px',
-      headerTitle: '30px',
-      feeItem: '13px',
-      feeBadge: '14px',
-      totalAmount: '15px',
-    } : {
-      // Tamanhos MAIORES (sem etapas extras)
+      scheduleLabel: '11px',
+      instructions: '13px',
+      stepNumber: '15px',
+      stepTitle: '13px',
+      stepIcon: '32px',
+      cardMinHeight: '160px',
+      cardWithFeeMinHeight: '190px',
+      headerTitle: '28px',
+      feeItem: '12px',
+      feeBadge: '12px',
+      totalAmount: '14px',
+    };
+    
+    const sizesWithoutExtra = {
       professionalName: '24px',
       professionalInfo: '20px',
       scheduleLabel: '14px',
@@ -196,6 +196,8 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
       feeBadge: '13px',
       totalAmount: '15px',
     };
+    
+    const sizes = hasExtraSteps ? sizesWithExtra : sizesWithoutExtra;
     
     return `
 <!DOCTYPE html>
