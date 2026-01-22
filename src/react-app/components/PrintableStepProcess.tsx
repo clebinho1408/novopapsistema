@@ -182,19 +182,19 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
     };
     
     const sizesWithoutExtra = {
-      professionalName: '32px',
-      professionalInfo: '26px',
-      scheduleLabel: '18px',
-      instructions: '16px',
-      stepNumber: '24px',
-      stepTitle: '22px',
-      stepIcon: '52px',
-      cardMinHeight: '240px',
-      cardWithFeeMinHeight: '280px',
-      headerTitle: '34px',
-      feeItem: '16px',
-      feeBadge: '28px',
-      totalAmount: '17px',
+      professionalName: '16px',
+      professionalInfo: '13px',
+      scheduleLabel: '12px',
+      instructions: '12px',
+      stepNumber: '14px',
+      stepTitle: '13px',
+      stepIcon: '32px',
+      cardMinHeight: '160px',
+      cardWithFeeMinHeight: '180px',
+      headerTitle: '24px',
+      feeItem: '12px',
+      feeBadge: '14px',
+      totalAmount: '14px',
     };
     
     const sizes = hasExtraSteps ? sizesWithExtra : sizesWithoutExtra;
