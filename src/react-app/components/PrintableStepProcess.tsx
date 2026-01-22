@@ -531,8 +531,8 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             .container { 
                 max-width: none;
                 margin: 4mm;
-                min-height: calc(297mm - 8mm);
-                max-height: calc(297mm - 8mm);
+                min-height: calc(297mm - 18mm);
+                max-height: calc(297mm - 18mm);
                 overflow: hidden;
                 display: flex;
                 flex-direction: column;
