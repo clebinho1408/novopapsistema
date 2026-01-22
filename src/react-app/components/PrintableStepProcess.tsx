@@ -221,6 +221,9 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             max-width: none;
             margin: 12px;
             padding: 0;
+            min-height: calc(100vh - 24px);
+            display: flex;
+            flex-direction: column;
         }
         .header {
             display: flex;
@@ -505,7 +508,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             margin: 2px 0;
         }
         .footer {
-            margin-top: 8px;
+            margin-top: auto;
             padding-top: 6px;
             border-top: 1px solid black;
             text-align: center;
@@ -528,8 +531,11 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             .container { 
                 max-width: none;
                 margin: 4mm;
+                min-height: calc(297mm - 8mm);
                 max-height: calc(297mm - 8mm);
                 overflow: hidden;
+                display: flex;
+                flex-direction: column;
             }
             .step-card {
                 page-break-inside: avoid;
@@ -600,7 +606,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 font-size: ${sizes.stepTitle};
             }
             .footer {
-                margin-top: 5px;
+                margin-top: auto;
                 page-break-inside: avoid;
                 page-break-after: avoid;
                 page-break-before: avoid;
