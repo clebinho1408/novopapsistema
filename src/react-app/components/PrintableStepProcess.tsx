@@ -194,8 +194,8 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
       cardMinHeight: '160px',
       cardWithFeeMinHeight: '180px',
       headerTitle: '24px',
-      feeItem: '12px',
-      feeBadge: '14px',
+      feeItem: '13px',
+      feeBadge: '15px',
       totalAmount: '14px',
     };
     
@@ -555,7 +555,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             .step-content-with-fee {
                 padding: 5px 5px 32px 5px;
                 position: relative;
-                min-height: 110px;
+                min-height: 125px;
             }
             .fee-badge {
                 position: absolute;
