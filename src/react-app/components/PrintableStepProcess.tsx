@@ -168,6 +168,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
     const sizesWithExtra = {
       professionalName: '15px',
       professionalInfo: '12px',
+      professionalPhone: '10px',
       scheduleLabel: '11px',
       instructions: '13px',
       stepNumber: '15px',
@@ -182,9 +183,10 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
     };
     
     const sizesWithoutExtra = {
-      professionalName: '16px',
-      professionalInfo: '13px',
-      scheduleLabel: '12px',
+      professionalName: '14px',
+      professionalInfo: '11px',
+      professionalPhone: '12px',
+      scheduleLabel: '11px',
       instructions: '12px',
       stepNumber: '14px',
       stepTitle: '13px',
@@ -586,10 +588,10 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 font-size: 24px;
             }
             .step-number-text {
-                font-size: 12px;
+                font-size: ${sizes.stepNumber};
             }
             .step-title {
-                font-size: 11px;
+                font-size: ${sizes.stepTitle};
             }
             .footer {
                 margin-top: 5px;
@@ -687,7 +689,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                                 <div class="schedule-info">
                                     <div class="schedule-label"><strong>${professional.attendance_type}:</strong></div>
                                     ${professional.phone ? `
-                                        <div class="professional-info" style="font-size: 12px;"><strong>${professional.phone}</strong> - Somente mensagem WhatsApp</div>
+                                        <div class="professional-info" style="font-size: ${sizes.professionalPhone};"><strong>${professional.phone}</strong> - Somente mensagem WhatsApp</div>
                                     ` : ''}
                                 </div>
                             ` : ''}
@@ -822,7 +824,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                               <div class="schedule-info">
                                   <div class="schedule-label"><strong>${professional.attendance_type}:</strong></div>
                                   ${professional.phone ? `
-                                      <div class="professional-info" style="font-size: 10px;"><strong>${professional.phone}</strong> - Somente mensagem WhatsApp</div>
+                                      <div class="professional-info" style="font-size: ${sizes.professionalPhone};"><strong>${professional.phone}</strong> - Somente mensagem WhatsApp</div>
                                   ` : ''}
                               </div>
                           ` : ''}
