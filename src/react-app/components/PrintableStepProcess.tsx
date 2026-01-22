@@ -168,7 +168,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
     const sizesWithExtra = {
       professionalName: '15px',
       professionalInfo: '12px',
-      professionalPhone: '10px',
+      professionalPhone: '12px',
       scheduleLabel: '11px',
       instructions: '13px',
       stepNumber: '15px',
