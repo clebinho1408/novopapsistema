@@ -272,17 +272,22 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             grid-template-columns: 1fr 1fr;
             gap: 8px;
             margin-bottom: 8px;
+            align-items: stretch;
         }
         .step-card {
             border: 2px solid black;
             min-height: ${sizes.cardMinHeight};
             page-break-inside: avoid;
+            display: flex;
+            flex-direction: column;
         }
         .step-card-with-fee {
             border: 2px solid black;
             min-height: ${sizes.cardWithFeeMinHeight};
             page-break-inside: avoid;
             position: relative;
+            display: flex;
+            flex-direction: column;
         }
         .step-header {
             background-color: #f5f5f5;
@@ -322,6 +327,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             padding: 8px 8px 44px 8px;
             position: relative;
             min-height: 145px;
+            flex: 1;
         }
         .fee-badge {
             position: absolute;
