@@ -183,10 +183,10 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
     };
     
     const sizesWithoutExtra = {
-      professionalName: '14px',
-      professionalInfo: '11px',
-      professionalPhone: '12px',
-      scheduleLabel: '11px',
+      professionalName: '13px',
+      professionalInfo: '10.5px',
+      professionalPhone: '13px',
+      scheduleLabel: '10.5px',
       instructions: '12px',
       stepNumber: '14px',
       stepTitle: '13px',
@@ -559,8 +559,8 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             }
             .fee-badge {
                 position: absolute;
-                bottom: 4px;
-                right: 4px;
+                bottom: 7px;
+                right: 7px;
                 font-size: ${sizes.feeBadge};
                 padding: 3px 6px;
             }
