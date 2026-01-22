@@ -555,7 +555,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             .step-content-with-fee {
                 padding: 5px 5px 32px 5px;
                 position: relative;
-                min-height: 115px;
+                min-height: 105px;
             }
             .fee-badge {
                 position: absolute;
