@@ -1194,32 +1194,32 @@ export default function StepProcess() {
 
               <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
-              <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+              <div className="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full border-4 border-amber-400">
+                <div className="bg-white px-6 pt-8 pb-6 sm:p-10 sm:pb-8">
                   <div className="sm:flex sm:items-start">
-                    <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 sm:mx-0 sm:h-10 sm:w-10">
-                      <AlertTriangle className="h-6 w-6 text-yellow-600" />
+                    <div className="mx-auto flex-shrink-0 flex items-center justify-center h-20 w-20 rounded-full bg-amber-100 sm:mx-0 sm:h-16 sm:w-16 animate-pulse">
+                      <AlertTriangle className="h-12 w-12 text-amber-600" />
                     </div>
-                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left flex-1">
-                      <h3 className="text-xl leading-6 font-bold text-gray-900 mb-3">
+                    <div className="mt-5 text-center sm:mt-0 sm:ml-8 sm:text-left flex-1">
+                      <h3 className="text-3xl leading-9 font-black text-gray-900 mb-6 uppercase tracking-tight">
                         Atenção, colaborador!
                       </h3>
-                      <div className="mt-2">
-                        <p className="text-base text-gray-700 leading-relaxed">
-                          Antes de finalizar o atendimento, revise se todos os documentos exigidos estão devidamente anexados no DetranNet.
+                      <div className="mt-4">
+                        <p className="text-xl text-gray-800 font-medium leading-relaxed">
+                          Antes de finalizar o atendimento, revise se todos os documentos exigidos estão devidamente anexados no <span className="text-blue-700 font-bold underline">DetranNet</span>.
                         </p>
                       </div>
                     </div>
                   </div>
                 </div>
-                <div className="bg-gray-50 px-4 py-3 sm:px-6 flex justify-center">
+                <div className="bg-amber-50 px-6 py-6 sm:px-10 flex justify-center">
                   <button
                     type="button"
                     onClick={() => {
                       setShowWarningModal(false);
                       handleSubmit();
                     }}
-                    className="inline-flex justify-center rounded-md border border-transparent shadow-sm px-8 py-3 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                    className="inline-flex justify-center rounded-xl border border-transparent shadow-lg px-12 py-4 bg-green-600 text-xl font-bold text-white hover:bg-green-700 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-green-500 transform transition hover:scale-105 active:scale-95"
                   >
                     OK, Entendi
                   </button>
