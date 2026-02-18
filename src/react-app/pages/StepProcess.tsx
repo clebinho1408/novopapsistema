@@ -766,6 +766,7 @@ export default function StepProcess() {
                         <option value="Transferência + Alteração de Dados">Transferência + Alteração de Dados</option>
                         <option value="Transferência + Alteração de Dados + EAR">Transferência + Alteração de Dados + EAR</option>
                         <option value="Transferência + Definitiva">Transferência + Definitiva</option>
+                        <option value="Estrangeiro">Estrangeiro</option>
                       </select>
                     </div>
                   </div>
