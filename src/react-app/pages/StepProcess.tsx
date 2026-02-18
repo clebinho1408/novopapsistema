@@ -108,6 +108,10 @@ export default function StepProcess() {
         'Transferência + Definitiva': {
           steps: ['foto', 'taxa'],
           fees: ['Emissão da CNH', 'Transferência']
+        },
+        'Estrangeiro': {
+          steps: ['foto', 'taxa'],
+          fees: ['Emissão da CNH']
         }
       };
       
