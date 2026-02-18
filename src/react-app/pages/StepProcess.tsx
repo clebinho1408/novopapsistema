@@ -1200,13 +1200,13 @@ export default function StepProcess() {
                     <div className="mx-auto flex-shrink-0 flex items-center justify-center h-20 w-20 rounded-full bg-amber-100 sm:mx-0 sm:h-16 sm:w-16 animate-pulse">
                       <AlertTriangle className="h-12 w-12 text-amber-600" />
                     </div>
-                    <div className="mt-5 text-center sm:mt-0 sm:ml-8 sm:text-left flex-1">
-                      <h3 className="text-3xl leading-9 font-black text-gray-900 mb-6 uppercase tracking-tight">
+                    <div className="mt-4 text-center sm:mt-0 sm:ml-6 sm:text-left flex-1">
+                      <h3 className="text-2xl leading-8 font-black text-gray-900 mb-4 uppercase tracking-tight">
                         Atenção, colaborador!
                       </h3>
-                      <div className="mt-4">
-                        <p className="text-xl text-gray-800 font-medium leading-relaxed">
-                          Antes de finalizar o atendimento, revise se todos os documentos exigidos estão devidamente anexados no <span className="text-blue-700 font-bold underline">DetranNet</span>.
+                      <div className="mt-3">
+                        <p className="text-2xl text-gray-900 font-extrabold leading-tight">
+                          Antes de finalizar o atendimento, <span className="text-red-600">revise se todos os documentos exigidos</span> estão devidamente anexados no <span className="text-blue-700 underline">DetranNet</span>.
                         </p>
                       </div>
                     </div>
