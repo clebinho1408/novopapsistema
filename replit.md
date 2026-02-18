@@ -30,7 +30,7 @@ Do not make changes to the `worker/` folder unless explicitly instructed, as it 
         * **Transferência + Alteração de Dados**: Auto-selects Foto, Taxa steps + Emissão da CNH, Transferência fees
         * **Transferência + Alteração de Dados + EAR**: Auto-selects Foto, Taxa, Exame Psicológico steps + Emissão da CNH, Transferência fees
         * **Transferência + Definitiva**: Auto-selects Foto, Taxa steps + Emissão da CNH, Transferência fees
-        * **Estrangeiro**: Auto-selects Foto, Taxa steps + Emissão da CNH fee
+        * **Estrangeiro**: Auto-selects Foto, Taxa, Exame Psicológico, Exame Médico steps + Emissão da CNH fee
         * **Transferência + 2º Via**: Auto-selects Foto, Taxa steps + 2º Via, Transferência fees
     - Automatic selection of "Foto" professional for a city if available and the "Foto" step is selected.
     - Automatic selection/deselection of "Prova" fee when a "Prova" credenciado is chosen/unchosen (fee is always disabled for manual selection).

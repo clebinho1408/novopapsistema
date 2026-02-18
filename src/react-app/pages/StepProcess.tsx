@@ -110,7 +110,7 @@ export default function StepProcess() {
           fees: ['Emissão da CNH', 'Transferência']
         },
         'Estrangeiro': {
-          steps: ['foto', 'taxa'],
+          steps: ['foto', 'taxa', 'psicologo', 'medico'],
           fees: ['Emissão da CNH']
         }
       };
