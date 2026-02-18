@@ -70,7 +70,7 @@ export default function StepProcess() {
       // Definir regras de auto-seleção para cada serviço
       const serviceRules: Record<string, { steps: string[], fees: string[] }> = {
         '1º Habilitação': {
-          steps: ['foto', 'taxa', 'psicologo', 'medico', 'curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'],
+          steps: ['foto', 'taxa', 'psicologo', 'medico', 'prova_teorica', 'curso_pratico', 'prova_pratica'],
           fees: ['Emissão da CNH']
         },
         'Alteração de Dados': {
@@ -805,7 +805,7 @@ export default function StepProcess() {
                               {step.name}
                               {step.type === 'curso_teorico' && (
                                 <span className="ml-2 text-sm text-red-600 font-medium italic">
-                                  Obs.: Se já realizou o curso teórico pelo aplicativo CNH do Brasil, esta etapa deve ser desmarcada.
+                                  Obs.: Se ainda não fez o curso teórico pelo aplicativo CNH do Brasil, marque esta etapa.
                                 </span>
                               )}
                             </span>
