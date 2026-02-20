@@ -336,17 +336,16 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             position: absolute;
             bottom: 7px;
             right: 7px;
-            font-size: ${sizes.feeBadge};
+            font-size: 11px;
             font-weight: bold;
             color: black;
             background-color: #f5f5f5;
-            padding: 6px 12px;
+            padding: 4px 10px;
             border: 2px solid black;
             border-radius: 4px;
-            max-width: 85%;
-            word-wrap: break-word;
+            white-space: nowrap;
             text-align: right;
-            line-height: 1.1;
+            line-height: 1;
         }
         .professional-name {
             font-size: ${sizes.professionalName};
@@ -577,12 +576,11 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 position: absolute;
                 bottom: 7px;
                 right: 7px;
-                font-size: ${sizes.feeBadge};
-                padding: 3px 6px;
-                max-width: 80%;
-                word-wrap: break-word;
+                font-size: 10px;
+                padding: 3px 8px;
+                white-space: nowrap;
                 text-align: right;
-                line-height: 1.0;
+                line-height: 1;
             }
             .professional-info {
                 font-size: ${sizes.professionalInfo};
@@ -778,7 +776,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
 
                         ${linkedFee ? `
                             <div class="fee-badge">
-                                <strong>${(['medico', 'psicologo'].includes(step.type)) ? 'TAXA' : `TAXA ${linkedFee.name.toUpperCase()}`}: R$ ${parseFloat(linkedFee.amount).toFixed(2)}</strong>
+                                <strong>${(['medico', 'psicologo'].includes(step.type)) ? 'TAXA' : `Taxa ${linkedFee.name}`}: R$ ${parseFloat(linkedFee.amount).toFixed(2)}</strong>
                             </div>
                         ` : ''}
                     </div>
