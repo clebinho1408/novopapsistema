@@ -667,8 +667,14 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                   return isSelected;
                 }
                 
-                // Para médico e psicólogo, só mostrar se houver profissional selecionado
-                if (['medico', 'psicologo'].includes(step.type)) {
+                // EXAME PSICOLÓGICO: Sempre mostrar (mesmo que não selecionado)
+                // para exibir a mensagem de "NÃO OPTOU PELO EAR"
+                if (step.type === 'psicologo') {
+                  return true;
+                }
+                
+                // Para médico, só mostrar se houver profissional selecionado
+                if (step.type === 'medico') {
                   return isSelected && !!processData.selected_professionals[step.id.toString()];
                 }
                 
@@ -680,6 +686,28 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 const isSelected = processData.selected_steps.find(s => s.id === step.id);
                 const professional = isSelected ? processData.selected_professionals[step.id.toString()] : null;
                 
+                // Caso especial: Exame Psicológico não selecionado
+                if (step.type === 'psicologo' && !isSelected) {
+                  stepCounter++;
+                  const stepIcon = getStepIcon(step.type);
+                  return `
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-icon">${stepIcon}</div>
+                            <div class="step-number-and-title">
+                                <p class="step-number-text">(${stepCounter}º) PASSO</p>
+                                <h2 class="step-title">EXAME PSICOLÓGICO</h2>
+                            </div>
+                        </div>
+                        <div class="step-content" style="display: flex; align-items: center; justify-content: center; text-align: center; min-height: 120px; padding: 15px;">
+                            <h2 style="font-size: 22px; font-weight: bold; line-height: 1.3; margin: 0; text-transform: uppercase;">
+                                ATENÇÃO: O CONDUTOR OPTOU POR NÃO COLOCAR O EAR NA SUA CNH
+                            </h2>
+                        </div>
+                    </div>
+                  `;
+                }
+
                 // Para taxas, verificar se há taxas não vinculadas selecionadas
                 const hasTaxesSelected = step.type === 'taxa' && isSelected && 
                   processData.selected_fees.filter(fee => !fee.linked_professional_type).length > 0;
