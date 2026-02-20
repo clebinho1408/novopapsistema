@@ -177,60 +177,68 @@ export default function StepProcess() {
     });
   }, [formData.client_name, fees, processSteps]);
 
-  // Auto-selecionar credenciado de Foto quando a cidade mudar
-  useEffect(() => {
-    if (!formData.city_id || professionals.length === 0 || processSteps.length === 0) return;
-    
-    // Verificar se há uma etapa do tipo "foto" selecionada
-    const fotoStep = processSteps.find(step => step.type === 'foto');
-    if (!fotoStep) return;
-    
-    const isFotoStepSelected = formData.selected_steps.includes(fotoStep.id);
-    if (!isFotoStepSelected) return;
-    
-    // Buscar credenciado de foto daquela cidade
-    const fotoProfessionalForCity = professionals.find(
-      p => p.type === 'foto' && p.city_id.toString() === formData.city_id
-    );
-    
-    setFormData(prev => {
-      const currentSelectedProfId = prev.selected_professionals[fotoStep.id];
+    // Auto-selecionar credenciado de Foto e taxas vinculadas quando a cidade ou passos mudarem
+    useEffect(() => {
+      if (professionals.length === 0 || processSteps.length === 0 || fees.length === 0) return;
       
-      // Se não há profissional de foto nessa cidade
-      if (!fotoProfessionalForCity) {
-        // Remover a seleção (limpar profissional de cidade antiga)
-        const newProfessionals = { ...prev.selected_professionals };
-        delete newProfessionals[fotoStep.id];
-        
-        return {
-          ...prev,
-          selected_professionals: newProfessionals
-        };
-      }
-      
-      // Se já tem um profissional selecionado
-      if (currentSelectedProfId) {
-        // Verificar se o profissional atual é da mesma cidade
-        const currentSelectedProf = professionals.find(p => p.id === currentSelectedProfId);
-        
-        // Se for da mesma cidade, manter a seleção (não sobrescrever escolha manual)
-        if (currentSelectedProf && currentSelectedProf.city_id.toString() === formData.city_id) {
-          return prev;
+      setFormData(prev => {
+        let newSelectedFees = [...prev.selected_fees];
+        let newSelectedProfessionals = { ...prev.selected_professionals };
+        let changed = false;
+
+        // 1. Lógica de Profissional de Foto
+        if (prev.city_id) {
+          const fotoStep = processSteps.find(step => step.type === 'foto');
+          if (fotoStep && prev.selected_steps.includes(fotoStep.id)) {
+            const fotoProf = professionals.find(p => p.type === 'foto' && p.city_id.toString() === prev.city_id);
+            const currentProfId = prev.selected_professionals[fotoStep.id];
+            
+            if (fotoProf && currentProfId !== fotoProf.id) {
+              newSelectedProfessionals[fotoStep.id] = fotoProf.id;
+              changed = true;
+            } else if (!fotoProf && currentProfId) {
+              const currentProf = professionals.find(p => p.id === currentProfId);
+              if (currentProf && currentProf.city_id.toString() !== prev.city_id) {
+                delete newSelectedProfessionals[fotoStep.id];
+                changed = true;
+              }
+            }
+          }
         }
-        
-        // Se for de cidade diferente, atualizar para o profissional da nova cidade
-      }
-      
-      // Auto-selecionar o profissional da cidade
-      return {
-        ...prev,
-        selected_professionals: {
-          ...prev.selected_professionals,
-          [fotoStep.id]: fotoProfessionalForCity.id
+
+        // 2. Lógica de Taxas Vinculadas a Profissionais Selecionados
+        fees.forEach(fee => {
+          if (!fee.linked_professional_type) return;
+          
+          const step = processSteps.find(s => s.type === fee.linked_professional_type);
+          if (!step) return;
+
+          const isStepSelected = prev.selected_steps.includes(step.id);
+          const hasProfessional = !!newSelectedProfessionals[step.id];
+          const isFeeSelected = newSelectedFees.includes(fee.id);
+
+          // Se tem passo e profissional, garante a taxa
+          if (isStepSelected && hasProfessional && !isFeeSelected) {
+            newSelectedFees.push(fee.id);
+            changed = true;
+          } 
+          // Se não tem passo ou não tem profissional, remove a taxa vinculada
+          else if ((!isStepSelected || !hasProfessional) && isFeeSelected) {
+            newSelectedFees = newSelectedFees.filter(id => id !== fee.id);
+            changed = true;
+          }
+        });
+
+        if (changed) {
+          return {
+            ...prev,
+            selected_professionals: newSelectedProfessionals,
+            selected_fees: newSelectedFees
+          };
         }
-      };
-    });
-  }, [formData.city_id, formData.selected_steps, professionals, processSteps]);
+        return prev;
+      });
+    }, [formData.city_id, formData.selected_steps, professionals, processSteps, fees]);
 
   const fetchData = async () => {
     try {
@@ -519,27 +527,11 @@ export default function StepProcess() {
   };
 
   const calculateTotal = () => {
-    // Calcular total das taxas selecionadas manualmente (não vinculadas)
-    const manualFeesTotal = formData.selected_fees.reduce((total, feeId) => {
+    // Calcular total das taxas selecionadas no formulário (incluindo as auto-selecionadas)
+    return formData.selected_fees.reduce((total, feeId) => {
       const fee = fees.find(f => f.id === feeId);
       return total + (fee ? parseFloat(fee.amount) : 0);
     }, 0);
-
-    // Calcular total das taxas vinculadas automaticamente
-    const linkedFeesTotal = fees.filter(fee => {
-      if (!fee.linked_professional_type) return false;
-      
-      const hasLinkedProfessional = formData.selected_steps.some(stepId => {
-        const step = processSteps.find(s => s.id === stepId);
-        const professionalId = formData.selected_professionals[stepId];
-        const professional = professionals.find(p => p.id === professionalId);
-        return step?.type === fee.linked_professional_type && professional;
-      });
-      
-      return hasLinkedProfessional;
-    }).reduce((total, fee) => total + parseFloat(fee.amount), 0);
-
-    return manualFeesTotal + linkedFeesTotal;
   };
 
   const handleSubmit = async () => {
@@ -558,21 +550,7 @@ export default function StepProcess() {
       setIsSaving(true);
       console.log('Submitting form data:', formData);
 
-      // Incluir taxas vinculadas automaticamente
-        const linkedFees = fees.filter(fee => {
-          if (!fee.linked_professional_type) return false;
-          const hasLinkedProfessional = formData.selected_steps.some(stepId => {
-            const step = processSteps.find(s => s.id === stepId);
-            const professionalId = formData.selected_professionals[stepId];
-            const professional = professionals.find(p => p.id === professionalId);
-            return step?.type === fee.linked_professional_type && professional;
-          });
-          return hasLinkedProfessional;
-        }).map(fee => fee.id);
-
-        const allSelectedFees = [...formData.selected_fees, ...linkedFees];
-
-        const response = await fetch('/api/step-processes', {
+      const response = await fetch('/api/step-processes', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -584,7 +562,7 @@ export default function StepProcess() {
           client_name: formData.client_name || null,
           selected_steps: formData.selected_steps,
           selected_professionals: formData.selected_professionals,
-          selected_fees: allSelectedFees,
+          selected_fees: formData.selected_fees,
           show_toxicologico_message: formData.show_toxicologico_message
         })
       });
@@ -610,9 +588,8 @@ export default function StepProcess() {
           }
         });
 
-        // Como todas as taxas já foram incluídas no allSelectedFees enviado para o backend,
-        // vamos buscar todas as taxas selecionadas (manuais + vinculadas)
-        const selectedFees = fees.filter(fee => allSelectedFees.includes(fee.id));
+        // Buscar todas as taxas selecionadas no formulário (já sincronizadas pelo useEffect)
+        const selectedFees = fees.filter(fee => formData.selected_fees.includes(fee.id));
         
         const printData = {
           client_name: formData.client_name,
@@ -621,7 +598,7 @@ export default function StepProcess() {
           all_steps: processSteps, // Todas as etapas disponíveis
           selected_professionals: selectedProfessionals,
           selected_fees: selectedFees,
-          total_amount: calculateTotal(),
+          total_amount: calculateTotal().toString(),
           show_toxicologico_message: formData.show_toxicologico_message,
           general_instructions: instructions.general_instructions || ''
         };
