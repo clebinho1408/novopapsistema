@@ -673,12 +673,13 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                   return true;
                 }
                 
-                // Para médico, só mostrar se houver profissional selecionado
+                // EXAME MÉDICO: Sempre mostrar (mesmo que não selecionado)
+                // para exibir o X de "NÃO SELECIONADO"
                 if (step.type === 'medico') {
-                  return isSelected && !!processData.selected_professionals[step.id.toString()];
+                  return true;
                 }
                 
-                return true;
+                // Para outras etapas condicionais, só mostrar se selecionadas
               });
               let stepCounter = 0;
               
@@ -703,6 +704,26 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                             <h2 style="font-size: 22px; font-weight: bold; line-height: 1.3; margin: 0; text-transform: uppercase;">
                                 ATENÇÃO: O CONDUTOR OPTOU POR NÃO COLOCAR O EAR NA SUA CNH
                             </h2>
+                        </div>
+                    </div>
+                  `;
+                }
+
+                // Caso especial: Exame Médico não selecionado
+                if (step.type === 'medico' && (!isSelected || !professional)) {
+                  stepCounter++;
+                  const stepIcon = getStepIcon(step.type);
+                  return `
+                    <div class="step-card">
+                        <div class="step-header">
+                            <div class="step-icon">${stepIcon}</div>
+                            <div class="step-number-and-title">
+                                <p class="step-number-text">(${stepCounter}º) PASSO</p>
+                                <h2 class="step-title">EXAME MÉDICO</h2>
+                            </div>
+                        </div>
+                        <div class="step-content" style="display: flex; align-items: center; justify-content: center; text-align: center; min-height: 120px;">
+                            <span style="font-size: 80px; color: #ff0000; font-weight: bold; line-height: 1;">X</span>
                         </div>
                     </div>
                   `;
