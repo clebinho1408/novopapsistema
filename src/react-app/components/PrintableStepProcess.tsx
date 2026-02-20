@@ -343,6 +343,10 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             padding: 6px 12px;
             border: 2px solid black;
             border-radius: 4px;
+            max-width: 85%;
+            word-wrap: break-word;
+            text-align: right;
+            line-height: 1.1;
         }
         .professional-name {
             font-size: ${sizes.professionalName};
@@ -575,6 +579,10 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 right: 7px;
                 font-size: ${sizes.feeBadge};
                 padding: 3px 6px;
+                max-width: 80%;
+                word-wrap: break-word;
+                text-align: right;
+                line-height: 1.0;
             }
             .professional-info {
                 font-size: ${sizes.professionalInfo};
