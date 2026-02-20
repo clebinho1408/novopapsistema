@@ -612,8 +612,17 @@ export default function StepProcess() {
           }
         });
 
-        // Buscar todas as taxas selecionadas no formulário (já sincronizadas pelo useEffect)
-        const selectedFees = fees.filter(fee => formData.selected_fees.includes(fee.id));
+        // Buscar todas as taxas: selecionadas manualmente + vinculadas automaticamente
+        const autoLinkedFeeIds = fees.filter(fee => {
+          if (!fee.linked_professional_type) return false;
+          const step = processSteps.find(s => s.type === fee.linked_professional_type);
+          if (!step) return false;
+          const isStepSelected = formData.selected_steps.includes(step.id);
+          const hasProfessional = !!formData.selected_professionals[step.id];
+          return isStepSelected && (['medico', 'psicologo'].includes(step.type) ? hasProfessional : true);
+        }).map(f => f.id);
+        const allFeeIds = Array.from(new Set([...formData.selected_fees, ...autoLinkedFeeIds]));
+        const selectedFees = fees.filter(fee => allFeeIds.includes(fee.id));
         
         const printData = {
           client_name: formData.client_name,
