@@ -723,7 +723,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                             </div>
                         </div>
                         <div class="step-content" style="display: flex; align-items: center; justify-content: center; text-align: center; min-height: 120px;">
-                            <span style="font-size: 80px; color: #ff0000; font-weight: bold; line-height: 1;">X</span>
+                            <span style="font-size: 80px; color: #000000; font-weight: bold; line-height: 1;">X</span>
                         </div>
                     </div>
                   `;
