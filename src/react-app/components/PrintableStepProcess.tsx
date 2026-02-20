@@ -770,7 +770,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
 
                         ${linkedFee ? `
                             <div class="fee-badge">
-                                <strong>TAXA (${linkedFee.name.toUpperCase()}): R$ ${parseFloat(linkedFee.amount).toFixed(2)}</strong>
+                                <strong>${(['medico', 'psicologo'].includes(step.type)) ? 'TAXA' : `TAXA ${linkedFee.name.toUpperCase()}`}: R$ ${parseFloat(linkedFee.amount).toFixed(2)}</strong>
                             </div>
                         ` : ''}
                     </div>
