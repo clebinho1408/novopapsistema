@@ -848,14 +848,9 @@ app.patch("/api/fees/:id", systemAuthMiddleware, async (c) => {
     return c.json({ error: "Taxa não encontrada" }, 404);
   }
 
-  // Taxas fixas do sistema: apenas permitir alteração de valor
-  if (body.amount === undefined) {
-    return c.json({ error: "Apenas o valor pode ser alterado" }, 400);
-  }
-
   const result = await mockEnv.DB.prepare(
-    "UPDATE fees SET amount = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND agency_id = ? RETURNING *"
-  ).bind(body.amount, feeId, user.agency_id).first();
+    "UPDATE fees SET name = COALESCE(?, name), amount = COALESCE(?, amount), updated_at = CURRENT_TIMESTAMP WHERE id = ? AND agency_id = ? RETURNING *"
+  ).bind(body.name || null, body.amount, feeId, user.agency_id).first();
 
   if (!result) {
     return c.json({ error: "Taxa não encontrada" }, 404);
