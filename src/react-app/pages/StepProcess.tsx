@@ -949,8 +949,10 @@ export default function StepProcess() {
                               
                               const isFeeDisabled = !isTaxaStepSelected || isProvaFee || (isTransferenciaFee && hasConflictStepSelected) || isSpecificFeeDisabled;
                               
+                              if (isFeeDisabled) return null;
+
                               return (
-                                <label key={fee.id} className={`flex items-center justify-between ${isFeeDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                <label key={fee.id} className="flex items-center justify-between">
                                   <div className="flex items-center space-x-3">
                                     <input
                                       type="checkbox"
