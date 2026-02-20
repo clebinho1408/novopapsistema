@@ -659,10 +659,19 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
               const filteredSteps = (processData.all_steps || processData.selected_steps).filter(step => {
                 // Excluir prova (processada separadamente)
                 if (step.type === 'prova') return false;
+                
+                const isSelected = processData.selected_steps.find(s => s.id === step.id);
+                
                 // Para etapas condicionais, só mostrar se selecionadas
                 if (conditionalTypes.includes(step.type)) {
-                  return processData.selected_steps.find(s => s.id === step.id);
+                  return isSelected;
                 }
+                
+                // Para médico e psicólogo, só mostrar se houver profissional selecionado
+                if (['medico', 'psicologo'].includes(step.type)) {
+                  return isSelected && !!processData.selected_professionals[step.id.toString()];
+                }
+                
                 return true;
               });
               let stepCounter = 0;
