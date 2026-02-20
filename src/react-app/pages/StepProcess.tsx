@@ -227,10 +227,18 @@ export default function StepProcess() {
             changed = true;
           } 
           else if (!needsFee && isFeeSelected) {
-            newSelectedFees = newSelectedFees.filter(id => id !== fee.id);
-            changed = true;
+            // Apenas removemos se o passo for desmarcado ou o profissional for removido.
+            if (!isStepSelected || (['medico', 'psicologo'].includes(step.type) && !hasProfessional)) {
+              newSelectedFees = newSelectedFees.filter(id => id !== fee.id);
+              changed = true;
+            }
           }
         });
+
+        // 3. Garantir sincronização forçada das taxas para o total
+        if (changed) {
+          console.log('🔄 Sincronizando taxas auto-selecionadas:', newSelectedFees);
+        }
 
         if (changed) {
           return {
@@ -530,8 +538,21 @@ export default function StepProcess() {
   };
 
   const calculateTotal = () => {
-    // Calcular total das taxas selecionadas no formulário (incluindo as auto-selecionadas)
-    return formData.selected_fees.reduce((total, feeId) => {
+    // 1. Pegar IDs de taxas que devem estar selecionadas baseado na lógica de vínculo
+    const autoSelectedFeeIds = fees.filter(fee => {
+      if (!fee.linked_professional_type) return false;
+      const step = processSteps.find(s => s.type === fee.linked_professional_type);
+      if (!step) return false;
+      const isStepSelected = formData.selected_steps.includes(step.id);
+      const hasProfessional = !!formData.selected_professionals[step.id];
+      return isStepSelected && (['medico', 'psicologo'].includes(step.type) ? hasProfessional : true);
+    }).map(f => f.id);
+
+    // 2. Unir as taxas selecionadas manualmente com as que devem estar vinculadas
+    const allUniqueFeeIds = Array.from(new Set([...formData.selected_fees, ...autoSelectedFeeIds]));
+
+    // 3. Calcular o total real
+    return allUniqueFeeIds.reduce((total, feeId) => {
       const fee = fees.find(f => f.id === feeId);
       return total + (fee ? parseFloat(fee.amount) : 0);
     }, 0);
