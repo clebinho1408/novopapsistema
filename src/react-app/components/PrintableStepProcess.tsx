@@ -863,7 +863,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                       <div style="font-size: 12px; font-weight: bold; color: black; line-height: 1.3;">⚠️ ATENÇÃO: PRAZO PARA RETIRAR A CNH/PID FÍSICA SERÁ DE 180 DIAS, CONTANDO A PARTIR DA DATA DA SUA EMISSÃO</div>
                     </div>
                     <div class="total-amount-box">
-                      <div class="total-amount-text"><strong>VALOR TOTAL: R$ ${parseFloat(processData.total_amount).toFixed(2)}</strong></div>
+                      <div class="total-amount-text"><strong>VALOR TOTAL: R$ ${processData.selected_fees.reduce((sum: number, fee: Fee) => sum + parseFloat(String(fee.amount)), 0).toFixed(2)}</strong></div>
                     </div>
                   </div>
                 `;
@@ -919,7 +919,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                     </div>
                     <div class="total-amount-card">
                       <div class="total-amount-box">
-                          <div class="total-amount-text"><strong>VALOR TOTAL: R$ ${parseFloat(processData.total_amount).toFixed(2)}</strong></div>
+                          <div class="total-amount-text"><strong>VALOR TOTAL: R$ ${processData.selected_fees.reduce((sum: number, fee: Fee) => sum + parseFloat(String(fee.amount)), 0).toFixed(2)}</strong></div>
                       </div>
                     </div>
                   </div>
