@@ -206,7 +206,7 @@ export default function StepProcess() {
           }
         }
 
-        // 2. Lógica de Taxas Vinculadas a Profissionais Selecionados
+        // 2. Lógica de Taxas Vinculadas a Passos e Profissionais
         fees.forEach(fee => {
           if (!fee.linked_professional_type) return;
           
@@ -217,13 +217,16 @@ export default function StepProcess() {
           const hasProfessional = !!newSelectedProfessionals[step.id];
           const isFeeSelected = newSelectedFees.includes(fee.id);
 
-          // Se tem passo e profissional, garante a taxa
-          if (isStepSelected && hasProfessional && !isFeeSelected) {
+          // Se o passo está selecionado E (é médico/psicólogo com profissional OU é prova teórica/prática)
+          const needsFee = isStepSelected && (
+            (['medico', 'psicologo'].includes(step.type) ? hasProfessional : true)
+          );
+
+          if (needsFee && !isFeeSelected) {
             newSelectedFees.push(fee.id);
             changed = true;
           } 
-          // Se não tem passo ou não tem profissional, remove a taxa vinculada
-          else if ((!isStepSelected || !hasProfessional) && isFeeSelected) {
+          else if (!needsFee && isFeeSelected) {
             newSelectedFees = newSelectedFees.filter(id => id !== fee.id);
             changed = true;
           }
