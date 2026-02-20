@@ -679,7 +679,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                   return true;
                 }
                 
-                // Para outras etapas condicionais, só mostrar se selecionadas
+                return true;
               });
               let stepCounter = 0;
               
