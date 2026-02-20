@@ -93,6 +93,9 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
       printWindow.document.write(printContent);
       printWindow.document.close();
       
+      // Close the modal immediately after opening the print window
+      onClose();
+      
       // Wait for content to load and font adjustment to complete, then print
       printWindow.onload = () => {
         let checkAttempts = 0;
@@ -151,8 +154,9 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
     // Abrir o Gmail
     window.open(gmailLink, '_blank');
     
-    // Fechar o modal
+    // Fechar o modal principal e o modal de email
     setEmailModal({ isOpen: false, email: '' });
+    onClose();
     
     alert('Abrindo o Gmail com o conteúdo pré-carregado!');
   };
