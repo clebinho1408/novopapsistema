@@ -679,8 +679,8 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
               
               // Check if this step has a linked fee to determine card height
               const linkedFee = processData.selected_fees.find(fee => fee.linked_professional_type === step.type);
-              const cardClass = linkedFee && professional ? "step-card-with-fee" : "step-card";
-              const contentClass = linkedFee && professional ? "step-content-with-fee" : "step-content";
+              const cardClass = linkedFee && (professional || ['prova_teorica', 'prova_pratica'].includes(step.type)) ? "step-card-with-fee" : "step-card";
+              const contentClass = linkedFee && (professional || ['prova_teorica', 'prova_pratica'].includes(step.type)) ? "step-content-with-fee" : "step-content";
               
               return `
                 <div class="${cardClass}">
@@ -735,15 +735,6 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                               return workingInfo;
                             })()}
                             ${professional.observations ? `<div class="professional-info" style="margin-top: 6px;">${professional.observations}</div>` : ''}
-                            ${(() => {
-                              // Buscar taxa vinculada a este tipo de profissional
-                              const linkedFee = processData.selected_fees.find(fee => fee.linked_professional_type === step.type);
-                              return linkedFee ? `
-                                <div class="fee-badge">
-                                  <strong>TAXA: R$ ${parseFloat(linkedFee.amount).toFixed(2)}</strong>
-                                </div>
-                              ` : '';
-                            })()}
                             ${step.type === 'medico' && processData.show_toxicologico_message ? `
                               <div style="margin-top: 6px; text-align: center;">
                                 <div style="font-size: 11px; font-weight: bold; color: black;">
@@ -776,6 +767,12 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                                 <div style="font-size: 54px; font-weight: bold; color: black; line-height: 1;">✕</div>
                             </div>
                         `}
+
+                        ${linkedFee ? `
+                            <div class="fee-badge">
+                                <strong>TAXA: R$ ${parseFloat(linkedFee.amount).toFixed(2)}</strong>
+                            </div>
+                        ` : ''}
                     </div>
                 </div>
               `;

@@ -151,8 +151,17 @@ export default function StepProcess() {
         if (rule.fees.includes('Transferência')) {
           newSelectedFees.push(transferenciaFee.id);
         }
+
+        // Auto-selecionar taxas vinculadas (Médico, Psicólogo, Prova Teórica, Prova Prática)
+        fees.forEach(fee => {
+          if (fee.linked_professional_type && rule.steps.includes(fee.linked_professional_type)) {
+            if (!newSelectedFees.includes(fee.id)) {
+              newSelectedFees.push(fee.id);
+            }
+          }
+        });
         
-        // Regra para 1º Habilitação: Marcar Prova Teórica, LADV e Prova Prática
+        // Regra para 1º Habilitação: Marcar LADV e Prova Prática se necessário (Prova Teórica já é vinculada)
         if (serviceName === '1º Habilitação') {
           const ptFee = fees.find(f => f.name === 'Prova Teórica');
           const ladvFee = fees.find(f => f.name === 'LADV');
