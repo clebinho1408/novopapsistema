@@ -340,7 +340,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             position: absolute;
             bottom: 7px;
             right: 7px;
-            font-size: 11px;
+            font-size: 12.5px;
             font-weight: bold;
             color: black;
             background-color: #f5f5f5;
@@ -580,7 +580,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 position: absolute;
                 bottom: 7px;
                 right: 7px;
-                font-size: 10px;
+                font-size: 11.5px;
                 padding: 3px 8px;
                 white-space: nowrap;
                 text-align: right;
