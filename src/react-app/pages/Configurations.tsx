@@ -258,7 +258,7 @@ function StepsConfiguration({ steps, onUpdate }: { steps: ProcessStep[], onUpdat
 function FeesConfiguration({ fees, onUpdate }: { fees: Fee[], onUpdate: () => void }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingFee, setEditingFee] = useState<Fee | null>(null);
-  const [formData, setFormData] = useState({ amount: '' });
+  const [formData, setFormData] = useState({ name: '', amount: '' });
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -273,13 +273,14 @@ function FeesConfiguration({ fees, onUpdate }: { fees: Fee[], onUpdate: () => vo
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
+          name: formData.name,
           amount: parseFloat(formData.amount)
         })
       });
 
       if (response.ok) {
         setIsModalOpen(false);
-        setFormData({ amount: '' });
+        setFormData({ name: '', amount: '' });
         setEditingFee(null);
         onUpdate();
       } else {
@@ -329,7 +330,7 @@ function FeesConfiguration({ fees, onUpdate }: { fees: Fee[], onUpdate: () => vo
                   <button 
                     onClick={() => {
                       setEditingFee(fee);
-                      setFormData({ amount: fee.amount });
+                      setFormData({ name: fee.name, amount: fee.amount });
                       setIsModalOpen(true);
                     }}
                     className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -346,16 +347,17 @@ function FeesConfiguration({ fees, onUpdate }: { fees: Fee[], onUpdate: () => vo
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              Editar Valor da Taxa
+              Editar Taxa
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Taxa</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Nome da Taxa</label>
                 <input
                   type="text"
-                  value={editingFee.name}
-                  disabled
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed text-gray-600"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  required
                 />
               </div>
               <div>
@@ -365,10 +367,9 @@ function FeesConfiguration({ fees, onUpdate }: { fees: Fee[], onUpdate: () => vo
                   step="0.01"
                   min="0"
                   value={formData.amount}
-                  onChange={(e) => setFormData({ amount: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
-                  autoFocus
                 />
               </div>
               <div className="flex justify-end space-x-3">
@@ -377,7 +378,7 @@ function FeesConfiguration({ fees, onUpdate }: { fees: Fee[], onUpdate: () => vo
                   onClick={() => {
                     setIsModalOpen(false);
                     setEditingFee(null);
-                    setFormData({ amount: '' });
+                    setFormData({ name: '', amount: '' });
                   }}
                   className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
                 >
