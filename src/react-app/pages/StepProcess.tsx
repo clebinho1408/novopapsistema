@@ -811,8 +811,10 @@ export default function StepProcess() {
                         // Desabilitar etapas de curso/prova se não for 1ª Habilitação
                         const isDisabled = (isProvaPCD && hasConflictSelected) || (isConflictStep && currentStepTypes.includes('prova')) || (isCourseOrExamStep && isNotPrimeiraHabilitacao);
 
+                        if (isDisabled) return null;
+
                         return (
-                          <label key={step.id} className={`flex items-center space-x-3 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                          <label key={step.id} className="flex items-center space-x-3">
                             <input
                               type="checkbox"
                               checked={formData.selected_steps.includes(step.id)}
