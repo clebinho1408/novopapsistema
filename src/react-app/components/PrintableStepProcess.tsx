@@ -696,8 +696,10 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                         <div class="step-header">
                             <div class="step-icon">${stepIcon}</div>
                             <div class="step-number-and-title">
-                                <p class="step-number-text">(${stepCounter}º) PASSO</p>
-                                <h2 class="step-title">EXAME PSICOLÓGICO</h2>
+                                <p class="step-number-text"><strong>(${stepCounter}º) PASSO</strong></p>
+                                <div class="step-title">
+                                    <strong>EXAME PSICOLÓGICO</strong>
+                                </div>
                             </div>
                         </div>
                         <div class="step-content" style="display: flex; align-items: center; justify-content: center; text-align: center; min-height: 120px; padding: 15px;">
@@ -718,8 +720,10 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                         <div class="step-header">
                             <div class="step-icon">${stepIcon}</div>
                             <div class="step-number-and-title">
-                                <p class="step-number-text">(${stepCounter}º) PASSO</p>
-                                <h2 class="step-title">EXAME MÉDICO</h2>
+                                <p class="step-number-text"><strong>(${stepCounter}º) PASSO</strong></p>
+                                <div class="step-title">
+                                    <strong>EXAME MÉDICO</strong>
+                                </div>
                             </div>
                         </div>
                         <div class="step-content" style="display: flex; align-items: center; justify-content: center; text-align: center; min-height: 120px;">
