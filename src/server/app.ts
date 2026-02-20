@@ -1018,7 +1018,7 @@ app.post("/api/step-processes", systemAuthMiddleware, async (c) => {
           ).bind(newProcessId, fee.id as number, fee.amount as number).run();
 
           // Update total amount to include linked fee
-          totalAmount += fee.amount;
+          totalAmount += Number(fee.amount);
         }
       }
     }
