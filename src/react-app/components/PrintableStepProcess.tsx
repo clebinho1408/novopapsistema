@@ -894,8 +894,8 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                       <div class="prova-header">
                           <div class="step-icon">📝</div>
                           <div class="prova-title">
-                              <p class="step-number-text"><strong>(${stepNumber}°) PASSO</strong></p>
-                              <div class="step-title"><strong>PROVA</strong></div>
+                              <p class="step-number-text"><strong>(${stepNumber}º) PASSO</strong></p>
+                              <div class="step-title"><strong>PROVA PCD</strong></div>
                           </div>
                       </div>
                       <div class="prova-content">
