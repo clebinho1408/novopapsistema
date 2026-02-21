@@ -890,47 +890,48 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
               
               return `
                 <div style="display: flex; flex-direction: column; gap: 6px; width: 100%;">
-                  <div class="prova-card">
-                      <div class="prova-header">
-                          <div class="step-icon">📝</div>
-                          <div class="prova-title">
-                              <p class="step-number-text"><strong>(${stepNumber}º) PASSO</strong></p>
-                              <div class="step-title"><strong>PROVA PCD</strong></div>
-                          </div>
-                      </div>
-                      <div class="prova-content">
-                          <div class="professional-name"><strong>${professional.name}</strong></div>
-                          ${professional.attendance_type ? `
-                              <div class="schedule-info">
-                                  <div class="schedule-label"><strong>${professional.attendance_type}:</strong></div>
-                                  ${professional.phone ? `
-                                      <div class="professional-info" style="font-size: ${sizes.professionalPhone};"><strong>${professional.phone}</strong> - Somente mensagem WhatsApp</div>
-                                  ` : ''}
-                              </div>
-                          ` : ''}
-                          ${professional.email ? `
-                              <div class="professional-info"><strong>Email:</strong> ${professional.email}</div>
-                          ` : ''}
-                          ${professional.observations ? `
-                              <div class="professional-info"><strong>OBS:</strong> ${professional.observations}</div>
-                          ` : ''}
-                      </div>
-                  </div>
-                  <div style="display: flex; gap: 10px; align-items: stretch; justify-content: space-between; width: 100%;">
-                    <div style="display: flex; flex-direction: column; gap: 6px; flex: 1;">
-                      <div style="background-color: white; border: 2px solid black; padding: 9px; border-radius: 5px; text-align: center;">
-                        <div style="font-size: 12px; font-weight: bold; color: black; line-height: 1.3;">⚠️ ATENÇÃO: PRAZO PARA RETIRAR A CNH/PID FÍSICA SERÁ DE 180 DIAS, CONTANDO A PARTIR DA DATA DA SUA EMISSÃO</div>
-                      </div>
-                      <div class="total-amount-card" style="margin-left: auto;">
-                        <div class="total-amount-box">
-                            <div class="total-amount-text"><strong>VALOR TOTAL: R$ ${processData.selected_fees.reduce((sum: number, fee: Fee) => sum + parseFloat(String(fee.amount)), 0).toFixed(2)}</strong></div>
+                  <div style="display: flex; gap: 8px; align-items: stretch;">
+                    <div class="prova-card" style="flex: 1;">
+                        <div class="prova-header">
+                            <div class="step-icon">📝</div>
+                            <div class="prova-title">
+                                <p class="step-number-text"><strong>(${stepNumber}º) PASSO</strong></p>
+                                <div class="step-title"><strong>PROVA PCD</strong></div>
+                            </div>
                         </div>
-                      </div>
+                        <div class="prova-content">
+                            <div class="professional-name"><strong>${professional.name}</strong></div>
+                            ${professional.attendance_type ? `
+                                <div class="schedule-info">
+                                    <div class="schedule-label"><strong>${professional.attendance_type}:</strong></div>
+                                    ${professional.phone ? `
+                                        <div class="professional-info" style="font-size: ${sizes.professionalPhone};"><strong>${professional.phone}</strong> - Somente mensagem WhatsApp</div>
+                                    ` : ''}
+                                </div>
+                            ` : ''}
+                            ${professional.email ? `
+                                <div class="professional-info"><strong>Email:</strong> ${professional.email}</div>
+                            ` : ''}
+                            ${professional.observations ? `
+                                <div class="professional-info"><strong>OBS:</strong> ${professional.observations}</div>
+                            ` : ''}
+                        </div>
                     </div>
-                    <div style="flex: 1; border: 2px solid black; border-radius: 5px; padding: 8px; display: flex; align-items: center; justify-content: center; background-color: #fff;">
-                      <p style="font-size: 12px; font-weight: bold; color: black; margin: 0; line-height: 1.4; text-align: center;">
+                    <div style="flex: 1; border: 2px solid black; border-radius: 5px; padding: 12px; display: flex; align-items: center; justify-content: center; background-color: #fff;">
+                      <p style="font-size: 13px; font-weight: bold; color: black; margin: 0; line-height: 1.5; text-align: center;">
                         Caso seja registrada restrição PCD pelo médico, será necessário passar por mais dois médicos, quitar as taxas correspondentes e, em seguida, realizar a Prova de Direção Veicular.
                       </p>
+                    </div>
+                  </div>
+                  
+                  <div style="display: flex; gap: 10px; align-items: center; justify-content: space-between; width: 100%;">
+                    <div style="background-color: white; border: 2px solid black; padding: 9px; border-radius: 5px; text-align: center; max-width: 400px;">
+                      <div style="font-size: 12px; font-weight: bold; color: black; line-height: 1.3;">⚠️ ATENÇÃO: PRAZO PARA RETIRAR A CNH/PID FÍSICA SERÁ DE 180 DIAS, CONTANDO A PARTIR DA DATA DA SUA EMISSÃO</div>
+                    </div>
+                    <div class="total-amount-card">
+                      <div class="total-amount-box">
+                          <div class="total-amount-text"><strong>VALOR TOTAL: R$ ${processData.selected_fees.reduce((sum: number, fee: Fee) => sum + parseFloat(String(fee.amount)), 0).toFixed(2)}</strong></div>
+                      </div>
                     </div>
                   </div>
                 </div>
