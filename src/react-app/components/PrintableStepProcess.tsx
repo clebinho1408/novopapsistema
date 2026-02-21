@@ -919,7 +919,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                     </div>
                     <div style="flex: 1; border: 2px solid black; border-radius: 5px; padding: 12px; display: flex; align-items: center; justify-content: center; background-color: #fff;">
                       <p style="font-size: 13px; font-weight: bold; color: black; margin: 0; line-height: 1.5; text-align: center;">
-                        Caso seja registrada restrição PCD pelo médico, será necessário passar por mais dois médicos, quitar as taxas correspondentes e, em seguida, realizar a Prova de Direção Veicular.
+                        Caso seja registrada restrição PCD pelo médico, será necessário passar por mais dois médicos, quitar as taxas correspondentes a cada um e, em seguida, agendar e realizar a Prova de Direção Veicular.
                       </p>
                     </div>
                   </div>
