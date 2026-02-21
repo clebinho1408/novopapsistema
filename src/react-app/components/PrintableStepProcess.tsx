@@ -302,6 +302,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
             border-bottom: 2px solid black;
             display: flex;
             align-items: center;
+            height: 45px;
         }
         .step-icon {
             font-size: ${sizes.stepIcon};
