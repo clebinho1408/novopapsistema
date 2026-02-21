@@ -696,7 +696,6 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                         <div class="step-header">
                             <div class="step-icon">${stepIcon}</div>
                             <div class="step-number-and-title">
-                                <p class="step-number-text"><strong>(${stepCounter}º) PASSO</strong></p>
                                 <div class="step-title">
                                     <strong>EXAME PSICOLÓGICO</strong>
                                 </div>
@@ -719,12 +718,9 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                     <div class="step-card">
                         <div class="step-header">
                             <div class="step-icon">${stepIcon}</div>
-                            <div class="step-number-and-title">
-                                <p class="step-number-text"><strong>(${stepCounter}º) PASSO</strong></p>
                                 <div class="step-title">
                                     <strong>EXAME MÉDICO</strong>
                                 </div>
-                            </div>
                         </div>
                         <div class="step-content" style="display: flex; align-items: center; justify-content: center; text-align: center; min-height: 120px;">
                             <span style="font-size: 80px; color: #000000; font-weight: bold; line-height: 1;">X</span>
