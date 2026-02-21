@@ -517,9 +517,8 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
         }
         .footer {
             margin-top: auto;
-            padding-top: 6px;
+            padding-top: 4px;
             border-top: 1px solid black;
-            text-align: center;
             page-break-after: avoid;
             page-break-before: avoid;
         }
@@ -953,8 +952,10 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
 
         <!-- Footer -->
         <div class="footer">
-            <p>Documento gerado pelo PAP - Sistema - ${new Date().toLocaleDateString('pt-BR')}</p>
-            ${currentUserName ? `<p style="margin-top: 4px;">Impresso por: ${currentUserName}</p>` : ''}
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <p>Documento gerado pelo PAP - Sistema - ${new Date().toLocaleDateString('pt-BR')}</p>
+                ${currentUserName ? `<p>Impresso por: ${currentUserName}</p>` : ''}
+            </div>
         </div>
     </div>
     <script>
