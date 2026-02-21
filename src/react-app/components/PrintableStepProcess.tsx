@@ -882,7 +882,11 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 const stepHasTaxes = step.type === 'taxa' && stepSelected && 
                   processData.selected_fees.filter(fee => !fee.linked_professional_type).length > 0;
                 const isNoProfStep = noProfTypes.includes(step.type) && stepSelected;
-                if (stepProfessional || stepHasTaxes || isNoProfStep) {
+                
+                // EXAME PSICOLÓGICO e MÉDICO sempre contam como passo, pois sempre são exibidos
+                const isAlwaysShown = ['psicologo', 'medico'].includes(step.type);
+
+                if (stepProfessional || stepHasTaxes || isNoProfStep || isAlwaysShown) {
                   stepNumber++;
                 }
               });
