@@ -663,21 +663,18 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 
                 const isSelected = processData.selected_steps.find(s => s.id === step.id);
                 
-                // Para etapas condicionais, só mostrar se selecionadas
+                // Tipos de etapas que devem SEMPRE aparecer (mesmo que não selecionadas)
+                const alwaysShowTypes = ['psicologo', 'medico', 'curso_teorico'];
+                
+                // Para outras etapas condicionais, só mostrar se selecionadas
+                const conditionalTypes = ['prova_teorica', 'curso_pratico', 'prova_pratica'];
+                
+                if (alwaysShowTypes.includes(step.type)) {
+                  return true;
+                }
+                
                 if (conditionalTypes.includes(step.type)) {
                   return isSelected;
-                }
-                
-                // EXAME PSICOLÓGICO: Sempre mostrar (mesmo que não selecionado)
-                // para exibir a mensagem de "NÃO OPTOU PELO EAR"
-                if (step.type === 'psicologo') {
-                  return true;
-                }
-                
-                // EXAME MÉDICO: Sempre mostrar (mesmo que não selecionado)
-                // para exibir o X de "NÃO SELECIONADO"
-                if (step.type === 'medico') {
-                  return true;
                 }
                 
                 return true;
@@ -710,16 +707,17 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                   `;
                 }
 
-                // Caso especial: Exame Médico não selecionado
-                if (step.type === 'medico' && (!isSelected || !professional)) {
+                // Caso especial: Exame Médico ou Curso Teórico não selecionado
+                if ((step.type === 'medico' && (!isSelected || !professional)) || (step.type === 'curso_teorico' && !isSelected)) {
                   const stepIcon = getStepIcon(step.type);
+                  const title = step.type === 'medico' ? 'EXAME MÉDICO' : 'CURSO TEÓRICO';
                   return `
                     <div class="step-card">
                         <div class="step-header">
                             <div class="step-icon">${stepIcon}</div>
                             <div class="step-number-and-title" style="flex: 1; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center;">
                                 <div class="step-title">
-                                    <strong>EXAME MÉDICO</strong>
+                                    <strong>${title}</strong>
                                 </div>
                             </div>
                         </div>
