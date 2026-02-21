@@ -690,7 +690,6 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 
                 // Caso especial: Exame Psicológico não selecionado
                 if (step.type === 'psicologo' && !isSelected) {
-                  stepCounter++;
                   const stepIcon = getStepIcon(step.type);
                   return `
                     <div class="step-card">
@@ -713,7 +712,6 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
 
                 // Caso especial: Exame Médico não selecionado
                 if (step.type === 'medico' && (!isSelected || !professional)) {
-                  stepCounter++;
                   const stepIcon = getStepIcon(step.type);
                   return `
                     <div class="step-card">
@@ -874,19 +872,17 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
               
               // Calcular o número do passo baseado nos passos anteriores que têm dados
               let stepNumber = 0;
-              const filteredSteps = allSteps.filter(s => s.type !== 'prova');
+              const filteredStepsForCounter = allSteps.filter(s => s.type !== 'prova');
               const noProfTypes = ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'];
-              filteredSteps.forEach(step => {
+              filteredStepsForCounter.forEach(step => {
                 const stepSelected = processData.selected_steps.find(s => s.id === step.id);
                 const stepProfessional = stepSelected ? processData.selected_professionals[step.id.toString()] : null;
                 const stepHasTaxes = step.type === 'taxa' && stepSelected && 
                   processData.selected_fees.filter(fee => !fee.linked_professional_type).length > 0;
                 const isNoProfStep = noProfTypes.includes(step.type) && stepSelected;
                 
-                // EXAME PSICOLÓGICO e MÉDICO sempre contam como passo, pois sempre são exibidos
-                const isAlwaysShown = ['psicologo', 'medico'].includes(step.type);
-
-                if (stepProfessional || stepHasTaxes || isNoProfStep || isAlwaysShown) {
+                // Só contar se estiver REALMENTE selecionado (com profissional ou dados)
+                if (stepProfessional || stepHasTaxes || isNoProfStep) {
                   stepNumber++;
                 }
               });
