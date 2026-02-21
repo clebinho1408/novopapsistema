@@ -815,8 +815,8 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                               </div>
                             ` : ''}
                         ` : isNoProfessionalStep ? `
-                            <div style="padding: 8px; min-height: 60px;">
-                                ${step.description ? `<div style="font-size: 14px; font-weight: bold; color: black; margin-bottom: 5px; line-height: 1.25;">${step.description}</div>` : ''}
+                            <div style="padding: 6px; min-height: 40px;">
+                                ${step.description ? `<div style="font-size: 14px; font-weight: bold; color: black; margin-bottom: 4px; line-height: 1.2;">${step.description}</div>` : ''}
                                 ${step.obs ? `<div style="font-size: 13px; font-weight: bold; color: black;">Obs.: ${step.obs}</div>` : ''}
                                 ${!step.description && !step.obs ? `<div style="font-size: 13px; color: #666; text-align: center;">Etapa selecionada</div>` : ''}
                             </div>
