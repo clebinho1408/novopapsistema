@@ -653,9 +653,6 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
         <!-- Steps Grid -->
         <div class="steps-grid">
             ${(() => {
-              // Tipos de etapas que só devem aparecer se estiverem selecionadas
-              const conditionalTypes = ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'];
-              
               const filteredSteps = (processData.all_steps || processData.selected_steps).filter(step => {
                 // Excluir prova (processada separadamente)
                 if (step.type === 'prova') return false;
@@ -663,7 +660,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 const isSelected = processData.selected_steps.find(s => s.id === step.id);
                 
                 // Tipos de etapas que devem SEMPRE aparecer (mesmo que não selecionadas)
-                const alwaysShowTypes = ['psicologo', 'medico'];
+                // const alwaysShowTypes = ['psicologo', 'medico']; // Mantido comentado se necessário para referência futura
                 
                 // Para outras etapas condicionais, só mostrar se selecionadas
                 const conditionalTypes = ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'];
