@@ -664,12 +664,17 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 const isSelected = processData.selected_steps.find(s => s.id === step.id);
                 
                 // Tipos de etapas que devem SEMPRE aparecer (mesmo que não selecionadas)
-                const alwaysShowTypes = ['psicologo', 'medico', 'curso_teorico'];
+                const alwaysShowTypes = ['psicologo', 'medico'];
                 
                 // Para outras etapas condicionais, só mostrar se selecionadas
-                const conditionalTypes = ['prova_teorica', 'curso_pratico', 'prova_pratica'];
+                const conditionalTypes = ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'];
                 
-                if (alwaysShowTypes.includes(step.type)) {
+                // Caso especial: CURSO TEÓRICO só aparece se Prova Teórica, Curso Prático ou Prova Prática estiverem selecionados
+                if (step.type === 'curso_teorico') {
+                  const hasRelatedSteps = ['prova_teorica', 'curso_pratico', 'prova_pratica'].some(type => 
+                    processData.selected_steps.some(s => s.type === type)
+                  );
+                  if (!hasRelatedSteps && !isSelected) return false;
                   return true;
                 }
                 
