@@ -284,9 +284,15 @@ export default function StepProcess() {
     try {
       const response = await fetch('/api/step-processes', { credentials: 'include' });
       const data = await response.json();
-      setProcesses(data);
+      if (Array.isArray(data)) {
+        setProcesses(data);
+      } else {
+        console.error('Invalid processes response:', data);
+        setProcesses([]);
+      }
     } catch (error) {
       console.error('Error fetching processes:', error);
+      setProcesses([]);
     }
   };
 

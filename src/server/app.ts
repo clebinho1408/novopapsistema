@@ -463,6 +463,15 @@ app.delete('/api/auth/users/:id', systemAuthMiddleware, async (c) => {
   }
 
   try {
+    // Check if user has associated step processes
+    const { results: processCount } = await mockEnv.DB.prepare(
+      "SELECT COUNT(*) as count FROM step_processes WHERE user_id = ? AND agency_id = ?"
+    ).bind(userId, user.agency_id).all();
+
+    if (processCount && (processCount[0] as any)?.count > 0) {
+      return c.json({ error: "Não é possível excluir este usuário pois ele possui processos (Passo a Passo) associados. Remova os processos primeiro." }, 400);
+    }
+
     // Delete user sessions first
     await mockEnv.DB.prepare(
       "DELETE FROM user_sessions WHERE user_id = ?"
@@ -886,46 +895,62 @@ async function sendEmailWithHTML(to: string, subject: string, htmlContent: strin
 // Step processes endpoints
 app.get("/api/step-processes", systemAuthMiddleware, async (c) => {
   try {
-  const user = getUserWithAgency(c);
-  if (!user) return c.json({ error: "User not found" }, 404);
+    const user = getUserWithAgency(c);
+    if (!user) return c.json({ error: "User not found" }, 404);
 
-  const query = (user.role === 'administrator' || user.role === 'supervisor')
-    ? "SELECT sp.*, c.name as city_name, u.name as user_name FROM step_processes sp JOIN cities c ON sp.city_id = c.id JOIN system_users u ON sp.user_id = u.id WHERE sp.agency_id = ? ORDER BY sp.created_at DESC"
-    : "SELECT sp.*, c.name as city_name FROM step_processes sp JOIN cities c ON sp.city_id = c.id WHERE sp.agency_id = ? AND sp.user_id = ? ORDER BY sp.created_at DESC";
+    const query = (user.role === 'administrator' || user.role === 'supervisor')
+      ? "SELECT sp.*, c.name as city_name, u.name as user_name FROM step_processes sp JOIN cities c ON sp.city_id = c.id JOIN system_users u ON sp.user_id = u.id WHERE sp.agency_id = ? ORDER BY sp.created_at DESC"
+      : "SELECT sp.*, c.name as city_name FROM step_processes sp JOIN cities c ON sp.city_id = c.id WHERE sp.agency_id = ? AND sp.user_id = ? ORDER BY sp.created_at DESC";
 
-  let results: any[];
-  if (user.role === 'administrator' || user.role === 'supervisor') {
-    const res = await mockEnv.DB.prepare(query).bind(user.agency_id).all();
-    results = res.results || [];
-  } else {
-    const res = await mockEnv.DB.prepare(query).bind(user.agency_id, user.id).all();
-    results = res.results || [];
-  }
-
-  for (const process of results) {
-    try {
-      const { results: profRows } = await mockEnv.DB.prepare(
-        `SELECT p.name as professional_name, ps.type as step_type
-         FROM process_selected_steps pss
-         JOIN process_steps ps ON pss.step_id = ps.id
-         JOIN professionals p ON pss.professional_id = p.id
-         WHERE pss.process_id = ? AND ps.type IN ('psicologo', 'medico')`
-      ).bind(process.id).all();
-
-      const profData = (profRows || []) as any[];
-      process.psicologo_name = profData.find((r: any) => r.step_type === 'psicologo')?.professional_name || null;
-      process.medico_name = profData.find((r: any) => r.step_type === 'medico')?.professional_name || null;
-    } catch (error) {
-      console.error(`Error fetching professionals for process ${process.id}:`, error);
-      process.psicologo_name = null;
-      process.medico_name = null;
+    let results: any[];
+    if (user.role === 'administrator' || user.role === 'supervisor') {
+      const res = await mockEnv.DB.prepare(query).bind(user.agency_id).all();
+      results = res.results || [];
+    } else {
+      const res = await mockEnv.DB.prepare(query).bind(user.agency_id, user.id).all();
+      results = res.results || [];
     }
-  }
 
-  return c.json(results);
+    try {
+      if (results.length > 0) {
+        const processIds = results.map((p: any) => p.id);
+        const placeholders = processIds.map(() => '?').join(',');
+        const { results: allProfRows } = await mockEnv.DB.prepare(
+          `SELECT pss.process_id, p.name as professional_name, ps.type as step_type
+           FROM process_selected_steps pss
+           JOIN process_steps ps ON pss.step_id = ps.id
+           JOIN professionals p ON pss.professional_id = p.id
+           WHERE pss.process_id IN (${placeholders}) AND ps.type IN ('psicologo', 'medico')`
+        ).bind(...processIds).all();
+
+        const profMap = new Map<number, { psicologo_name: string | null; medico_name: string | null }>();
+        for (const row of (allProfRows || []) as any[]) {
+          if (!profMap.has(row.process_id)) {
+            profMap.set(row.process_id, { psicologo_name: null, medico_name: null });
+          }
+          const entry = profMap.get(row.process_id)!;
+          if (row.step_type === 'psicologo') entry.psicologo_name = row.professional_name;
+          if (row.step_type === 'medico') entry.medico_name = row.professional_name;
+        }
+
+        for (const process of results) {
+          const prof = profMap.get(process.id);
+          process.psicologo_name = prof?.psicologo_name || null;
+          process.medico_name = prof?.medico_name || null;
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching professionals for processes:', error);
+      for (const process of results) {
+        process.psicologo_name = null;
+        process.medico_name = null;
+      }
+    }
+
+    return c.json(results);
   } catch (error) {
     console.error('Error fetching step processes:', error);
-    return c.json({ error: "Erro ao carregar processos" }, 500);
+    return c.json([], 200);
   }
 });
 
