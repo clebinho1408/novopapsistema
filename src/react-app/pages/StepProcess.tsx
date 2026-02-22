@@ -1306,6 +1306,20 @@ export default function StepProcess() {
                               {new Date(process.created_at).toLocaleDateString('pt-BR')}
                             </span>
                           </div>
+                          {(process.medico_name || process.psicologo_name) && (
+                            <div className="mt-1 flex items-center space-x-4 text-sm text-gray-500">
+                              {process.medico_name && (
+                                <span className="flex items-center">
+                                  <span className="font-medium text-gray-600">Médico:</span>&nbsp;{process.medico_name}
+                                </span>
+                              )}
+                              {process.psicologo_name && (
+                                <span className="flex items-center">
+                                  <span className="font-medium text-gray-600">Psicólogo:</span>&nbsp;{process.psicologo_name}
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </div>
                         <div className="flex items-center space-x-2">
                           <button 

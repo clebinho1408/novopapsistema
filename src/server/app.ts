@@ -901,6 +901,20 @@ app.get("/api/step-processes", systemAuthMiddleware, async (c) => {
     results = res.results || [];
   }
 
+  for (const process of results) {
+    const { results: profRows } = await mockEnv.DB.prepare(
+      `SELECT p.name as professional_name, ps.type as step_type
+       FROM process_selected_steps pss
+       JOIN process_steps ps ON pss.step_id = ps.id
+       JOIN professionals p ON pss.professional_id = p.id
+       WHERE pss.process_id = ? AND ps.type IN ('psicologo', 'medico')`
+    ).bind(process.id).all();
+
+    const profData = (profRows || []) as any[];
+    process.psicologo_name = profData.find((r: any) => r.step_type === 'psicologo')?.professional_name || null;
+    process.medico_name = profData.find((r: any) => r.step_type === 'medico')?.professional_name || null;
+  }
+
   return c.json(results);
 });
 
