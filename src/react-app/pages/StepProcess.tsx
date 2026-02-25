@@ -299,11 +299,12 @@ export default function StepProcess() {
   const handleStepToggle = (stepId: number) => {
     const step = processSteps.find(s => s.id === stepId);
     
-    // Grupo de etapas que devem ser marcadas/desmarcadas juntas
+    // Grupo de etapas que devem ser marcadas/desmarcadas juntas (apenas quando serviço está selecionado)
     const groupedTypes = ['prova_teorica', 'curso_pratico', 'prova_pratica'];
-    const isGroupedStep = step && groupedTypes.includes(step.type);
     
     setFormData(prev => {
+      const hasServiceSelected = !!prev.client_name;
+      const isGroupedStep = hasServiceSelected && step && groupedTypes.includes(step.type);
       const isCurrentlySelected = prev.selected_steps.includes(stepId);
       
       // Se está desmarcando a etapa
@@ -311,7 +312,7 @@ export default function StepProcess() {
         let newFees = [...prev.selected_fees];
         let stepsToRemove = [stepId];
         
-        // Se é uma etapa do grupo, desmarcar todas do grupo
+        // Se é uma etapa do grupo e serviço está selecionado, desmarcar todas do grupo
         if (isGroupedStep) {
           const groupedStepIds = processSteps
             .filter(s => groupedTypes.includes(s.type))
@@ -344,7 +345,7 @@ export default function StepProcess() {
       let newFees = [...prev.selected_fees];
       let newSteps = [...prev.selected_steps, stepId];
       
-      // Se é uma etapa do grupo, marcar todas do grupo
+      // Se é uma etapa do grupo e serviço está selecionado, marcar todas do grupo
       if (isGroupedStep) {
         const groupedStepIds = processSteps
           .filter(s => groupedTypes.includes(s.type))
