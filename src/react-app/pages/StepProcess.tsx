@@ -327,7 +327,10 @@ export default function StepProcess() {
           if (ladvFee) newFees = newFees.filter(id => id !== ladvFee.id);
           if (provaPraticaFee) newFees = newFees.filter(id => id !== provaPraticaFee.id);
         } else {
-          // Remover taxa vinculada ao desmarcar etapa individual
+          if (step?.type === 'prova_pratica' && !hasServiceSelected) {
+            const ladvFee = fees.find(f => f.name === 'LADV');
+            if (ladvFee) newFees = newFees.filter(id => id !== ladvFee.id);
+          }
           if (step?.type === 'taxa') {
             const emissaoCNHFee = fees.find(f => f.name === 'Emissão da CNH');
             if (emissaoCNHFee) newFees = newFees.filter(id => id !== emissaoCNHFee.id);
@@ -363,6 +366,9 @@ export default function StepProcess() {
         if (provaTeoricoFee && !newFees.includes(provaTeoricoFee.id)) newFees.push(provaTeoricoFee.id);
         if (ladvFee && !newFees.includes(ladvFee.id)) newFees.push(ladvFee.id);
         if (provaPraticaFee && !newFees.includes(provaPraticaFee.id)) newFees.push(provaPraticaFee.id);
+      } else if (step?.type === 'prova_pratica' && !hasServiceSelected) {
+        const ladvFee = fees.find(f => f.name === 'LADV');
+        if (ladvFee && !newFees.includes(ladvFee.id)) newFees.push(ladvFee.id);
       } else if (step?.type === 'taxa') {
         const emissaoCNHFee = fees.find(f => f.name === 'Emissão da CNH');
         if (emissaoCNHFee && !newFees.includes(emissaoCNHFee.id)) {
