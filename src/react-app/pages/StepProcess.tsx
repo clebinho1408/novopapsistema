@@ -850,7 +850,8 @@ export default function StepProcess() {
                           }
                           setFormData(prev => ({ ...prev, client_name: newService, second_city_id: newService ? '' : prev.second_city_id }));
                         }}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        disabled={enableSecondCity}
+                        className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${enableSecondCity ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : ''}`}
                       >
                         <option value="">Selecione um serviço</option>
                         <option value="1º Habilitação">1º Habilitação</option>
