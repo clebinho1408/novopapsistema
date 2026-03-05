@@ -31,8 +31,10 @@ export default function StepProcess() {
   const [isSaving, setIsSaving] = useState(false);
   const [showWarningModal, setShowWarningModal] = useState(false);
   const [instructions, setInstructions] = useState<{ general_instructions?: string; required_documents?: string }>({});
+  const [enableSecondCity, setEnableSecondCity] = useState(false);
   const [formData, setFormData] = useState({
     city_id: '',
+    second_city_id: '',
     client_name: '',
     selected_steps: [] as number[],
     selected_professionals: {} as Record<string, number>,
@@ -249,7 +251,7 @@ export default function StepProcess() {
         }
         return prev;
       });
-    }, [formData.city_id, formData.selected_steps, professionals, processSteps, fees]);
+    }, [formData.city_id, formData.second_city_id, formData.selected_steps, professionals, processSteps, fees]);
 
   const fetchData = async () => {
     try {
@@ -526,9 +528,11 @@ export default function StepProcess() {
   };
 
   const handleCancel = () => {
+    setEnableSecondCity(false);
     // Reset form data
     setFormData({
       city_id: '',
+      second_city_id: '',
       client_name: '',
       selected_steps: [],
       selected_professionals: {},
@@ -654,8 +658,10 @@ export default function StepProcess() {
         setShowPrintModal(true);
         
         // Reset form data
+        setEnableSecondCity(false);
         setFormData({
           city_id: '',
+          second_city_id: '',
           client_name: '',
           selected_steps: [],
           selected_professionals: {},
@@ -720,8 +726,8 @@ export default function StepProcess() {
   };
 
   const getSelectedCity = () => cities.find(c => c.id.toString() === formData.city_id);
-  const getStepProfessionals = (stepType: string, cityId: string) => {
-    console.log('getStepProfessionals called with:', { stepType, cityId });
+  const getStepProfessionals = (stepType: string, cityId: string, secondCityId?: string) => {
+    console.log('getStepProfessionals called with:', { stepType, cityId, secondCityId });
     console.log('Available professionals:', professionals);
     
     if (!cityId) {
@@ -731,8 +737,10 @@ export default function StepProcess() {
     
     // Filtrar por cidade apenas para médicos e psicólogos
     if (stepType === 'medico' || stepType === 'psicologo') {
-      const filtered = professionals.filter(p => p.type === stepType && p.city_id.toString() === cityId);
-      console.log(`Filtered ${stepType} professionals for city ${cityId}:`, filtered);
+      const cityIds = [cityId];
+      if (secondCityId) cityIds.push(secondCityId);
+      const filtered = professionals.filter(p => p.type === stepType && cityIds.includes(p.city_id.toString()));
+      console.log(`Filtered ${stepType} professionals for cities ${cityIds.join(',')}:`, filtered);
       return filtered;
     }
     
@@ -771,7 +779,18 @@ export default function StepProcess() {
                     <h2 className="text-lg font-medium text-gray-900 mb-4">Selecione a Cidade</h2>
                     <select
                       value={formData.city_id}
-                      onChange={(e) => setFormData(prev => ({ ...prev, city_id: e.target.value }))}
+                      onChange={(e) => {
+                        const newCityId = e.target.value;
+                        setFormData(prev => ({
+                          ...prev,
+                          city_id: newCityId,
+                          second_city_id: prev.second_city_id === newCityId ? '' : prev.second_city_id
+                        }));
+                        if (!newCityId) {
+                          setEnableSecondCity(false);
+                          setFormData(prev => ({ ...prev, city_id: '', second_city_id: '' }));
+                        }
+                      }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       <option value="">Selecione uma cidade</option>
@@ -779,12 +798,58 @@ export default function StepProcess() {
                         <option key={city.id} value={city.id.toString()}>{city.name}</option>
                       ))}
                     </select>
+                    {!formData.client_name && formData.city_id && (
+                      <div className="mt-3">
+                        <label className="flex items-center space-x-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={enableSecondCity}
+                            onChange={(e) => {
+                              setEnableSecondCity(e.target.checked);
+                              if (!e.target.checked) {
+                                setFormData(prev => {
+                                  const newProfessionals = { ...prev.selected_professionals };
+                                  Object.entries(newProfessionals).forEach(([stepId, profId]) => {
+                                    const prof = professionals.find(p => p.id === profId);
+                                    const step = processSteps.find(s => s.id === parseInt(stepId));
+                                    if (prof && step && (step.type === 'medico' || step.type === 'psicologo') && prof.city_id.toString() === prev.second_city_id) {
+                                      delete newProfessionals[stepId];
+                                    }
+                                  });
+                                  return { ...prev, second_city_id: '', selected_professionals: newProfessionals };
+                                });
+                              }
+                            }}
+                            className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          />
+                          <span className="text-sm text-gray-700">Incluir segunda cidade</span>
+                        </label>
+                        {enableSecondCity && (
+                          <select
+                            value={formData.second_city_id}
+                            onChange={(e) => setFormData(prev => ({ ...prev, second_city_id: e.target.value }))}
+                            className="w-full mt-2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          >
+                            <option value="">Selecione a segunda cidade</option>
+                            {cities.filter(city => city.id.toString() !== formData.city_id).map(city => (
+                              <option key={city.id} value={city.id.toString()}>{city.name}</option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
+                    )}
                     <div className="mt-4">
                       <label className="block text-sm font-medium text-gray-700 mb-1">Serviço (opcional)</label>
                       <p className="text-xs text-gray-500 mb-2">Este campo preencherá automaticamente as Etapas e Taxas, conforme o Serviço selecionado</p>
                       <select
                         value={formData.client_name}
-                        onChange={(e) => setFormData(prev => ({ ...prev, client_name: e.target.value }))}
+                        onChange={(e) => {
+                          const newService = e.target.value;
+                          if (newService) {
+                            setEnableSecondCity(false);
+                          }
+                          setFormData(prev => ({ ...prev, client_name: newService, second_city_id: newService ? '' : prev.second_city_id }));
+                        }}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
                         <option value="">Selecione um serviço</option>
@@ -863,7 +928,7 @@ export default function StepProcess() {
                             return step && !excludedTypes.includes(step.type);
                           }).map(stepId => {
                             const step = processSteps.find(s => s.id === stepId);
-                            const stepProfessionals = getStepProfessionals(step?.type || '', formData.city_id);
+                            const stepProfessionals = getStepProfessionals(step?.type || '', formData.city_id, formData.second_city_id);
                             
                             return (
                               <div key={stepId}>
