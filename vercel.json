@@ -1,7 +1,19 @@
 {
   "buildCommand": "npm run build:vercel",
   "outputDirectory": "dist",
+  "functions": {
+    "api/index.ts": {
+      "maxDuration": 30
+    },
+    "api/health.ts": {
+      "maxDuration": 10
+    }
+  },
   "rewrites": [
+    {
+      "source": "/api/health",
+      "destination": "/api/health"
+    },
     {
       "source": "/api/:path*",
       "destination": "/api/index"
@@ -9,15 +21,6 @@
     {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
-    }
-  ],
-  "headers": [
-    {
-      "source": "/api/(.*)",
-      "headers": [
-        { "key": "Access-Control-Allow-Credentials", "value": "true" },
-        { "key": "Access-Control-Allow-Origin", "value": "$request_header_origin" }
-      ]
     }
   ]
 }
