@@ -388,11 +388,7 @@ export default function StepProcess() {
         if (provaPCDStep) {
           newSteps = newSteps.filter(id => id !== provaPCDStep.id);
         }
-        // Desmarcar Transferência
-        const transferenciaFee = fees.find(f => f.name === 'Transferência');
-        if (transferenciaFee) {
-          newFees = newFees.filter(id => id !== transferenciaFee.id);
-        }
+        // Transferência permanece disponível mesmo com etapas de Curso/Prova Teórica/Prática
       } else if (step?.type === 'prova') {
         // Se estiver tentando marcar Prova PCD mas já tem etapas conflitantes
         const currentStepTypes = prev.selected_steps.map(id => processSteps.find(s => s.id === id)?.type);
@@ -1026,7 +1022,7 @@ export default function StepProcess() {
                                 (isLadvFee && !hasCursoPraticoStep) ||
                                 (isProvaPraticaFee && !hasProvaPraticaStep);
                               
-                              const isFeeDisabled = !isTaxaStepSelected || isProvaFee || (isTransferenciaFee && hasConflictStepSelected) || isSpecificFeeDisabled;
+                              const isFeeDisabled = !isTaxaStepSelected || isProvaFee || isSpecificFeeDisabled;
                               
                               if (isFeeDisabled) return null;
 
