@@ -18,7 +18,6 @@ dist/
 .agents/
 .upm/
 replit.nix
-.replit
 
 # Logs
 *.log
@@ -28,5 +27,5 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 
-# TypeScript
+# TypeScript cache
 *.tsbuildinfo
