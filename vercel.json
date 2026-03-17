@@ -2,14 +2,14 @@
   "buildCommand": "npm run build:vercel",
   "outputDirectory": "dist",
   "functions": {
-    "api/index.ts":  { "maxDuration": 30 },
-    "api/health.ts": { "maxDuration": 10 },
-    "api/debug.ts":  { "maxDuration": 15 }
+    "api/index.mjs":  { "maxDuration": 30 },
+    "api/health.mjs": { "maxDuration": 10 },
+    "api/debug.mjs":  { "maxDuration": 15 }
   },
   "rewrites": [
-    { "source": "/api/health", "destination": "/api/health" },
-    { "source": "/api/debug",  "destination": "/api/debug"  },
-    { "source": "/api/:path*", "destination": "/api/index"  },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    { "source": "/api/health",   "destination": "/api/health"  },
+    { "source": "/api/debug",    "destination": "/api/debug"   },
+    { "source": "/api/:path*",   "destination": "/api/index"   },
+    { "source": "/((?!api/).*)", "destination": "/index.html"  }
   ]
 }

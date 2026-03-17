@@ -57,6 +57,6 @@
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "build:vercel": "vite build"
+    "build:vercel": "vite build && npx esbuild api/_index.ts --bundle --platform=node --target=node18 --format=esm --external:pg-native --outfile=api/index.mjs && npx esbuild api/_health.ts --bundle --platform=node --target=node18 --format=esm --external:pg-native --outfile=api/health.mjs && npx esbuild api/_debug.ts --bundle --platform=node --target=node18 --format=esm --external:pg-native --outfile=api/debug.mjs"
   }
 }
