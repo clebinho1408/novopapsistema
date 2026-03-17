@@ -1,6 +1,32 @@
-dist/
+# Dependencies
 node_modules/
+.npm
+
+# Build outputs
+dist/
 .wrangler/
+
+# Environment variables (NUNCA commitar!)
+.env
+.env.local
+.env.production
 .dev.vars
-worker-configuration.d.ts
-worker-configuration.d.ts
+
+# Replit specific
+.local/
+.config/
+.agents/
+.upm/
+replit.nix
+.replit
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# TypeScript
+*.tsbuildinfo
