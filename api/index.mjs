@@ -17545,7 +17545,11 @@ app.post("/api/auth/register", async (c) => {
       { name: "Taxa", type: "taxa", sort_order: 2 },
       { name: "Exame Psicol\xF3gico", type: "psicologo", sort_order: 3 },
       { name: "Exame M\xE9dico", type: "medico", sort_order: 4 },
-      { name: "Prova PCD", type: "prova", sort_order: 5 }
+      { name: "Prova PCD", type: "prova", sort_order: 5 },
+      { name: "Curso Te\xF3rico", type: "curso_teorico", sort_order: 6 },
+      { name: "Prova Te\xF3rica", type: "prova_teorica", sort_order: 7 },
+      { name: "Curso Pr\xE1tico", type: "curso_pratico", sort_order: 8 },
+      { name: "Prova Pr\xE1tica", type: "prova_pratica", sort_order: 9 }
     ];
     for (const step of defaultSteps) {
       await mockEnv.DB.prepare(
@@ -17553,14 +17557,14 @@ app.post("/api/auth/register", async (c) => {
       ).bind(agencyResult.id, step.name, step.type, step.sort_order, true).run();
     }
     const defaultFees = [
-      { name: "Emiss\xE3o da CNH", amount: 101.51, linked_professional_type: null },
-      { name: "Transfer\xEAncia", amount: 53.37, linked_professional_type: null },
-      { name: "Prova PCD", amount: 0, linked_professional_type: null },
-      { name: "M\xE9dico", amount: 0, linked_professional_type: "medico" },
-      { name: "Psic\xF3logo", amount: 0, linked_professional_type: "psicologo" },
-      { name: "Prova Te\xF3rica", amount: 0, linked_professional_type: null },
-      { name: "LADV", amount: 0, linked_professional_type: null },
-      { name: "Prova Pr\xE1tica", amount: 0, linked_professional_type: null }
+      { name: "Emiss\xE3o da CNH", amount: 106.26, linked_professional_type: null },
+      { name: "Transfer\xEAncia", amount: 55.87, linked_professional_type: null },
+      { name: "Psic\xF3logo", amount: 93.53, linked_professional_type: "psicologo" },
+      { name: "M\xE9dico", amount: 86.03, linked_professional_type: "medico" },
+      { name: "Prova PCD", amount: 72.24, linked_professional_type: null },
+      { name: "Exame Legisla\xE7\xE3o de Tr\xE2nsito", amount: 72.24, linked_professional_type: "prova_teorica" },
+      { name: "LADV", amount: 72.24, linked_professional_type: null },
+      { name: "Exame de Dire\xE7\xE3o Veicular", amount: 72.24, linked_professional_type: "prova_pratica" }
     ];
     for (const fee of defaultFees) {
       await mockEnv.DB.prepare(

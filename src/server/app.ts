@@ -145,6 +145,10 @@ app.post('/api/auth/register', async (c) => {
       { name: 'Exame Psicológico', type: 'psicologo', sort_order: 3 },
       { name: 'Exame Médico', type: 'medico', sort_order: 4 },
       { name: 'Prova PCD', type: 'prova', sort_order: 5 },
+      { name: 'Curso Teórico', type: 'curso_teorico', sort_order: 6 },
+      { name: 'Prova Teórica', type: 'prova_teorica', sort_order: 7 },
+      { name: 'Curso Prático', type: 'curso_pratico', sort_order: 8 },
+      { name: 'Prova Prática', type: 'prova_pratica', sort_order: 9 },
     ];
 
     for (const step of defaultSteps) {
@@ -155,14 +159,14 @@ app.post('/api/auth/register', async (c) => {
 
     // Create default fees (fixed sequence)
     const defaultFees = [
-      { name: 'Emissão da CNH', amount: 101.51, linked_professional_type: null },
-      { name: 'Transferência', amount: 53.37, linked_professional_type: null },
-      { name: 'Prova PCD', amount: 0, linked_professional_type: null },
-      { name: 'Médico', amount: 0, linked_professional_type: 'medico' },
-      { name: 'Psicólogo', amount: 0, linked_professional_type: 'psicologo' },
-      { name: 'Prova Teórica', amount: 0, linked_professional_type: null },
-      { name: 'LADV', amount: 0, linked_professional_type: null },
-      { name: 'Prova Prática', amount: 0, linked_professional_type: null },
+      { name: 'Emissão da CNH', amount: 106.26, linked_professional_type: null },
+      { name: 'Transferência', amount: 55.87, linked_professional_type: null },
+      { name: 'Psicólogo', amount: 93.53, linked_professional_type: 'psicologo' },
+      { name: 'Médico', amount: 86.03, linked_professional_type: 'medico' },
+      { name: 'Prova PCD', amount: 72.24, linked_professional_type: null },
+      { name: 'Exame Legislação de Trânsito', amount: 72.24, linked_professional_type: 'prova_teorica' },
+      { name: 'LADV', amount: 72.24, linked_professional_type: null },
+      { name: 'Exame de Direção Veicular', amount: 72.24, linked_professional_type: 'prova_pratica' },
     ];
 
     for (const fee of defaultFees) {
