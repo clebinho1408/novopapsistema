@@ -1,11 +1,12 @@
 import Layout from '@/react-app/components/Layout';
 import PrintableStepProcess from '@/react-app/components/PrintableStepProcess';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { FileText, MapPin, DollarSign, CheckCircle, Eye, AlertTriangle } from 'lucide-react';
 import type { City, ProcessStep, Fee, Professional } from '@/shared/types';
 
 export default function StepProcess() {
   const [currentStep, setCurrentStep] = useState(1);
+  const saveButtonRef = useRef<HTMLButtonElement>(null);
   const [cities, setCities] = useState<City[]>([]);
   const [processSteps, setProcessSteps] = useState<ProcessStep[]>([]);
   const [fees, setFees] = useState<Fee[]>([]);
@@ -46,6 +47,15 @@ export default function StepProcess() {
     fetchData();
     fetchProcesses();
   }, []);
+
+  // Scroll automático para o botão Salvar e Imprimir ao entrar no passo 4 (Resumo)
+  useEffect(() => {
+    if (currentStep === 4 && saveButtonRef.current) {
+      setTimeout(() => {
+        saveButtonRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }, 150);
+    }
+  }, [currentStep]);
 
   useEffect(() => {
     if (fees.length === 0 || processSteps.length === 0 || !formData.client_name) return;
@@ -1183,6 +1193,7 @@ export default function StepProcess() {
                       </button>
                     ) : (
                       <button
+                        ref={saveButtonRef}
                         onClick={() => setShowWarningModal(true)}
                         disabled={formData.selected_steps.length === 0 || isSaving}
                         className="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 font-medium"
