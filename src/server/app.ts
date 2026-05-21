@@ -544,6 +544,46 @@ app.get("/api/professionals", systemAuthMiddleware, async (c) => {
   const user = getUserWithAgency(c);
   if (!user) return c.json({ error: "User not found" }, 404);
 
+  // Auto-apply any scheduled changes that are due
+  try {
+    const { results: pending } = await c.env.DB.prepare(`
+      SELECT * FROM professional_scheduled_changes
+      WHERE agency_id = ? AND applied_at IS NULL AND scheduled_at <= CURRENT_TIMESTAMP
+    `).bind(user.agency_id).all();
+
+    for (const change of (pending || [])) {
+      const updates: string[] = [];
+      const binds: any[] = [];
+
+      if ((change as any).working_days !== null && (change as any).working_days !== undefined) {
+        updates.push('working_days = ?');
+        binds.push((change as any).working_days);
+      }
+      if ((change as any).working_hours !== null && (change as any).working_hours !== undefined) {
+        updates.push('working_hours = ?');
+        binds.push((change as any).working_hours);
+      }
+      if ((change as any).observations !== null && (change as any).observations !== undefined) {
+        updates.push('observations = ?');
+        binds.push((change as any).observations);
+      }
+
+      if (updates.length > 0) {
+        updates.push('updated_at = CURRENT_TIMESTAMP');
+        binds.push((change as any).professional_id, user.agency_id);
+        await c.env.DB.prepare(
+          `UPDATE professionals SET ${updates.join(', ')} WHERE id = ? AND agency_id = ?`
+        ).bind(...binds).run();
+      }
+
+      await c.env.DB.prepare(
+        `UPDATE professional_scheduled_changes SET applied_at = CURRENT_TIMESTAMP WHERE id = ?`
+      ).bind((change as any).id).run();
+    }
+  } catch (e) {
+    // Silently continue if table doesn't exist yet
+  }
+
   const { results } = await c.env.DB.prepare(`
     SELECT p.*, c.name as city_name 
     FROM professionals p 
@@ -675,6 +715,77 @@ app.delete("/api/professionals/:id", systemAuthMiddleware, async (c) => {
   ).bind(professionalId, user.agency_id).run();
 
   return c.json({ success: true });
+});
+
+// Scheduled changes endpoints
+app.get("/api/professionals/:id/scheduled-changes", systemAuthMiddleware, async (c) => {
+  const user = getUserWithAgency(c);
+  if (!user) return c.json({ error: "User not found" }, 404);
+  if (user.role !== 'administrator' && user.role !== 'supervisor') return c.json({ error: "Acesso negado" }, 403);
+
+  const professionalId = c.req.param("id");
+  try {
+    const { results } = await c.env.DB.prepare(`
+      SELECT * FROM professional_scheduled_changes
+      WHERE professional_id = ? AND agency_id = ?
+      ORDER BY scheduled_at ASC
+    `).bind(professionalId, user.agency_id).all();
+    return c.json(results || []);
+  } catch (e) {
+    return c.json([]);
+  }
+});
+
+app.post("/api/professionals/:id/scheduled-changes", systemAuthMiddleware, async (c) => {
+  const user = getUserWithAgency(c);
+  if (!user) return c.json({ error: "User not found" }, 404);
+  if (user.role !== 'administrator' && user.role !== 'supervisor') return c.json({ error: "Acesso negado" }, 403);
+
+  const professionalId = c.req.param("id");
+  const body = await c.req.json();
+
+  if (!body.scheduled_at) return c.json({ error: "scheduled_at é obrigatório" }, 400);
+  if (body.working_days === undefined && body.working_hours === undefined && body.observations === undefined) {
+    return c.json({ error: "Informe pelo menos um campo para alterar" }, 400);
+  }
+
+  try {
+    const result = await c.env.DB.prepare(`
+      INSERT INTO professional_scheduled_changes
+        (agency_id, professional_id, scheduled_at, working_days, working_hours, observations, created_by_user_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+      RETURNING *
+    `).bind(
+      user.agency_id,
+      parseInt(professionalId),
+      body.scheduled_at,
+      body.working_days !== undefined ? (body.working_days || null) : null,
+      body.working_hours !== undefined ? (body.working_hours || null) : null,
+      body.observations !== undefined ? (body.observations || null) : null,
+      user.id
+    ).first();
+    return c.json(result);
+  } catch (e: any) {
+    console.error('Error creating scheduled change:', e);
+    return c.json({ error: "Erro ao criar agendamento" }, 500);
+  }
+});
+
+app.delete("/api/professionals/:id/scheduled-changes/:changeId", systemAuthMiddleware, async (c) => {
+  const user = getUserWithAgency(c);
+  if (!user) return c.json({ error: "User not found" }, 404);
+  if (user.role !== 'administrator' && user.role !== 'supervisor') return c.json({ error: "Acesso negado" }, 403);
+
+  const changeId = c.req.param("changeId");
+  try {
+    await c.env.DB.prepare(`
+      DELETE FROM professional_scheduled_changes
+      WHERE id = ? AND agency_id = ? AND applied_at IS NULL
+    `).bind(changeId, user.agency_id).run();
+    return c.json({ success: true });
+  } catch (e) {
+    return c.json({ error: "Erro ao cancelar agendamento" }, 500);
+  }
 });
 
 // Process steps endpoints

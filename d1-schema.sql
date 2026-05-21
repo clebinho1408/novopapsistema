@@ -136,7 +136,22 @@ CREATE TABLE IF NOT EXISTS agency_instructions (
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS professional_scheduled_changes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  agency_id INTEGER NOT NULL REFERENCES agencies(id),
+  professional_id INTEGER NOT NULL REFERENCES professionals(id) ON DELETE CASCADE,
+  scheduled_at DATETIME NOT NULL,
+  working_days TEXT,
+  working_hours TEXT,
+  observations TEXT,
+  created_by_user_id INTEGER REFERENCES system_users(id),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  applied_at DATETIME
+);
+
 -- Índices
+CREATE INDEX IF NOT EXISTS idx_professional_scheduled_changes_professional ON professional_scheduled_changes(professional_id);
+CREATE INDEX IF NOT EXISTS idx_professional_scheduled_changes_agency ON professional_scheduled_changes(agency_id);
 CREATE INDEX IF NOT EXISTS idx_system_users_agency ON system_users(agency_id);
 CREATE INDEX IF NOT EXISTS idx_user_sessions_token ON user_sessions(session_token);
 CREATE INDEX IF NOT EXISTS idx_user_sessions_user ON user_sessions(user_id);

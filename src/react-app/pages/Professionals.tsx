@@ -1,8 +1,34 @@
 import Layout from '@/react-app/components/Layout';
 import { useState, useEffect } from 'react';
-import { Users, Plus, Edit, Trash2, Search, Phone, MapPin } from 'lucide-react';
+import { Users, Plus, Edit, Trash2, Search, Phone, MapPin, Clock, CalendarClock, X, Trash } from 'lucide-react';
 import type { Professional, City, ProfessionalType, AttendanceType } from '@/shared/types';
 import { PROFESSIONAL_TYPE_LABELS } from '@/shared/types';
+
+const DAYS = [
+  { value: 'monday', label: 'Segunda' },
+  { value: 'tuesday', label: 'Terça' },
+  { value: 'wednesday', label: 'Quarta' },
+  { value: 'thursday', label: 'Quinta' },
+  { value: 'friday', label: 'Sexta' },
+  { value: 'saturday', label: 'Sábado' },
+  { value: 'sunday', label: 'Domingo' },
+];
+
+const DAY_LABELS: Record<string, string> = {
+  monday: 'Segunda', tuesday: 'Terça', wednesday: 'Quarta',
+  thursday: 'Quinta', friday: 'Sexta', saturday: 'Sábado', sunday: 'Domingo'
+};
+
+interface ScheduledChange {
+  id: number;
+  professional_id: number;
+  scheduled_at: string;
+  working_days: string | null;
+  working_hours: string | null;
+  observations: string | null;
+  created_at: string;
+  applied_at: string | null;
+}
 
 export default function Professionals() {
   const [professionals, setProfessionals] = useState<Professional[]>([]);
@@ -26,6 +52,21 @@ export default function Professionals() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [userRole, setUserRole] = useState<string>('');
+
+  // Schedule modal state
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [schedulingProfessional, setSchedulingProfessional] = useState<Professional | null>(null);
+  const [scheduledChanges, setScheduledChanges] = useState<ScheduledChange[]>([]);
+  const [scheduleForm, setScheduleForm] = useState({
+    scheduled_at: '',
+    working_days: [] as string[],
+    working_hours: '',
+    observations: '',
+    change_working_days: false,
+    change_working_hours: false,
+    change_observations: false,
+  });
+  const [isScheduleLoading, setIsScheduleLoading] = useState(false);
 
   useEffect(() => {
     fetchProfessionals();
@@ -63,27 +104,27 @@ export default function Professionals() {
     }
   };
 
+  const fetchScheduledChanges = async (professionalId: number) => {
+    try {
+      const response = await fetch(`/api/professionals/${professionalId}/scheduled-changes`, { credentials: 'include' });
+      const data = await response.json();
+      setScheduledChanges(data);
+    } catch (error) {
+      console.error('Error fetching scheduled changes:', error);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      // Validação básica
-      if (!formData.name.trim()) {
-        alert('Nome é obrigatório');
-        setIsLoading(false);
-        return;
-      }
-
-      if (!formData.city_id) {
-        alert('Cidade é obrigatória');
-        setIsLoading(false);
-        return;
-      }
+      if (!formData.name.trim()) { alert('Nome é obrigatório'); setIsLoading(false); return; }
+      if (!formData.city_id) { alert('Cidade é obrigatória'); setIsLoading(false); return; }
 
       const method = editingProfessional ? 'PATCH' : 'POST';
       const url = editingProfessional ? `/api/professionals/${editingProfessional.id}` : '/api/professionals';
-      
+
       const requestData: any = {
         name: formData.name.trim(),
         type: formData.type,
@@ -91,42 +132,16 @@ export default function Professionals() {
         attendance_type: formData.attendance_type || 'AGENDAMENTO'
       };
 
-      // Only include optional fields if they have values
-      const trimmedPhone = formData.phone.trim();
-      if (trimmedPhone) {
-        requestData.phone = trimmedPhone;
-      }
+      if (formData.phone.trim()) requestData.phone = formData.phone.trim();
+      if (formData.email.trim()) requestData.email = formData.email.trim();
+      if (formData.address.trim()) requestData.address = formData.address.trim();
+      if (formData.observations.trim()) requestData.observations = formData.observations.trim();
+      if (formData.working_days.length > 0) requestData.working_days = JSON.stringify(formData.working_days);
+      if (formData.working_hours.trim()) requestData.working_hours = formData.working_hours.trim();
 
-      const trimmedEmail = formData.email.trim();
-      if (trimmedEmail) {
-        requestData.email = trimmedEmail;
-      }
-
-      const trimmedAddress = formData.address.trim();
-      if (trimmedAddress) {
-        requestData.address = trimmedAddress;
-      }
-
-      const trimmedObservations = formData.observations.trim();
-      if (trimmedObservations) {
-        requestData.observations = trimmedObservations;
-      }
-
-      if (formData.working_days.length > 0) {
-        requestData.working_days = JSON.stringify(formData.working_days);
-      }
-
-      const trimmedWorkingHours = formData.working_hours.trim();
-      if (trimmedWorkingHours) {
-        requestData.working_hours = trimmedWorkingHours;
-      }
-      
       const response = await fetch(url, {
         method,
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         credentials: 'include',
         body: JSON.stringify(requestData),
       });
@@ -137,37 +152,11 @@ export default function Professionals() {
         setIsModalOpen(false);
         resetForm();
       } else {
-        let errorMessage = 'Erro ao salvar credenciado';
-        
-        try {
-          const errorData = await response.json();
-          if (errorData && typeof errorData === 'object') {
-            if (typeof errorData.error === 'string') {
-              errorMessage = errorData.error;
-            } else if (typeof errorData.message === 'string') {
-              errorMessage = errorData.message;
-            } else {
-              errorMessage = `Erro HTTP ${response.status}: ${response.statusText}`;
-            }
-          }
-        } catch (parseError) {
-          errorMessage = `Erro HTTP ${response.status}: ${response.statusText || 'Erro desconhecido'}`;
-        }
-        
-        alert(errorMessage);
+        const errorData = await response.json().catch(() => ({}));
+        alert(errorData.error || `Erro HTTP ${response.status}`);
       }
     } catch (networkError: any) {
-      let errorMessage = 'Erro de conexão com o servidor';
-      
-      if (networkError instanceof Error) {
-        errorMessage = `Erro de rede: ${networkError.message}`;
-      } else if (typeof networkError === 'string') {
-        errorMessage = `Erro: ${networkError}`;
-      } else {
-        errorMessage = 'Erro de conexão desconhecido';
-      }
-      
-      alert(errorMessage);
+      alert(`Erro de conexão: ${networkError instanceof Error ? networkError.message : 'Erro desconhecido'}`);
     } finally {
       setIsLoading(false);
     }
@@ -175,46 +164,87 @@ export default function Professionals() {
 
   const handleDelete = async (id: number) => {
     if (!confirm('Tem certeza que deseja excluir este credenciado?')) return;
-
     try {
-      const response = await fetch(`/api/professionals/${id}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-      
-      if (response.ok) {
-        fetchProfessionals();
-        alert('Credenciado excluído com sucesso!');
-      } else {
-        alert('Erro ao excluir credenciado. Tente novamente.');
-      }
+      const response = await fetch(`/api/professionals/${id}`, { method: 'DELETE', credentials: 'include' });
+      if (response.ok) { fetchProfessionals(); alert('Credenciado excluído com sucesso!'); }
+      else alert('Erro ao excluir credenciado. Tente novamente.');
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Erro de conexão';
-      alert(`Erro ao excluir credenciado: ${errorMessage}`);
+      alert(`Erro ao excluir: ${error instanceof Error ? error.message : 'Erro de conexão'}`);
     }
   };
 
   const resetForm = () => {
-    setFormData({
-      name: '',
-      type: 'foto',
-      city_id: '',
-      phone: '',
-      email: '',
-      address: '',
-      observations: '',
-      attendance_type: 'AGENDAMENTO',
-      working_days: [],
-      working_hours: ''
-    });
+    setFormData({ name: '', type: 'foto', city_id: '', phone: '', email: '', address: '', observations: '', attendance_type: 'AGENDAMENTO', working_days: [], working_hours: '' });
     setEditingProfessional(null);
   };
 
-  const filteredProfessionals = professionals.filter(professional => {
-    const matchesSearch = professional.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = typeFilter === 'all' || professional.type === typeFilter;
-    const matchesCity = cityFilter === 'all' || professional.city_id.toString() === cityFilter;
-    return matchesSearch && matchesType && matchesCity;
+  const openScheduleModal = (professional: Professional) => {
+    setSchedulingProfessional(professional);
+    setScheduleForm({ scheduled_at: '', working_days: [], working_hours: '', observations: '', change_working_days: false, change_working_hours: false, change_observations: false });
+    fetchScheduledChanges(professional.id);
+    setIsScheduleModalOpen(true);
+  };
+
+  const handleScheduleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!schedulingProfessional) return;
+    if (!scheduleForm.scheduled_at) { alert('Informe a data e hora do agendamento'); return; }
+    if (!scheduleForm.change_working_days && !scheduleForm.change_working_hours && !scheduleForm.change_observations) {
+      alert('Selecione pelo menos um campo para alterar');
+      return;
+    }
+    setIsScheduleLoading(true);
+    try {
+      const payload: any = { scheduled_at: scheduleForm.scheduled_at };
+      if (scheduleForm.change_working_days) payload.working_days = scheduleForm.working_days.length > 0 ? JSON.stringify(scheduleForm.working_days) : '';
+      if (scheduleForm.change_working_hours) payload.working_hours = scheduleForm.working_hours;
+      if (scheduleForm.change_observations) payload.observations = scheduleForm.observations;
+
+      const response = await fetch(`/api/professionals/${schedulingProfessional.id}/scheduled-changes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(payload),
+      });
+      if (response.ok) {
+        alert('Alteração agendada com sucesso!');
+        setScheduleForm({ scheduled_at: '', working_days: [], working_hours: '', observations: '', change_working_days: false, change_working_hours: false, change_observations: false });
+        fetchScheduledChanges(schedulingProfessional.id);
+      } else {
+        const err = await response.json().catch(() => ({}));
+        alert(err.error || 'Erro ao agendar alteração');
+      }
+    } catch (error) {
+      alert('Erro de conexão');
+    } finally {
+      setIsScheduleLoading(false);
+    }
+  };
+
+  const handleDeleteSchedule = async (changeId: number) => {
+    if (!schedulingProfessional) return;
+    if (!confirm('Cancelar este agendamento?')) return;
+    try {
+      const response = await fetch(`/api/professionals/${schedulingProfessional.id}/scheduled-changes/${changeId}`, {
+        method: 'DELETE', credentials: 'include'
+      });
+      if (response.ok) fetchScheduledChanges(schedulingProfessional.id);
+      else alert('Erro ao cancelar agendamento');
+    } catch {
+      alert('Erro de conexão');
+    }
+  };
+
+  const formatScheduledAt = (dateStr: string) => {
+    try {
+      return new Date(dateStr).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+    } catch { return dateStr; }
+  };
+
+  const filteredProfessionals = professionals.filter(p => {
+    return p.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+      (typeFilter === 'all' || p.type === typeFilter) &&
+      (cityFilter === 'all' || p.city_id.toString() === cityFilter);
   });
 
   return (
@@ -246,27 +276,15 @@ export default function Professionals() {
                 className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
+            <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
               <option value="all">Todos os tipos</option>
               {Object.entries(PROFESSIONAL_TYPE_LABELS)
                 .filter(([value]) => !['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'].includes(value))
-                .map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
+                .map(([value, label]) => <option key={value} value={value}>{label}</option>)}
             </select>
-            <select
-              value={cityFilter}
-              onChange={(e) => setCityFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
+            <select value={cityFilter} onChange={(e) => setCityFilter(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
               <option value="all">Todas as cidades</option>
-              {cities.map(city => (
-                <option key={city.id} value={city.id.toString()}>{city.name}</option>
-              ))}
+              {cities.map(city => <option key={city.id} value={city.id.toString()}>{city.name}</option>)}
             </select>
           </div>
 
@@ -276,11 +294,7 @@ export default function Professionals() {
               {filteredProfessionals.length === 0 ? (
                 <div className="text-center py-12">
                   <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">
-                    {searchTerm || typeFilter !== 'all' || cityFilter !== 'all' 
-                      ? 'Nenhum credenciado encontrado' 
-                      : 'Nenhum credenciado cadastrado'}
-                  </p>
+                  <p className="text-gray-500">{searchTerm || typeFilter !== 'all' || cityFilter !== 'all' ? 'Nenhum credenciado encontrado' : 'Nenhum credenciado cadastrado'}</p>
                 </div>
               ) : (
                 <div className="grid gap-4 p-6">
@@ -310,56 +324,28 @@ export default function Professionals() {
                                 <span>{professional.phone}</span>
                               </div>
                             )}
-                            {professional.email && (
-                              <div className="col-span-2">
-                                <strong>Email:</strong> {professional.email}
-                              </div>
-                            )}
-                            {professional.address && (
-                              <div className="col-span-2">
-                                <strong>Endereço:</strong> {professional.address}
-                              </div>
-                            )}
-                            {professional.observations && (
-                              <div className="col-span-2">
-                                <strong>Observações:</strong> {professional.observations}
-                              </div>
-                            )}
-                            {professional.attendance_type && (
-                              <div className="col-span-2">
-                                <strong>Atendimento:</strong> {professional.attendance_type}
-                              </div>
-                            )}
+                            {professional.email && <div className="col-span-2"><strong>Email:</strong> {professional.email}</div>}
+                            {professional.address && <div className="col-span-2"><strong>Endereço:</strong> {professional.address}</div>}
+                            {professional.observations && <div className="col-span-2"><strong>Observações:</strong> {professional.observations}</div>}
+                            {professional.attendance_type && <div className="col-span-2"><strong>Atendimento:</strong> {professional.attendance_type}</div>}
                             {professional.working_days && (
                               <div className="col-span-2">
-                                <strong>Dias de Funcionamento:</strong> {(() => {
-                                  try {
-                                    const days = JSON.parse(professional.working_days);
-                                    const dayLabels: Record<string, string> = {
-                                      'monday': 'Segunda',
-                                      'tuesday': 'Terça',
-                                      'wednesday': 'Quarta',
-                                      'thursday': 'Quinta',
-                                      'friday': 'Sexta',
-                                      'saturday': 'Sábado',
-                                      'sunday': 'Domingo'
-                                    };
-                                    return days.map((day: string) => dayLabels[day] || day).join(', ');
-                                  } catch {
-                                    return professional.working_days;
-                                  }
-                                })()}
+                                <strong>Dias de Funcionamento:</strong>{' '}
+                                {(() => { try { return JSON.parse(professional.working_days).map((d: string) => DAY_LABELS[d] || d).join(', '); } catch { return professional.working_days; } })()}
                               </div>
                             )}
-                            {professional.working_hours && (
-                              <div className="col-span-2">
-                                <strong>Horário de Funcionamento:</strong> {professional.working_hours}
-                              </div>
-                            )}
+                            {professional.working_hours && <div className="col-span-2"><strong>Horário de Funcionamento:</strong> {professional.working_hours}</div>}
                           </div>
                         </div>
                         {(userRole === 'administrator' || userRole === 'supervisor') && (
-                          <div className="flex space-x-2 ml-4">
+                          <div className="flex space-x-1 ml-4">
+                            <button
+                              title="Agendar alteração"
+                              onClick={() => openScheduleModal(professional)}
+                              className="p-2 text-gray-400 hover:text-purple-600"
+                            >
+                              <CalendarClock className="w-4 h-4" />
+                            </button>
                             <button
                               onClick={() => {
                                 setEditingProfessional(professional);
@@ -372,13 +358,7 @@ export default function Professionals() {
                                   address: professional.address || '',
                                   observations: professional.observations || '',
                                   attendance_type: professional.attendance_type || 'AGENDAMENTO',
-                                  working_days: (() => {
-                                    try {
-                                      return professional.working_days ? JSON.parse(professional.working_days) : [];
-                                    } catch {
-                                      return [];
-                                    }
-                                  })(),
+                                  working_days: (() => { try { return professional.working_days ? JSON.parse(professional.working_days) : []; } catch { return []; } })(),
                                   working_hours: professional.working_hours || ''
                                 });
                                 setIsModalOpen(true);
@@ -388,10 +368,7 @@ export default function Professionals() {
                               <Edit className="w-4 h-4" />
                             </button>
                             {userRole === 'administrator' && (
-                              <button
-                                onClick={() => handleDelete(professional.id)}
-                                className="p-2 text-gray-400 hover:text-red-600"
-                              >
+                              <button onClick={() => handleDelete(professional.id)} className="p-2 text-gray-400 hover:text-red-600">
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             )}
@@ -407,7 +384,7 @@ export default function Professionals() {
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Edit/Create Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-4xl mx-4 max-h-screen overflow-y-auto">
@@ -418,167 +395,235 @@ export default function Professionals() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Nome *</label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value.toUpperCase() }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
-                    required
-                  />
+                  <input type="text" value={formData.name} onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value.toUpperCase() }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase" required />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Tipo *</label>
-                  <select
-                    value={formData.type}
-                    onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value as ProfessionalType }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  >
-                    {Object.entries(PROFESSIONAL_TYPE_LABELS).map(([value, label]) => (
-                      <option key={value} value={value}>{label}</option>
-                    ))}
+                  <select value={formData.type} onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value as ProfessionalType }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+                    {Object.entries(PROFESSIONAL_TYPE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Cidade *</label>
-                  <select
-                    value={formData.city_id}
-                    onChange={(e) => setFormData(prev => ({ ...prev, city_id: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  >
+                  <select value={formData.city_id} onChange={(e) => setFormData(prev => ({ ...prev, city_id: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
                     <option value="">Selecione uma cidade</option>
-                    {cities.map(city => (
-                      <option key={city.id} value={city.id.toString()}>{city.name}</option>
-                    ))}
+                    {cities.map(city => <option key={city.id} value={city.id.toString()}>{city.name}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Atendimento</label>
-                  <select
-                    value={formData.attendance_type}
-                    onChange={(e) => setFormData(prev => ({ ...prev, attendance_type: e.target.value as AttendanceType }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
+                  <select value={formData.attendance_type} onChange={(e) => setFormData(prev => ({ ...prev, attendance_type: e.target.value as AttendanceType }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     <option value="AGENDAMENTO">AGENDAMENTO</option>
                     <option value="POR ORDEM DE CHEGADA">POR ORDEM DE CHEGADA</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Telefone</label>
-                  <input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="(47) 99999-9999"
-                  />
+                  <input type="tel" value={formData.phone} onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="(47) 99999-9999" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="exemplo@email.com"
-                  />
+                  <input type="email" value={formData.email} onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="exemplo@email.com" />
                 </div>
               </div>
-              
-              {/* Endereço - spans full width */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Endereço</label>
-                <input
-                  type="text"
-                  value={formData.address}
-                  onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value.toUpperCase() }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
-                />
+                <input type="text" value={formData.address} onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value.toUpperCase() }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase" />
               </div>
-              
-              {/* Working Days */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Dias de Funcionamento</label>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                  {[
-                    { value: 'monday', label: 'Segunda' },
-                    { value: 'tuesday', label: 'Terça' },
-                    { value: 'wednesday', label: 'Quarta' },
-                    { value: 'thursday', label: 'Quinta' },
-                    { value: 'friday', label: 'Sexta' },
-                    { value: 'saturday', label: 'Sábado' },
-                    { value: 'sunday', label: 'Domingo' }
-                  ].map(day => (
+                  {DAYS.map(day => (
                     <label key={day.value} className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        checked={formData.working_days.includes(day.value)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setFormData(prev => ({ 
-                              ...prev, 
-                              working_days: [...prev.working_days, day.value]
-                            }));
-                          } else {
-                            setFormData(prev => ({ 
-                              ...prev, 
-                              working_days: prev.working_days.filter(d => d !== day.value)
-                            }));
-                          }
-                        }}
-                        className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                      />
+                      <input type="checkbox" checked={formData.working_days.includes(day.value)}
+                        onChange={(e) => setFormData(prev => ({ ...prev, working_days: e.target.checked ? [...prev.working_days, day.value] : prev.working_days.filter(d => d !== day.value) }))}
+                        className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
                       <span className="text-sm text-gray-700">{day.label}</span>
                     </label>
                   ))}
                 </div>
               </div>
-              
-              {/* Working Hours */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Horário de Funcionamento</label>
-                <input
-                  type="text"
-                  value={formData.working_hours}
-                  onChange={(e) => setFormData(prev => ({ ...prev, working_hours: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Ex: 08:00 às 18:00 ou 08:00-12:00 / 14:00-18:00"
-                />
+                <input type="text" value={formData.working_hours} onChange={(e) => setFormData(prev => ({ ...prev, working_hours: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Ex: 08:00 às 18:00 ou 08:00-12:00 / 14:00-18:00" />
               </div>
-
-              {/* Observações - moved to last and spans full width */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Observações</label>
-                <textarea
-                  value={formData.observations}
-                  onChange={(e) => setFormData(prev => ({ ...prev, observations: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  rows={3}
-                  placeholder="Ex: Outras observações importantes"
-                />
+                <textarea value={formData.observations} onChange={(e) => setFormData(prev => ({ ...prev, observations: e.target.value }))} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" rows={3} placeholder="Ex: Outras observações importantes" />
               </div>
-              
               <div className="flex justify-end space-x-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsModalOpen(false);
-                    resetForm();
-                  }}
-                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                >
-                  {isLoading ? 'Salvando...' : 'Salvar'}
-                </button>
+                <button type="button" onClick={() => { setIsModalOpen(false); resetForm(); }} className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">Cancelar</button>
+                <button type="submit" disabled={isLoading} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{isLoading ? 'Salvando...' : 'Salvar'}</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Schedule Modal */}
+      {isScheduleModalOpen && schedulingProfessional && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b">
+              <div className="flex items-center space-x-2">
+                <CalendarClock className="w-5 h-5 text-purple-600" />
+                <h2 className="text-lg font-semibold text-gray-900">Agendar Alteração</h2>
+              </div>
+              <button onClick={() => setIsScheduleModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="px-6 py-4">
+              <p className="text-sm text-gray-600 mb-4">
+                Credenciado: <strong>{schedulingProfessional.name}</strong>
+              </p>
+
+              {/* New schedule form */}
+              <form onSubmit={handleScheduleSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Data e hora para aplicar a alteração *
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={scheduleForm.scheduled_at}
+                    onChange={(e) => setScheduleForm(prev => ({ ...prev, scheduled_at: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+
+                <p className="text-xs text-gray-500">Marque os campos que deseja alterar:</p>
+
+                {/* Working Days */}
+                <div className="border border-gray-200 rounded-lg p-3">
+                  <label className="flex items-center space-x-2 mb-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={scheduleForm.change_working_days}
+                      onChange={(e) => setScheduleForm(prev => ({ ...prev, change_working_days: e.target.checked }))}
+                      className="h-4 w-4 text-purple-600 border-gray-300 rounded"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Alterar Dias de Funcionamento</span>
+                  </label>
+                  {scheduleForm.change_working_days && (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 ml-6">
+                      {DAYS.map(day => (
+                        <label key={day.value} className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            checked={scheduleForm.working_days.includes(day.value)}
+                            onChange={(e) => setScheduleForm(prev => ({ ...prev, working_days: e.target.checked ? [...prev.working_days, day.value] : prev.working_days.filter(d => d !== day.value) }))}
+                            className="h-4 w-4 text-purple-600 border-gray-300 rounded"
+                          />
+                          <span className="text-sm text-gray-700">{day.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Working Hours */}
+                <div className="border border-gray-200 rounded-lg p-3">
+                  <label className="flex items-center space-x-2 mb-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={scheduleForm.change_working_hours}
+                      onChange={(e) => setScheduleForm(prev => ({ ...prev, change_working_hours: e.target.checked }))}
+                      className="h-4 w-4 text-purple-600 border-gray-300 rounded"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Alterar Horário de Funcionamento</span>
+                  </label>
+                  {scheduleForm.change_working_hours && (
+                    <input
+                      type="text"
+                      value={scheduleForm.working_hours}
+                      onChange={(e) => setScheduleForm(prev => ({ ...prev, working_hours: e.target.value }))}
+                      placeholder="Ex: 08:00 às 18:00"
+                      className="w-full ml-6 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm"
+                      style={{ width: 'calc(100% - 1.5rem)' }}
+                    />
+                  )}
+                </div>
+
+                {/* Observations */}
+                <div className="border border-gray-200 rounded-lg p-3">
+                  <label className="flex items-center space-x-2 mb-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={scheduleForm.change_observations}
+                      onChange={(e) => setScheduleForm(prev => ({ ...prev, change_observations: e.target.checked }))}
+                      className="h-4 w-4 text-purple-600 border-gray-300 rounded"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Alterar Observações</span>
+                  </label>
+                  {scheduleForm.change_observations && (
+                    <textarea
+                      value={scheduleForm.observations}
+                      onChange={(e) => setScheduleForm(prev => ({ ...prev, observations: e.target.value }))}
+                      placeholder="Novo texto de observações"
+                      className="w-full ml-6 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm"
+                      style={{ width: 'calc(100% - 1.5rem)' }}
+                      rows={2}
+                    />
+                  )}
+                </div>
+
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={isScheduleLoading}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 flex items-center space-x-2"
+                  >
+                    <Clock className="w-4 h-4" />
+                    <span>{isScheduleLoading ? 'Agendando...' : 'Agendar Alteração'}</span>
+                  </button>
+                </div>
+              </form>
+
+              {/* Pending schedules list */}
+              {scheduledChanges.length > 0 && (
+                <div className="mt-6">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center space-x-1">
+                    <Clock className="w-4 h-4 text-orange-500" />
+                    <span>Agendamentos Pendentes ({scheduledChanges.filter(c => !c.applied_at).length})</span>
+                  </h3>
+                  <div className="space-y-2">
+                    {scheduledChanges.map(change => (
+                      <div key={change.id} className={`border rounded-lg p-3 text-sm ${change.applied_at ? 'border-green-200 bg-green-50' : 'border-orange-200 bg-orange-50'}`}>
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="font-medium text-gray-800 flex items-center space-x-1">
+                              <Clock className="w-3 h-3" />
+                              <span>{formatScheduledAt(change.scheduled_at)}</span>
+                              {change.applied_at && <span className="text-green-600 text-xs ml-2">(Aplicado)</span>}
+                            </div>
+                            <div className="mt-1 text-gray-600 space-y-0.5">
+                              {change.working_days !== null && (
+                                <div><strong>Dias:</strong> {(() => { try { const d = JSON.parse(change.working_days || '[]'); return d.length > 0 ? d.map((x: string) => DAY_LABELS[x] || x).join(', ') : '(limpar dias)'; } catch { return change.working_days || '(limpar dias)'; } })()}</div>
+                              )}
+                              {change.working_hours !== null && (
+                                <div><strong>Horário:</strong> {change.working_hours || '(limpar horário)'}</div>
+                              )}
+                              {change.observations !== null && (
+                                <div><strong>Obs.:</strong> {change.observations || '(limpar observações)'}</div>
+                              )}
+                            </div>
+                          </div>
+                          {!change.applied_at && (
+                            <button onClick={() => handleDeleteSchedule(change.id)} className="ml-2 p-1 text-gray-400 hover:text-red-600" title="Cancelar agendamento">
+                              <Trash className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

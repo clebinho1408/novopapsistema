@@ -162,6 +162,20 @@ export const agencyInstructions = pgTable('agency_instructions', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
+// Professional scheduled changes
+export const professionalScheduledChanges = pgTable('professional_scheduled_changes', {
+  id: serial('id').primaryKey(),
+  agencyId: integer('agency_id').notNull().references(() => agencies.id),
+  professionalId: integer('professional_id').notNull().references(() => professionals.id, { onDelete: 'cascade' }),
+  scheduledAt: timestamp('scheduled_at').notNull(),
+  workingDays: text('working_days'),
+  workingHours: text('working_hours'),
+  observations: text('observations'),
+  createdByUserId: integer('created_by_user_id').references(() => systemUsers.id),
+  createdAt: timestamp('created_at').defaultNow(),
+  appliedAt: timestamp('applied_at'),
+});
+
 // Relations
 export const agenciesRelations = relations(agencies, ({ many }) => ({
   users: many(systemUsers),
