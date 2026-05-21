@@ -746,9 +746,11 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 const stepIcon = getStepIcon(step.type);
               
               // Check if this step has a linked fee to determine card height
-              const linkedFee = processData.selected_fees.find(fee => fee.linked_professional_type === step.type);
-              const cardClass = linkedFee && (professional || ['prova_teorica', 'prova_pratica'].includes(step.type)) ? "step-card-with-fee" : "step-card";
-              const contentClass = linkedFee && (professional || ['prova_teorica', 'prova_pratica'].includes(step.type)) ? "step-content-with-fee" : "step-content";
+              const linkedFee = step.type === 'curso_pratico'
+                ? processData.selected_fees.find(fee => fee.name === 'LADV')
+                : processData.selected_fees.find(fee => fee.linked_professional_type === step.type);
+              const cardClass = linkedFee && (professional || ['prova_teorica', 'prova_pratica', 'curso_pratico'].includes(step.type)) ? "step-card-with-fee" : "step-card";
+              const contentClass = linkedFee && (professional || ['prova_teorica', 'prova_pratica', 'curso_pratico'].includes(step.type)) ? "step-content-with-fee" : "step-content";
               
               return `
                 <div class="${cardClass}">
@@ -820,8 +822,8 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                             <div class="fee-section">
                                 <h4><strong>TAXAS A PAGAR:</strong></h4>
                                 ${processData.selected_fees.filter(fee => {
-                                  // Incluir taxas sem vínculo OU com vínculo à prova
-                                  return !fee.linked_professional_type || fee.linked_professional_type === 'prova';
+                                  // Incluir taxas sem vínculo OU com vínculo à prova, exceto LADV (exibida no card Curso Prático)
+                                  return (!fee.linked_professional_type || fee.linked_professional_type === 'prova') && fee.name !== 'LADV';
                                 }).map(fee => `
                                     <div class="fee-item"><strong>${fee.name}: R$ ${parseFloat(fee.amount).toFixed(2)}</strong></div>
                                 `).join('')}
@@ -838,7 +840,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
 
                         ${linkedFee ? `
                             <div class="fee-badge">
-                                <strong>${(['medico', 'psicologo'].includes(step.type)) ? 'TAXA' : `Taxa ${linkedFee.name}`}: R$ ${parseFloat(linkedFee.amount).toFixed(2)}</strong>
+                                <strong>${(['medico', 'psicologo'].includes(step.type)) ? 'TAXA' : `TAXA ${linkedFee.name}`}: R$ ${parseFloat(linkedFee.amount).toFixed(2)}</strong>
                             </div>
                         ` : ''}
                     </div>
@@ -1382,8 +1384,10 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                 return (
                   <div key={step.id} className={`border-2 border-black ${(() => {
                     // Buscar taxa vinculada a este tipo de profissional para ajustar altura
-                    const linkedFee = processData.selected_fees.find(fee => fee.linked_professional_type === step.type);
-                    return linkedFee && professional ? 'min-h-[220px]' : 'min-h-[200px]';
+                    const linkedFee = step.type === 'curso_pratico'
+                      ? processData.selected_fees.find(fee => fee.name === 'LADV')
+                      : processData.selected_fees.find(fee => fee.linked_professional_type === step.type);
+                    return linkedFee && (professional || step.type === 'curso_pratico') ? 'min-h-[220px]' : 'min-h-[200px]';
                   })()}`}>
                     {/* Step Header */}
                     <div className="bg-gray-100 p-3 border-b-2 border-black">
@@ -1405,8 +1409,10 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                     {/* Step Content */}
                     <div className={`p-3 relative ${(() => {
                       // Buscar taxa vinculada a este tipo de profissional para ajustar padding
-                      const linkedFee = processData.selected_fees.find(fee => fee.linked_professional_type === step.type);
-                      return linkedFee && professional ? 'pb-10' : '';
+                      const linkedFee = step.type === 'curso_pratico'
+                        ? processData.selected_fees.find(fee => fee.name === 'LADV')
+                        : processData.selected_fees.find(fee => fee.linked_professional_type === step.type);
+                      return linkedFee && (professional || step.type === 'curso_pratico') ? 'pb-10' : '';
                     })()}`}>
                       {professional ? (
                         <div className="space-y-2">
@@ -1480,11 +1486,13 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                           
                           {(() => {
                             // Buscar taxa vinculada a este tipo de profissional
-                            const linkedFee = processData.selected_fees.find(fee => fee.linked_professional_type === step.type);
+                            const linkedFee = step.type === 'curso_pratico'
+                              ? processData.selected_fees.find(fee => fee.name === 'LADV')
+                              : processData.selected_fees.find(fee => fee.linked_professional_type === step.type);
                             return linkedFee ? (
                               <div className="absolute bottom-1 right-1">
                                 <div className="bg-gray-100 border border-black px-2 py-1 rounded text-xs font-bold shadow-sm">
-                                  R$ {parseFloat(linkedFee.amount).toFixed(2)}
+                                  {step.type === 'curso_pratico' ? `TAXA LADV: R$ ${parseFloat(linkedFee.amount).toFixed(2)}` : `R$ ${parseFloat(linkedFee.amount).toFixed(2)}`}
                                 </div>
                               </div>
                             ) : null;
@@ -1500,7 +1508,7 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                           )}
                         </div>
                       ) : isNoProfessionalStep ? (
-                        <div className="space-y-2 p-2">
+                        <div className="space-y-2 p-2 relative">
                           {step.description && (
                             <p className="text-xs font-bold text-black">{step.description}</p>
                           )}
@@ -1510,6 +1518,16 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                           {!step.description && !step.obs && (
                             <p className="text-xs text-gray-500 text-center">Etapa selecionada</p>
                           )}
+                          {step.type === 'curso_pratico' && (() => {
+                            const ladvFee = processData.selected_fees.find(fee => fee.name === 'LADV');
+                            return ladvFee ? (
+                              <div className="absolute bottom-1 right-1">
+                                <div className="bg-gray-100 border border-black px-2 py-1 rounded text-xs font-bold shadow-sm">
+                                  TAXA LADV: R$ {parseFloat(ladvFee.amount).toFixed(2)}
+                                </div>
+                              </div>
+                            ) : null;
+                          })()}
                         </div>
                       ) : step.type === 'taxa' && isSelected ? (
                         <div className="space-y-2">
@@ -1517,8 +1535,8 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
                             TAXAS A PAGAR:
                           </h4>
                           {processData.selected_fees.filter(fee => {
-                            // Apenas incluir taxas que NÃO têm vínculo com profissionais
-                            return !fee.linked_professional_type;
+                            // Apenas incluir taxas sem vínculo, exceto LADV (exibida no card Curso Prático)
+                            return !fee.linked_professional_type && fee.name !== 'LADV';
                           }).map(fee => (
                             <div key={fee.id} className="text-xs">
                               {fee.name}: R$ {parseFloat(fee.amount).toFixed(2)}
