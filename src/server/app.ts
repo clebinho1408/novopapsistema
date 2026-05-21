@@ -7,33 +7,16 @@ import {
   CreateCityRequestSchema,
   CreateProfessionalRequestSchema,
 } from "../shared/types";
-import { d1Adapter } from "./d1-adapter";
-
-// Replace c.env.DB with d1Adapter globally
-const mockEnv = { DB: d1Adapter };
-
-const app = new Hono();
+const app = new Hono<{ Bindings: Env }>();
 
 app.use("*", cors({
   origin: (origin) => {
-    const allowedOrigins = [
-      "http://localhost:5173",
-      "http://localhost:5000",
-      "https://localhost:5000",
-    ];
-
-    if (!origin) return allowedOrigins[0];
-
-    const replitDomain = process.env.REPLIT_DEV_DOMAIN || process.env.REPLIT_DOMAINS;
-    if (replitDomain) {
-      allowedOrigins.push(`https://${replitDomain}`);
-      allowedOrigins.push(`http://${replitDomain}`);
-    }
-
-    if (allowedOrigins.includes(origin)) return origin;
+    if (!origin) return 'http://localhost:5000';
+    if (origin.includes('localhost')) return origin;
+    if (origin.includes('.workers.dev')) return origin;
+    if (origin.includes('.pages.dev')) return origin;
     if (origin.includes('.replit.dev')) return origin;
-
-    return allowedOrigins[0];
+    return origin;
   },
   credentials: true,
 }));
@@ -52,7 +35,7 @@ async function systemAuthMiddleware(c: any, next: any) {
   }
 
   // Check if session is valid and not expired
-  const session = await mockEnv.DB.prepare(
+  const session = await c.env.DB.prepare(
     "SELECT s.*, u.*, a.name as agency_name FROM user_sessions s JOIN system_users u ON s.user_id = u.id JOIN agencies a ON u.agency_id = a.id WHERE s.session_token = ? AND s.expires_at > CURRENT_TIMESTAMP AND u.is_active = true"
   ).bind(sessionToken).first();
 
@@ -72,7 +55,7 @@ function getUserWithAgency(c: any) {
 
 // Public endpoints (no auth required)
 app.get('/api/public/agencies', async (c) => {
-  const { results } = await mockEnv.DB.prepare(
+  const { results } = await c.env.DB.prepare(
     "SELECT id, name FROM agencies WHERE is_active = true ORDER BY name"
   ).all();
 
@@ -93,7 +76,7 @@ app.post('/api/auth/register', async (c) => {
     }
 
     // Check if agency email already exists
-    const existingAgency = await mockEnv.DB.prepare(
+    const existingAgency = await c.env.DB.prepare(
       "SELECT id FROM agencies WHERE email = ?"
     ).bind(body.agency_email).first();
 
@@ -102,7 +85,7 @@ app.post('/api/auth/register', async (c) => {
     }
 
     // Check if admin email already exists
-    const existingUser = await mockEnv.DB.prepare(
+    const existingUser = await c.env.DB.prepare(
       "SELECT id FROM system_users WHERE email = ?"
     ).bind(body.admin_email).first();
 
@@ -111,7 +94,7 @@ app.post('/api/auth/register', async (c) => {
     }
 
     // Create agency
-    const agencyResult = await mockEnv.DB.prepare(
+    const agencyResult = await c.env.DB.prepare(
       "INSERT INTO agencies (name, email, phone, address, city, state) VALUES (?, ?, ?, ?, ?, ?) RETURNING id"
     ).bind(
       body.agency_name,
@@ -130,7 +113,7 @@ app.post('/api/auth/register', async (c) => {
     const passwordHash = await bcrypt.hash(body.admin_password, 12);
 
     // Create admin user
-    const userResult = await mockEnv.DB.prepare(
+    const userResult = await c.env.DB.prepare(
       "INSERT INTO system_users (agency_id, email, password_hash, name, role) VALUES (?, ?, ?, ?, ?) RETURNING id"
     ).bind(agencyResult.id, body.admin_email, passwordHash, body.admin_name, 'administrator').first();
 
@@ -152,7 +135,7 @@ app.post('/api/auth/register', async (c) => {
     ];
 
     for (const step of defaultSteps) {
-      await mockEnv.DB.prepare(
+      await c.env.DB.prepare(
         "INSERT INTO process_steps (agency_id, name, type, sort_order, is_active) VALUES (?, ?, ?, ?, ?)"
       ).bind(agencyResult.id, step.name, step.type, step.sort_order, true).run();
     }
@@ -170,7 +153,7 @@ app.post('/api/auth/register', async (c) => {
     ];
 
     for (const fee of defaultFees) {
-      await mockEnv.DB.prepare(
+      await c.env.DB.prepare(
         "INSERT INTO fees (agency_id, name, amount, linked_professional_type, is_active) VALUES (?, ?, ?, ?, ?)"
       ).bind(agencyResult.id, fee.name, fee.amount, fee.linked_professional_type, true).run();
     }
@@ -180,7 +163,7 @@ app.post('/api/auth/register', async (c) => {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 30); // 30 days
 
-    await mockEnv.DB.prepare(
+    await c.env.DB.prepare(
       "INSERT INTO user_sessions (user_id, session_token, expires_at) VALUES (?, ?, ?)"
     ).bind(userResult.id, sessionToken, expiresAt.toISOString()).run();
 
@@ -209,7 +192,7 @@ app.post('/api/auth/login', async (c) => {
     }
 
     // Find user by email (agency is determined automatically)
-    const user = await mockEnv.DB.prepare(
+    const user = await c.env.DB.prepare(
       "SELECT u.*, a.name as agency_name FROM system_users u JOIN agencies a ON u.agency_id = a.id WHERE u.email = ? AND u.is_active = true"
     ).bind(email).first();
 
@@ -231,12 +214,12 @@ app.post('/api/auth/login', async (c) => {
     const sessionToken = generateSessionToken();
     const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
 
-    await mockEnv.DB.prepare(
+    await c.env.DB.prepare(
       "INSERT INTO user_sessions (user_id, session_token, expires_at) VALUES (?, ?, ?)"
     ).bind(user.id, sessionToken, expiresAt.toISOString()).run();
 
     // Update last login
-    await mockEnv.DB.prepare(
+    await c.env.DB.prepare(
       "UPDATE system_users SET last_login_at = CURRENT_TIMESTAMP WHERE id = ?"
     ).bind(user.id).run();
 
@@ -260,7 +243,7 @@ app.post('/api/auth/logout', async (c) => {
   const sessionToken = getCookie(c, 'session_token');
 
   if (sessionToken) {
-    await mockEnv.DB.prepare(
+    await c.env.DB.prepare(
       "DELETE FROM user_sessions WHERE session_token = ?"
     ).bind(sessionToken).run();
   }
@@ -295,7 +278,7 @@ app.get('/api/auth/users', systemAuthMiddleware, async (c) => {
     return c.json({ error: "Acesso negado" }, 403);
   }
 
-  const { results } = await mockEnv.DB.prepare(
+  const { results } = await c.env.DB.prepare(
     "SELECT id, name, email, role, is_active, last_login_at, created_at FROM system_users WHERE agency_id = ? ORDER BY created_at DESC"
   ).bind(user.agency_id).all();
 
@@ -316,7 +299,7 @@ app.post('/api/auth/users', systemAuthMiddleware, async (c) => {
     }
 
     // Check if email already exists
-    const existingUser = await mockEnv.DB.prepare(
+    const existingUser = await c.env.DB.prepare(
       "SELECT id FROM system_users WHERE email = ?"
     ).bind(body.email).first();
 
@@ -328,7 +311,7 @@ app.post('/api/auth/users', systemAuthMiddleware, async (c) => {
     const passwordHash = await bcrypt.hash(body.password, 12);
 
     // Create user
-    const result = await mockEnv.DB.prepare(
+    const result = await c.env.DB.prepare(
       "INSERT INTO system_users (agency_id, email, password_hash, name, role, created_by_user_id) VALUES (?, ?, ?, ?, ?, ?) RETURNING *"
     ).bind(
       user.agency_id,
@@ -399,7 +382,7 @@ app.patch('/api/auth/users/:id', systemAuthMiddleware, async (c) => {
     updateFields.push("updated_at = CURRENT_TIMESTAMP");
     updateValues.push(userId, user.agency_id);
 
-    const result = await mockEnv.DB.prepare(
+    const result = await c.env.DB.prepare(
       `UPDATE system_users SET ${updateFields.join(", ")} WHERE id = ? AND agency_id = ? RETURNING *`
     ).bind(...updateValues).first();
 
@@ -438,7 +421,7 @@ app.patch('/api/auth/users/:id/password', systemAuthMiddleware, async (c) => {
     // Hash password
     const passwordHash = await bcrypt.hash(body.password, 12);
 
-    const result = await mockEnv.DB.prepare(
+    const result = await c.env.DB.prepare(
       "UPDATE system_users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND agency_id = ? RETURNING id"
     ).bind(passwordHash, userId, user.agency_id).first();
 
@@ -468,7 +451,7 @@ app.delete('/api/auth/users/:id', systemAuthMiddleware, async (c) => {
 
   try {
     // Check if user has associated step processes
-    const { results: processCount } = await mockEnv.DB.prepare(
+    const { results: processCount } = await c.env.DB.prepare(
       "SELECT COUNT(*) as count FROM step_processes WHERE user_id = ? AND agency_id = ?"
     ).bind(userId, user.agency_id).all();
 
@@ -477,12 +460,12 @@ app.delete('/api/auth/users/:id', systemAuthMiddleware, async (c) => {
     }
 
     // Delete user sessions first
-    await mockEnv.DB.prepare(
+    await c.env.DB.prepare(
       "DELETE FROM user_sessions WHERE user_id = ?"
     ).bind(userId).run();
 
     // Delete user
-    const result = await mockEnv.DB.prepare(
+    const result = await c.env.DB.prepare(
       "DELETE FROM system_users WHERE id = ? AND agency_id = ?"
     ).bind(userId, user.agency_id).run();
 
@@ -502,7 +485,7 @@ app.get("/api/cities", systemAuthMiddleware, async (c) => {
   const user = getUserWithAgency(c);
   if (!user) return c.json({ error: "User not found" }, 404);
 
-  const { results } = await mockEnv.DB.prepare(
+  const { results } = await c.env.DB.prepare(
     "SELECT * FROM cities WHERE agency_id = ? AND is_active = true ORDER BY name"
   ).bind(user.agency_id).all();
 
@@ -516,7 +499,7 @@ app.post("/api/cities", systemAuthMiddleware, zValidator("json", CreateCityReque
 
   const body = c.req.valid("json");
 
-  const result = await mockEnv.DB.prepare(
+  const result = await c.env.DB.prepare(
     "INSERT INTO cities (agency_id, name, state) VALUES (?, ?, ?) RETURNING *"
   ).bind(user.agency_id, body.name, 'SC').first();
 
@@ -531,7 +514,7 @@ app.patch("/api/cities/:id", systemAuthMiddleware, zValidator("json", CreateCity
   const cityId = c.req.param("id");
   const body = c.req.valid("json");
 
-  const result = await mockEnv.DB.prepare(
+  const result = await c.env.DB.prepare(
     "UPDATE cities SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND agency_id = ? RETURNING *"
   ).bind(body.name, cityId, user.agency_id).first();
 
@@ -549,7 +532,7 @@ app.delete("/api/cities/:id", systemAuthMiddleware, async (c) => {
 
   const cityId = c.req.param("id");
 
-  await mockEnv.DB.prepare(
+  await c.env.DB.prepare(
     "UPDATE cities SET is_active = false WHERE id = ? AND agency_id = ?"
   ).bind(cityId, user.agency_id).run();
 
@@ -561,7 +544,7 @@ app.get("/api/professionals", systemAuthMiddleware, async (c) => {
   const user = getUserWithAgency(c);
   if (!user) return c.json({ error: "User not found" }, 404);
 
-  const { results } = await mockEnv.DB.prepare(`
+  const { results } = await c.env.DB.prepare(`
     SELECT p.*, c.name as city_name 
     FROM professionals p 
     JOIN cities c ON p.city_id = c.id 
@@ -593,7 +576,7 @@ app.post("/api/professionals", systemAuthMiddleware, async (c) => {
 
     const validatedBody = validation.data;
 
-    const result = await mockEnv.DB.prepare(
+    const result = await c.env.DB.prepare(
       "INSERT INTO professionals (agency_id, name, type, city_id, phone, email, address, observations, attendance_type, working_days, working_hours) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *"
     ).bind(
       user.agency_id,
@@ -645,7 +628,7 @@ app.patch("/api/professionals/:id", systemAuthMiddleware, async (c) => {
       return c.json({ error: "city_id inválido" }, 400);
     }
 
-    const result = await mockEnv.DB.prepare(`
+    const result = await c.env.DB.prepare(`
       UPDATE professionals 
       SET name = ?, type = ?, city_id = ?, phone = ?, email = ?, address = ?, 
           observations = ?, attendance_type = ?, working_days = ?, working_hours = ?,
@@ -687,7 +670,7 @@ app.delete("/api/professionals/:id", systemAuthMiddleware, async (c) => {
 
   const professionalId = c.req.param("id");
 
-  await mockEnv.DB.prepare(
+  await c.env.DB.prepare(
     "UPDATE professionals SET is_active = false WHERE id = ? AND agency_id = ?"
   ).bind(professionalId, user.agency_id).run();
 
@@ -705,7 +688,7 @@ app.get("/api/process-steps", systemAuthMiddleware, async (c) => {
     ? "SELECT * FROM process_steps WHERE agency_id = ? AND is_active = true ORDER BY sort_order"
     : "SELECT * FROM process_steps WHERE agency_id = ? ORDER BY sort_order";
 
-  const { results } = await mockEnv.DB.prepare(query).bind(user.agency_id).all();
+  const { results } = await c.env.DB.prepare(query).bind(user.agency_id).all();
 
   console.log(`📋 [Steps API] Agency ${user.agency_id}, active_only=${activeOnly}, found ${results?.length || 0} steps:`, results?.map((s: any) => s.name));
 
@@ -721,7 +704,7 @@ app.patch("/api/process-steps/:id", systemAuthMiddleware, async (c) => {
   const body = await c.req.json();
 
   if (body.is_active !== undefined) {
-    await mockEnv.DB.prepare(
+    await c.env.DB.prepare(
       "UPDATE process_steps SET is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND agency_id = ?"
     ).bind(body.is_active, stepId, user.agency_id).run();
   }
@@ -747,7 +730,7 @@ app.patch("/api/process-steps/:id", systemAuthMiddleware, async (c) => {
       updates.push("updated_at = CURRENT_TIMESTAMP");
       params.push(stepId, user.agency_id);
       
-      await mockEnv.DB.prepare(
+      await c.env.DB.prepare(
         `UPDATE process_steps SET ${updates.join(", ")} WHERE id = ? AND agency_id = ?`
       ).bind(...params).run();
     }
@@ -767,7 +750,7 @@ app.patch("/api/process-steps/:id/reorder", systemAuthMiddleware, async (c) => {
 
   try {
     // Get current step
-    const currentStep = await mockEnv.DB.prepare(
+    const currentStep = await c.env.DB.prepare(
       "SELECT * FROM process_steps WHERE id = ? AND agency_id = ?"
     ).bind(stepId, user.agency_id).first();
 
@@ -776,7 +759,7 @@ app.patch("/api/process-steps/:id/reorder", systemAuthMiddleware, async (c) => {
     }
 
     // Get all steps for this agency
-    const { results: allSteps } = await mockEnv.DB.prepare(
+    const { results: allSteps } = await c.env.DB.prepare(
       "SELECT * FROM process_steps WHERE agency_id = ? ORDER BY sort_order"
     ).bind(user.agency_id).all();
 
@@ -799,11 +782,11 @@ app.patch("/api/process-steps/:id/reorder", systemAuthMiddleware, async (c) => {
     // Swap sort_order values
     const targetStep = steps[targetIndex];
 
-    await mockEnv.DB.prepare(
+    await c.env.DB.prepare(
       "UPDATE process_steps SET sort_order = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?"
     ).bind(targetStep.sort_order, stepId).run();
 
-    await mockEnv.DB.prepare(
+    await c.env.DB.prepare(
       "UPDATE process_steps SET sort_order = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?"
     ).bind(currentStep.sort_order, targetStep.id).run();
 
@@ -819,7 +802,7 @@ app.get("/api/fees", systemAuthMiddleware, async (c) => {
   const user = getUserWithAgency(c);
   if (!user) return c.json({ error: "User not found" }, 404);
 
-  const { results } = await mockEnv.DB.prepare(
+  const { results } = await c.env.DB.prepare(
     "SELECT * FROM fees WHERE agency_id = ? ORDER BY id"
   ).bind(user.agency_id).all();
 
@@ -837,7 +820,7 @@ app.post("/api/fees", systemAuthMiddleware, async (c) => {
     return c.json({ error: "Nome e valor são obrigatórios" }, 400);
   }
 
-  const result = await mockEnv.DB.prepare(
+  const result = await c.env.DB.prepare(
     "INSERT INTO fees (agency_id, name, amount, linked_professional_type) VALUES (?, ?, ?, ?) RETURNING *"
   ).bind(user.agency_id, body.name, body.amount, body.linked_professional_type || null).first();
 
@@ -853,7 +836,7 @@ app.patch("/api/fees/:id", systemAuthMiddleware, async (c) => {
   const body = await c.req.json();
 
   // Verificar se a taxa existe
-  const fee = await mockEnv.DB.prepare(
+  const fee = await c.env.DB.prepare(
     "SELECT id FROM fees WHERE id = ? AND agency_id = ?"
   ).bind(feeId, user.agency_id).first();
 
@@ -861,7 +844,7 @@ app.patch("/api/fees/:id", systemAuthMiddleware, async (c) => {
     return c.json({ error: "Taxa não encontrada" }, 404);
   }
 
-  const result = await mockEnv.DB.prepare(
+  const result = await c.env.DB.prepare(
     "UPDATE fees SET name = COALESCE(?, name), amount = COALESCE(?, amount), updated_at = CURRENT_TIMESTAMP WHERE id = ? AND agency_id = ? RETURNING *"
   ).bind(body.name || null, body.amount, feeId, user.agency_id).first();
 
@@ -908,10 +891,10 @@ app.get("/api/step-processes", systemAuthMiddleware, async (c) => {
 
     let results: any[];
     if (user.role === 'administrator' || user.role === 'supervisor') {
-      const res = await mockEnv.DB.prepare(query).bind(user.agency_id).all();
+      const res = await c.env.DB.prepare(query).bind(user.agency_id).all();
       results = res.results || [];
     } else {
-      const res = await mockEnv.DB.prepare(query).bind(user.agency_id, user.id).all();
+      const res = await c.env.DB.prepare(query).bind(user.agency_id, user.id).all();
       results = res.results || [];
     }
 
@@ -919,7 +902,7 @@ app.get("/api/step-processes", systemAuthMiddleware, async (c) => {
       if (results.length > 0) {
         const processIds = results.map((p: any) => p.id);
         const placeholders = processIds.map(() => '?').join(',');
-        const { results: allProfRows } = await mockEnv.DB.prepare(
+        const { results: allProfRows } = await c.env.DB.prepare(
           `SELECT pss.process_id, p.name as professional_name, ps.type as step_type
            FROM process_selected_steps pss
            JOIN process_steps ps ON pss.step_id = ps.id
@@ -988,14 +971,14 @@ app.post("/api/step-processes", systemAuthMiddleware, async (c) => {
     let totalAmount = 0;
     if (selectedFees.length > 0) {
       const placeholders = selectedFees.map(() => '?').join(',');
-      const { results: fees } = await mockEnv.DB.prepare(
+      const { results: fees } = await c.env.DB.prepare(
         `SELECT SUM(amount) as total FROM fees WHERE id IN (${placeholders}) AND agency_id = ?`
       ).bind(...selectedFees, user.agency_id).all();
       totalAmount = Number(fees?.[0]?.total) || 0;
     }
 
     // Create step process
-    const result = await mockEnv.DB.prepare(
+    const result = await c.env.DB.prepare(
       "INSERT INTO step_processes (agency_id, user_id, city_id, client_name, total_amount, show_toxicologico_message, status) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING *"
     ).bind(user.agency_id, user.id, cityId, body.client_name || null, totalAmount, body.show_toxicologico_message || false, 'completed').first() as any;
 
@@ -1010,45 +993,45 @@ app.post("/api/step-processes", systemAuthMiddleware, async (c) => {
 
       // Validate that the professional exists and belongs to this agency (if provided)
       if (professionalId) {
-        const professionalExists = await mockEnv.DB.prepare(
+        const professionalExists = await c.env.DB.prepare(
           "SELECT id FROM professionals WHERE id = ? AND agency_id = ? AND is_active = true"
         ).bind(professionalId, user.agency_id).first();
 
         if (!professionalExists) {
           console.warn(`Professional ${professionalId} not found or not active for agency ${user.agency_id}`);
           // Insert step without professional if professional doesn't exist
-          await mockEnv.DB.prepare(
+          await c.env.DB.prepare(
             "INSERT INTO process_selected_steps (process_id, step_id, professional_id) VALUES (?, ?, ?)"
           ).bind(newProcessId, stepId, null).run();
           continue;
         }
       }
 
-      await mockEnv.DB.prepare(
+      await c.env.DB.prepare(
         "INSERT INTO process_selected_steps (process_id, step_id, professional_id) VALUES (?, ?, ?)"
       ).bind(newProcessId, stepId, professionalId || null).run();
     }
 
     // Add selected fees (manually selected ones)
     for (const feeId of selectedFees) {
-      const fee = await mockEnv.DB.prepare(
+      const fee = await c.env.DB.prepare(
         "SELECT amount FROM fees WHERE id = ? AND agency_id = ?"
       ).bind(feeId, user.agency_id).first();
 
       if (fee) {
-        await mockEnv.DB.prepare(
+        await c.env.DB.prepare(
           "INSERT INTO process_selected_fees (process_id, fee_id, amount) VALUES (?, ?, ?)"
         ).bind(newProcessId, feeId, (fee as any).amount).run();
       }
     }
 
     // Get process steps to find linked fees
-    const { results: processSteps } = await mockEnv.DB.prepare(
+    const { results: processSteps } = await c.env.DB.prepare(
       "SELECT * FROM process_steps WHERE agency_id = ?"
     ).bind(user.agency_id).all();
 
     // Add linked fees based on selected professionals
-    const { results: allFees } = await mockEnv.DB.prepare(
+    const { results: allFees } = await c.env.DB.prepare(
       "SELECT * FROM fees WHERE agency_id = ? AND is_active = true AND linked_professional_type IS NOT NULL"
     ).bind(user.agency_id).all();
 
@@ -1067,7 +1050,7 @@ app.post("/api/step-processes", systemAuthMiddleware, async (c) => {
         // Check if this fee is not already added (avoid duplicates)
         const alreadyAdded = selectedFees.includes(fee.id);
         if (!alreadyAdded) {
-          await mockEnv.DB.prepare(
+          await c.env.DB.prepare(
             "INSERT INTO process_selected_fees (process_id, fee_id, amount) VALUES (?, ?, ?)"
           ).bind(newProcessId, fee.id as number, fee.amount as number).run();
 
@@ -1079,7 +1062,7 @@ app.post("/api/step-processes", systemAuthMiddleware, async (c) => {
 
     // Update the total amount in the process if linked fees were added
     if (totalAmount > 0) {
-      await mockEnv.DB.prepare(
+      await c.env.DB.prepare(
         "UPDATE step_processes SET total_amount = ? WHERE id = ?"
       ).bind(totalAmount, newProcessId).run();
     }
@@ -1100,7 +1083,7 @@ app.get("/api/step-processes/:id", systemAuthMiddleware, async (c) => {
   const processId = parseInt(c.req.param("id"));
 
   // Get the process
-  const process = await mockEnv.DB.prepare(
+  const process = await c.env.DB.prepare(
     "SELECT sp.*, c.name as city_name FROM step_processes sp JOIN cities c ON sp.city_id = c.id WHERE sp.id = ? AND sp.agency_id = ?"
   ).bind(processId, user.agency_id as number).first();
 
@@ -1114,7 +1097,7 @@ app.get("/api/step-processes/:id", systemAuthMiddleware, async (c) => {
   }
 
   // Get selected steps with details
-  const { results: selectedSteps } = await mockEnv.DB.prepare(`
+  const { results: selectedSteps } = await c.env.DB.prepare(`
     SELECT pss.*, ps.name, ps.type, p.name as professional_name, p.phone, p.email, p.address, p.observations, p.attendance_type, p.working_days, p.working_hours, c.name as city_name
     FROM process_selected_steps pss
     JOIN process_steps ps ON pss.step_id = ps.id
@@ -1125,7 +1108,7 @@ app.get("/api/step-processes/:id", systemAuthMiddleware, async (c) => {
   `).bind(processId).all();
 
   // Get manually selected fees (not linked to professionals)
-  const { results: selectedFees } = await mockEnv.DB.prepare(`
+  const { results: selectedFees } = await c.env.DB.prepare(`
     SELECT psf.*, f.name, f.linked_professional_type
     FROM process_selected_fees psf
     JOIN fees f ON psf.fee_id = f.id
@@ -1133,7 +1116,7 @@ app.get("/api/step-processes/:id", systemAuthMiddleware, async (c) => {
   `).bind(processId).all();
 
   // Get all fees to find linked ones
-  const { results: allFees } = await mockEnv.DB.prepare(
+  const { results: allFees } = await c.env.DB.prepare(
     "SELECT * FROM fees WHERE agency_id = ? AND is_active = true"
   ).bind(user.agency_id).all();
 
@@ -1213,7 +1196,7 @@ app.delete("/api/step-processes/delete-all", systemAuthMiddleware, async (c) => 
   try {
     // Delete all processes - due to CASCADE in schema.ts, 
     // process_selected_steps and process_selected_fees will be deleted automatically
-    const result = await mockEnv.DB.prepare(
+    const result = await c.env.DB.prepare(
       "DELETE FROM step_processes WHERE agency_id = ?"
     ).bind(user.agency_id).run();
 
@@ -1244,7 +1227,7 @@ app.post("/api/step-processes/send-email", systemAuthMiddleware, async (c) => {
 
     // Get agency logo if exists
     let logoUrl = null;
-    const agency = await mockEnv.DB.prepare(
+    const agency = await c.env.DB.prepare(
       "SELECT logo_key FROM agencies WHERE id = ?"
     ).bind(user.agency_id as number).first();
 
@@ -1253,7 +1236,7 @@ app.post("/api/step-processes/send-email", systemAuthMiddleware, async (c) => {
     }
 
     // Get agency instructions
-    const instructions = await mockEnv.DB.prepare(
+    const instructions = await c.env.DB.prepare(
       "SELECT general_instructions FROM agency_instructions WHERE agency_id = ?"
     ).bind(user.agency_id as number).first();
 
@@ -1570,7 +1553,7 @@ app.post("/api/agencies/logo", systemAuthMiddleware, async (c) => {
     const dataUrl = `data:${file.type};base64,${base64}`;
 
     // Store base64 data in database
-    await mockEnv.DB.prepare(
+    await c.env.DB.prepare(
       "UPDATE agencies SET logo_key = ? WHERE id = ?"
     ).bind(dataUrl, user.agency_id).run();
 
@@ -1585,7 +1568,7 @@ app.get("/api/agencies/logo", systemAuthMiddleware, async (c) => {
   const user = getUserWithAgency(c);
   if (!user) return c.json({ error: "User not found" }, 404);
 
-  const agency = await mockEnv.DB.prepare(
+  const agency = await c.env.DB.prepare(
     "SELECT logo_key FROM agencies WHERE id = ?"
   ).bind(user.agency_id).first();
 
@@ -1603,7 +1586,7 @@ app.get("/api/files/:key", async (c) => {
     // Extract agency ID from key (format: logo-{agency_id})
     const agencyId = key.replace('logo-', '');
     
-    const agency = await mockEnv.DB.prepare(
+    const agency = await c.env.DB.prepare(
       "SELECT logo_key FROM agencies WHERE id = ?"
     ).bind(parseInt(agencyId)).first();
 
@@ -1647,7 +1630,7 @@ app.get("/api/agencies/info", systemAuthMiddleware, async (c) => {
   const user = getUserWithAgency(c);
   if (!user) return c.json({ error: "User not found" }, 404);
 
-  const agency = await mockEnv.DB.prepare(
+  const agency = await c.env.DB.prepare(
     "SELECT * FROM agencies WHERE id = ?"
   ).bind(user.agency_id).first();
 
@@ -1701,7 +1684,7 @@ app.patch("/api/agencies/info", systemAuthMiddleware, async (c) => {
     updateFields.push("updated_at = CURRENT_TIMESTAMP");
     updateValues.push(user.agency_id);
 
-    const result = await mockEnv.DB.prepare(
+    const result = await c.env.DB.prepare(
       `UPDATE agencies SET ${updateFields.join(", ")} WHERE id = ? RETURNING *`
     ).bind(...updateValues).first();
 
@@ -1721,7 +1704,7 @@ app.get("/api/instructions", systemAuthMiddleware, async (c) => {
   const user = await getUserWithAgency(c);
   if (!user) return c.json({ error: "User not found" }, 404);
 
-  const instructions = await mockEnv.DB.prepare(
+  const instructions = await c.env.DB.prepare(
     "SELECT * FROM agency_instructions WHERE agency_id = ?"
   ).bind(user.agency_id).first();
 
@@ -1741,20 +1724,20 @@ app.post("/api/instructions", systemAuthMiddleware, async (c) => {
 
   try {
     // Check if instructions already exist
-    const existing = await mockEnv.DB.prepare(
+    const existing = await c.env.DB.prepare(
       "SELECT id FROM agency_instructions WHERE agency_id = ?"
     ).bind(user.agency_id).first();
 
     if (existing) {
       // Update existing
-      const result = await mockEnv.DB.prepare(
+      const result = await c.env.DB.prepare(
         "UPDATE agency_instructions SET general_instructions = ?, required_documents = ?, updated_at = CURRENT_TIMESTAMP WHERE agency_id = ? RETURNING *"
       ).bind(body.general_instructions || '', body.required_documents || '', user.agency_id).first();
 
       return c.json(result);
     } else {
       // Create new
-      const result = await mockEnv.DB.prepare(
+      const result = await c.env.DB.prepare(
         "INSERT INTO agency_instructions (agency_id, general_instructions, required_documents) VALUES (?, ?, ?) RETURNING *"
       ).bind(user.agency_id, body.general_instructions || '', body.required_documents || '').first();
 
@@ -1765,18 +1748,6 @@ app.post("/api/instructions", systemAuthMiddleware, async (c) => {
     return c.json({ error: "Erro ao salvar instruções" }, 500);
   }
 });
-
-// Serve static files in production (Vite build output)
-// This uses a simple fallback approach: serve from dist/client/ for any non-API route
-if (process.env.NODE_ENV === 'production') {
-  const { serveStatic } = await import('@hono/node-server/serve-static');
-  
-  // Serve static assets
-  app.use('/*', serveStatic({ root: './dist/client' }));
-  
-  // SPA fallback - serve index.html for routes that don't exist
-  app.get('*', serveStatic({ path: './dist/client/index.html' }));
-}
 
 export default app;
 export { app };
