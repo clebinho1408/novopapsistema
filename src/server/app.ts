@@ -546,12 +546,16 @@ app.get("/api/professionals", systemAuthMiddleware, async (c) => {
 
   // Auto-apply any scheduled changes that are due
   try {
-    const { results: pending } = await c.env.DB.prepare(`
+    // Fetch all unapplied changes and compare in JS to avoid timezone/format issues between DBs
+    const { results: allPending } = await c.env.DB.prepare(`
       SELECT * FROM professional_scheduled_changes
-      WHERE agency_id = ? AND applied_at IS NULL AND scheduled_at <= CURRENT_TIMESTAMP
+      WHERE agency_id = ? AND applied_at IS NULL
     `).bind(user.agency_id).all();
 
-    for (const change of (pending || [])) {
+    const now = new Date();
+    const pending = (allPending || []).filter(change => new Date((change as any).scheduled_at) <= now);
+
+    for (const change of pending) {
       const updates: string[] = [];
       const binds: any[] = [];
 

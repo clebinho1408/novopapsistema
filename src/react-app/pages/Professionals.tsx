@@ -195,7 +195,8 @@ export default function Professionals() {
     }
     setIsScheduleLoading(true);
     try {
-      const payload: any = { scheduled_at: scheduleForm.scheduled_at };
+      // Convert local datetime to UTC ISO string to avoid timezone issues
+      const payload: any = { scheduled_at: new Date(scheduleForm.scheduled_at).toISOString() };
       if (scheduleForm.change_working_days) payload.working_days = scheduleForm.working_days.length > 0 ? JSON.stringify(scheduleForm.working_days) : '';
       if (scheduleForm.change_working_hours) payload.working_hours = scheduleForm.working_hours;
       if (scheduleForm.change_observations) payload.observations = scheduleForm.observations;
