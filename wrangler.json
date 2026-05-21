@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "0199c55d-a66a-73b2-b501-16d101636238",
+  "name": "papsistema",
   "main": "./src/worker/index.ts",
   "workers_dev": true,
   "compatibility_date": "2025-06-17",
