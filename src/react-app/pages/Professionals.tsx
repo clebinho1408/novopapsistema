@@ -72,6 +72,13 @@ export default function Professionals() {
     fetchProfessionals();
     fetchCities();
     fetchUserData();
+
+    // Verifica agendamentos pendentes a cada 30 segundos
+    const interval = setInterval(() => {
+      fetchProfessionals();
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const fetchUserData = async () => {
