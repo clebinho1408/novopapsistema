@@ -1014,8 +1014,6 @@ export default function StepProcess() {
                             }).map(fee => {
                               const isProvaFee = fee.name === 'Prova PCD';
                               const currentStepTypes = formData.selected_steps.map(id => processSteps.find(s => s.id === id)?.type);
-                              const hasConflictStepSelected = ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'].some(type => currentStepTypes.includes(type));
-                              const isTransferenciaFee = fee.name === 'Transferência';
                               
                               // Verificar se as etapas correspondentes estão selecionadas para as taxas específicas
                               const isProvaTeoricoFee = fee.name === 'Prova Teórica';
