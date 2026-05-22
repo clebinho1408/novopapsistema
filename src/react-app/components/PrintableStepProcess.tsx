@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy } from 'react';
+import { useState, useEffect, useRef, lazy } from 'react';
 import type { ProcessStep, Professional, Fee, City } from '@/shared/types';
 
 // Lazy load ícones apenas quando necessário
@@ -9,6 +9,7 @@ const Mail = lazy(() => import('lucide-react').then(mod => ({ default: mod.Mail 
 interface PrintableStepProcessProps {
   isOpen: boolean;
   onClose: () => void;
+  autoPrint?: boolean;
   processData: {
     client_name?: string;
     city: City;
@@ -21,18 +22,26 @@ interface PrintableStepProcessProps {
   };
 }
 
-export default function PrintableStepProcess({ isOpen, onClose, processData }: PrintableStepProcessProps) {
+export default function PrintableStepProcess({ isOpen, onClose, autoPrint, processData }: PrintableStepProcessProps) {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [generalInstructions, setGeneralInstructions] = useState<string>('');
   const [emailModal, setEmailModal] = useState({ isOpen: false, email: '' });
   const [currentUserName, setCurrentUserName] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
+  const autoPrintFiredRef = useRef(false);
 
   useEffect(() => {
     if (isOpen) {
       loadAllData();
     }
   }, [isOpen]);
+
+  // Auto-print: dispara impressão assim que os dados carregam
+  useEffect(() => {
+    if (!isOpen || !autoPrint || isLoading || autoPrintFiredRef.current) return;
+    autoPrintFiredRef.current = true;
+    handlePrint();
+  }, [isLoading, isOpen, autoPrint]);
 
   const loadAllData = async () => {
     setIsLoading(true);
@@ -1298,6 +1307,21 @@ export default function PrintableStepProcess({ isOpen, onClose, processData }: P
 
     return content;
   };
+
+  // Quando autoPrint está ativo, mostra apenas loading enquanto prepara — o useEffect dispara handlePrint() ao terminar
+  if (autoPrint) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg shadow-xl p-8 flex flex-col items-center space-y-4">
+          <svg className="animate-spin h-10 w-10 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <p className="text-gray-700 font-medium">Preparando impressão...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">

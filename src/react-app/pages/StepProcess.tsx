@@ -1428,6 +1428,7 @@ export default function StepProcess() {
       {showPrintModal && currentPrintData && (
         <PrintableStepProcess
           isOpen={showPrintModal}
+          autoPrint={true}
           onClose={() => {
             setShowPrintModal(false);
             setCurrentPrintData(null);
