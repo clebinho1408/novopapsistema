@@ -336,30 +336,32 @@ export default function Professionals() {
                             )}
                             {professional.email && <div className="col-span-2"><strong>Email:</strong> {professional.email}</div>}
                             {professional.address && <div className="col-span-2"><strong>Endereço:</strong> {professional.address}</div>}
-                            {professional.observations && <div className="col-span-2"><strong>Observações:</strong> {professional.observations}</div>}
                             {professional.attendance_type && <div className="col-span-2"><strong>Atendimento:</strong> {professional.attendance_type}</div>}
-                            {professional.working_days && (
+                            {(professional.working_days || professional.working_hours) && (
                               <div className="col-span-2">
-                                <strong>Dias de Funcionamento:</strong>{' '}
-                                {(() => { try { return JSON.parse(professional.working_days).map((d: string) => DAY_LABELS[d] || d).join(', '); } catch { return professional.working_days; } })()}
-                              </div>
-                            )}
-                            {professional.working_hours && (
-                              <div className="col-span-2">
-                                <strong>Horário:</strong>{' '}
+                                <strong>Dias de Funcionamento e Horários:</strong>{' '}
                                 {(() => {
+                                  const DAY_ORDER_LIST = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+                                  const abbr: Record<string,string> = { monday:'Seg', tuesday:'Ter', wednesday:'Qua', thursday:'Qui', friday:'Sex', saturday:'Sáb', sunday:'Dom' };
                                   try {
-                                    const h = JSON.parse(professional.working_hours);
-                                    if (typeof h === 'object' && !Array.isArray(h)) {
-                                      const abbr: Record<string, string> = { monday: 'Seg', tuesday: 'Ter', wednesday: 'Qua', thursday: 'Qui', friday: 'Sex', saturday: 'Sáb', sunday: 'Dom' };
-                                      const days = professional.working_days ? JSON.parse(professional.working_days).filter((d: string) => h[d]) : Object.keys(h);
-                                      return days.map((d: string) => `${abbr[d] || d}: ${h[d].start} - ${h[d].end}`).join(' | ');
+                                    if (professional.working_hours) {
+                                      const h = JSON.parse(professional.working_hours);
+                                      if (typeof h === 'object' && !Array.isArray(h)) {
+                                        const days = professional.working_days
+                                          ? JSON.parse(professional.working_days).filter((d: string) => h[d])
+                                          : DAY_ORDER_LIST.filter(d => h[d]);
+                                        return days.map((d: string) => `${abbr[d] || d}: ${h[d].start} - ${h[d].end}`).join(' | ');
+                                      }
+                                      return professional.working_hours;
                                     }
-                                    return professional.working_hours;
-                                  } catch { return professional.working_hours; }
+                                    if (professional.working_days) {
+                                      return JSON.parse(professional.working_days).map((d: string) => DAY_LABELS[d] || d).join(', ');
+                                    }
+                                  } catch { return professional.working_days || professional.working_hours || ''; }
                                 })()}
                               </div>
                             )}
+                            {professional.observations && <div className="col-span-2"><strong>Observações:</strong> {professional.observations}</div>}
                           </div>
                         </div>
                         {(userRole === 'administrator' || userRole === 'supervisor') && (
@@ -548,34 +550,6 @@ export default function Professionals() {
                 </div>
 
                 <p className="text-xs text-gray-500">Marque os campos que deseja alterar:</p>
-
-                {/* Working Days */}
-                <div className="border border-gray-200 rounded-lg p-3">
-                  <label className="flex items-center space-x-2 mb-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={scheduleForm.change_working_days}
-                      onChange={(e) => setScheduleForm(prev => ({ ...prev, change_working_days: e.target.checked }))}
-                      className="h-4 w-4 text-purple-600 border-gray-300 rounded"
-                    />
-                    <span className="text-sm font-medium text-gray-700">Alterar Dias de Funcionamento</span>
-                  </label>
-                  {scheduleForm.change_working_days && (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 ml-6">
-                      {DAYS.map(day => (
-                        <label key={day.value} className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            checked={scheduleForm.working_days.includes(day.value)}
-                            onChange={(e) => setScheduleForm(prev => ({ ...prev, working_days: e.target.checked ? [...prev.working_days, day.value] : prev.working_days.filter(d => d !== day.value) }))}
-                            className="h-4 w-4 text-purple-600 border-gray-300 rounded"
-                          />
-                          <span className="text-sm text-gray-700">{day.label}</span>
-                        </label>
-                      ))}
-                    </div>
-                  )}
-                </div>
 
                 {/* Working Hours */}
                 <div className="border border-gray-200 rounded-lg p-3">

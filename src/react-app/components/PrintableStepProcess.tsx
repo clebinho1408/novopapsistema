@@ -791,37 +791,51 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                               let workingInfo = '';
                               const DAY_ORDER = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
                               const DAY_ABBR: Record<string,string> = { monday:'Seg', tuesday:'Ter', wednesday:'Qua', thursday:'Qui', friday:'Sex', saturday:'Sáb', sunday:'Dom' };
+                              const DAY_FULL: Record<string,string> = { monday:'Segunda', tuesday:'Terça', wednesday:'Quarta', thursday:'Quinta', friday:'Sexta', saturday:'Sábado', sunday:'Domingo' };
                               if (professional.working_hours) {
                                 try {
                                   const hoursObj = JSON.parse(professional.working_hours);
                                   if (typeof hoursObj === 'object' && !Array.isArray(hoursObj)) {
-                                    // New per-day format: {"monday":{"start":"10:00","end":"13:00"},...}
                                     const selectedDays = professional.working_days
                                       ? JSON.parse(professional.working_days).filter((d: string) => hoursObj[d])
                                       : DAY_ORDER.filter(d => hoursObj[d]);
-                                    const items = selectedDays.map((d: string) => `(${DAY_ABBR[d] || d}: ${hoursObj[d].start} - ${hoursObj[d].end})`);
-                                    // 3 per line
-                                    const lines: string[] = [];
-                                    for (let i = 0; i < items.length; i += 3) lines.push(items.slice(i, i + 3).join(' - '));
-                                    workingInfo += `<div class="professional-info" style="margin-top: 4px; line-height: 1.5;">${lines.join('<br/>')}</div>`;
+                                    // Check if all selected days have identical hours
+                                    const allSame = selectedDays.length > 0 && selectedDays.every((d: string) =>
+                                      hoursObj[d].start === hoursObj[selectedDays[0]].start &&
+                                      hoursObj[d].end === hoursObj[selectedDays[0]].end
+                                    );
+                                    if (allSame && selectedDays.length > 1) {
+                                      const first = DAY_FULL[selectedDays[0]] || selectedDays[0];
+                                      const last = DAY_FULL[selectedDays[selectedDays.length - 1]] || selectedDays[selectedDays.length - 1];
+                                      const t = hoursObj[selectedDays[0]];
+                                      workingInfo += `<div class="professional-info" style="margin-top: 4px; font-size: 11.5px; font-weight: 600; line-height: 1.5;">(${first} a ${last}: ${t.start} - ${t.end})</div>`;
+                                    } else if (allSame && selectedDays.length === 1) {
+                                      const d = selectedDays[0];
+                                      const t = hoursObj[d];
+                                      workingInfo += `<div class="professional-info" style="margin-top: 4px; font-size: 11px; line-height: 1.5;">(${DAY_FULL[d] || DAY_ABBR[d] || d}: ${t.start} - ${t.end})</div>`;
+                                    } else {
+                                      const items = selectedDays.map((d: string) => `(${DAY_ABBR[d] || d}: ${hoursObj[d].start} - ${hoursObj[d].end})`);
+                                      const lines: string[] = [];
+                                      for (let i = 0; i < items.length; i += 3) lines.push(items.slice(i, i + 3).join(' - '));
+                                      workingInfo += `<div class="professional-info" style="margin-top: 4px; font-size: 11px; line-height: 1.5;">${lines.join('<br/>')}</div>`;
+                                    }
                                   } else {
                                     throw new Error('not object');
                                   }
                                 } catch {
-                                  // Old plain-text format — show days + hours separately
                                   if (professional.working_days) {
                                     try {
                                       const days = JSON.parse(professional.working_days).map((d: string) => DAY_ABBR[d] || d).join(', ');
-                                      workingInfo += `<div class="professional-info" style="margin-top: 4px;"><strong>Dias:</strong> ${days}</div>`;
-                                    } catch { workingInfo += `<div class="professional-info" style="margin-top: 4px;"><strong>Dias:</strong> ${professional.working_days}</div>`; }
+                                      workingInfo += `<div class="professional-info" style="margin-top: 4px; font-size: 11px;"><strong>Dias:</strong> ${days}</div>`;
+                                    } catch { workingInfo += `<div class="professional-info" style="margin-top: 4px; font-size: 11px;"><strong>Dias:</strong> ${professional.working_days}</div>`; }
                                   }
-                                  workingInfo += `<div class="professional-info" style="margin-top: 1px;"><strong>Horário:</strong> ${professional.working_hours}</div>`;
+                                  workingInfo += `<div class="professional-info" style="margin-top: 1px; font-size: 11px;"><strong>Horário:</strong> ${professional.working_hours}</div>`;
                                 }
                               } else if (professional.working_days) {
                                 try {
                                   const days = JSON.parse(professional.working_days).map((d: string) => DAY_ABBR[d] || d).join(', ');
-                                  workingInfo += `<div class="professional-info" style="margin-top: 4px;"><strong>Dias:</strong> ${days}</div>`;
-                                } catch { workingInfo += `<div class="professional-info" style="margin-top: 4px;"><strong>Dias:</strong> ${professional.working_days}</div>`; }
+                                  workingInfo += `<div class="professional-info" style="margin-top: 4px; font-size: 11px;"><strong>Dias:</strong> ${days}</div>`;
+                                } catch { workingInfo += `<div class="professional-info" style="margin-top: 4px; font-size: 11px;"><strong>Dias:</strong> ${professional.working_days}</div>`; }
                               }
                               return workingInfo;
                             })()}
