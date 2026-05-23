@@ -1055,7 +1055,6 @@ export default function StepProcess() {
                               const isProvaPraticaFee = fee.name === 'Prova Prática';
                               
                               const hasProvaTeoricoStep = currentStepTypes.includes('prova_teorica');
-                              const hasCursoPraticoStep = currentStepTypes.includes('curso_pratico');
                               const hasProvaPraticaStep = currentStepTypes.includes('prova_pratica');
                               
                               // Desabilitar taxas se as etapas correspondentes não estiverem selecionadas
