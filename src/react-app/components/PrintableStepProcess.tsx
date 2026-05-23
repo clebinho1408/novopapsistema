@@ -485,13 +485,13 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
         }
         .instructions {
             border-top: 2px solid black;
-            padding-top: 12px;
+            padding-top: 4px;
             page-break-inside: avoid;
         }
         .instructions h3 {
             font-size: 14px;
             font-weight: bold;
-            margin-bottom: 7px;
+            margin-bottom: 4px;
         }
         .instructions-content {
             line-height: 1.2;
@@ -547,7 +547,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
             }
             .container { 
                 max-width: none;
-                margin: 4mm;
+                margin: 2mm 4mm 4mm 4mm;
                 min-height: calc(297mm - 18mm);
                 max-height: calc(297mm - 18mm);
                 overflow: hidden;
@@ -887,8 +887,8 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
         </div>
 
         ${processData.show_toxicologico_habilitacao ? `
-        <div style="width: 100%; margin-top: 10px; border: 2px solid #b45309; border-radius: 6px; background-color: #fffbeb; padding: 10px 16px; box-sizing: border-box;">
-          <div style="font-size: 12px; font-weight: bold; color: #92400e; line-height: 1.5; text-align: center;">
+        <div style="width: 100%; margin-top: 5px; border: 2px solid black; border-radius: 6px; background-color: #fffbeb; padding: 10px 16px; box-sizing: border-box;">
+          <div style="font-size: 12px; font-weight: bold; color: black; line-height: 1.5; text-align: center;">
             ⚠️ Atenção: Para obter sua CNH, você deve fazer o exame toxicológico em um laboratório credenciado ao SENATRAN. A carteira só será emitida com resultado positivo do teste.
           </div>
         </div>
