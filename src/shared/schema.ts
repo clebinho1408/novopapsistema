@@ -126,6 +126,7 @@ export const stepProcesses = pgTable('step_processes', {
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
   showToxicologicoMessage: boolean('show_toxicologico_message').default(false),
+  showToxicologicoHabilitacao: boolean('show_toxicologico_habilitacao').default(false),
 }, (table) => ({
   agencyIdx: index('idx_step_processes_agency_id').on(table.agencyId),
   userIdx: index('idx_step_processes_user_id').on(table.userId),

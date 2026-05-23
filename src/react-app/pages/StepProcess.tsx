@@ -40,7 +40,8 @@ export default function StepProcess() {
     selected_steps: [] as number[],
     selected_professionals: {} as Record<string, number>,
     selected_fees: [] as number[],
-    show_toxicologico_message: false
+    show_toxicologico_message: false,
+    show_toxicologico_habilitacao: false
   });
 
   useEffect(() => {
@@ -188,6 +189,19 @@ export default function StepProcess() {
       return { ...prev, selected_fees: newSelectedFees, selected_steps: newSelectedSteps };
     });
   }, [formData.client_name, fees, processSteps]);
+
+  // Auto-selecionar/desselecionar Toxicológico (1ª Habilitação) quando serviço ou prova prática mudarem
+  useEffect(() => {
+    if (processSteps.length === 0) return;
+    const provaPraticaStep = processSteps.find(s => s.type === 'prova_pratica');
+    const is1aHab = formData.client_name === '1º Habilitação';
+    const hasProvaPratica = provaPraticaStep ? formData.selected_steps.includes(provaPraticaStep.id) : false;
+    const shouldShow = is1aHab && hasProvaPratica;
+    setFormData(prev => {
+      if (prev.show_toxicologico_habilitacao === shouldShow) return prev;
+      return { ...prev, show_toxicologico_habilitacao: shouldShow };
+    });
+  }, [formData.client_name, formData.selected_steps, processSteps]);
 
     // Auto-selecionar credenciado de Foto e taxas vinculadas quando a cidade ou passos mudarem
     useEffect(() => {
@@ -543,7 +557,8 @@ export default function StepProcess() {
       selected_steps: [],
       selected_professionals: {},
       selected_fees: [],
-      show_toxicologico_message: false
+      show_toxicologico_message: false,
+      show_toxicologico_habilitacao: false
     });
     // Reset to first step
     setCurrentStep(1);
@@ -610,7 +625,8 @@ export default function StepProcess() {
           selected_steps: formData.selected_steps,
           selected_professionals: formData.selected_professionals,
           selected_fees: formData.selected_fees,
-          show_toxicologico_message: formData.show_toxicologico_message
+          show_toxicologico_message: formData.show_toxicologico_message,
+          show_toxicologico_habilitacao: formData.show_toxicologico_habilitacao
         })
       });
 
@@ -656,6 +672,7 @@ export default function StepProcess() {
           selected_fees: selectedFees,
           total_amount: calculateTotal().toString(),
           show_toxicologico_message: formData.show_toxicologico_message,
+          show_toxicologico_habilitacao: formData.show_toxicologico_habilitacao,
           general_instructions: instructions.general_instructions || ''
         };
 
@@ -672,7 +689,8 @@ export default function StepProcess() {
           selected_steps: [],
           selected_professionals: {},
           selected_fees: [],
-          show_toxicologico_message: false
+          show_toxicologico_message: false,
+          show_toxicologico_habilitacao: false
         });
         
         // Refresh the process list
@@ -708,6 +726,7 @@ export default function StepProcess() {
           selected_fees: data.fees || [],
           total_amount: process.total_amount || 0,
           show_toxicologico_message: data.show_toxicologico_message || false,
+          show_toxicologico_habilitacao: data.show_toxicologico_habilitacao || false,
           general_instructions: instructions.general_instructions || ''
         };
         setCurrentPrintData(printData);
@@ -918,6 +937,22 @@ export default function StepProcess() {
                           </label>
                         );
                       })}
+
+                      {/* Toxicológico (1ª Habilitação) — visível apenas quando serviço = 1ª Habilitação e Prova Prática selecionada */}
+                      {formData.client_name === '1º Habilitação' && (() => {
+                        const provaPraticaStep = processSteps.find(s => s.type === 'prova_pratica');
+                        return provaPraticaStep && formData.selected_steps.includes(provaPraticaStep.id);
+                      })() && (
+                        <label className="flex items-center space-x-3">
+                          <input
+                            type="checkbox"
+                            checked={formData.show_toxicologico_habilitacao}
+                            onChange={(e) => setFormData(prev => ({ ...prev, show_toxicologico_habilitacao: e.target.checked }))}
+                            className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          />
+                          <span className="text-gray-900">Toxicológico (1º Habilitação)</span>
+                        </label>
+                      )}
                     </div>
 
                     {/* Professional selection for selected steps (excluding taxa and new course/exam steps) */}

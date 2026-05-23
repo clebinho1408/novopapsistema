@@ -19,6 +19,7 @@ interface PrintableStepProcessProps {
     selected_fees: Fee[];
     total_amount: string; // Database returns as string (decimal/numeric)
     show_toxicologico_message?: boolean;
+    show_toxicologico_habilitacao?: boolean;
   };
 }
 
@@ -884,6 +885,14 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
               }).join('');
             })()}
         </div>
+
+        ${processData.show_toxicologico_habilitacao ? `
+        <div style="width: 100%; margin-top: 10px; border: 2px solid #b45309; border-radius: 6px; background-color: #fffbeb; padding: 10px 16px; box-sizing: border-box;">
+          <div style="font-size: 12px; font-weight: bold; color: #92400e; line-height: 1.5; text-align: center;">
+            ⚠️ Atenção: Para obter sua CNH, você deve fazer o exame toxicológico em um laboratório credenciado ao SENATRAN. A carteira só será emitida com resultado positivo do teste.
+          </div>
+        </div>
+        ` : ''}
 
         <!-- Total Amount Card and Prova Card Container -->
         <div class="total-and-prova-container">
