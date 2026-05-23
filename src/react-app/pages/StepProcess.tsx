@@ -190,18 +190,17 @@ export default function StepProcess() {
     });
   }, [formData.client_name, fees, processSteps]);
 
-  // Auto-selecionar/desselecionar Toxicológico (1ª Habilitação) quando serviço ou prova prática mudarem
+  // Auto-selecionar/desselecionar Toxicológico (1ª Habilitação) quando prova prática for selecionada
   useEffect(() => {
     if (processSteps.length === 0) return;
     const provaPraticaStep = processSteps.find(s => s.type === 'prova_pratica');
-    const is1aHab = formData.client_name === '1º Habilitação';
     const hasProvaPratica = provaPraticaStep ? formData.selected_steps.includes(provaPraticaStep.id) : false;
-    const shouldShow = is1aHab && hasProvaPratica;
+    const shouldShow = hasProvaPratica;
     setFormData(prev => {
       if (prev.show_toxicologico_habilitacao === shouldShow) return prev;
       return { ...prev, show_toxicologico_habilitacao: shouldShow };
     });
-  }, [formData.client_name, formData.selected_steps, processSteps]);
+  }, [formData.selected_steps, processSteps]);
 
     // Auto-selecionar credenciado de Foto e taxas vinculadas quando a cidade ou passos mudarem
     useEffect(() => {
@@ -938,8 +937,8 @@ export default function StepProcess() {
                         );
                       })}
 
-                      {/* Toxicológico (1ª Habilitação) — visível apenas quando serviço = 1ª Habilitação e Prova Prática selecionada */}
-                      {formData.client_name === '1º Habilitação' && (() => {
+                      {/* Toxicológico (1ª Habilitação) — visível sempre que Prova Prática estiver selecionada */}
+                      {(() => {
                         const provaPraticaStep = processSteps.find(s => s.type === 'prova_pratica');
                         return provaPraticaStep && formData.selected_steps.includes(provaPraticaStep.id);
                       })() && (
@@ -1062,7 +1061,7 @@ export default function StepProcess() {
                               // Desabilitar taxas se as etapas correspondentes não estiverem selecionadas
                               const isSpecificFeeDisabled = 
                                 (isProvaTeoricoFee && !hasProvaTeoricoStep) ||
-                                (isLadvFee && !hasCursoPraticoStep) ||
+                                isLadvFee ||
                                 (isProvaPraticaFee && !hasProvaPraticaStep);
                               
                               const isFeeDisabled = !isTaxaStepSelected || isProvaFee || isSpecificFeeDisabled;
