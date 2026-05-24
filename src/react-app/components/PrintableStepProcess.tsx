@@ -916,8 +916,8 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
 
                         ${linkedFee ? (
                           (step.type === 'medico' && processData.selected_steps.some((s: any) => s.type === 'prova')) ? `
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 8px 6px 8px; gap: 6px;">
-                              <span style="font-size: 8.5px; color: #333; line-height: 1.3; font-style: italic;">Esta taxa será cobrada 3X (Uma por Médico)</span>
+                            <div style="display: flex; justify-content: flex-end; align-items: center; padding: 0 8px 6px 8px; gap: 8px;">
+                              <strong style="font-size: 8.5px; color: #333; line-height: 1.3;">Esta taxa será cobrada 3X (Uma por Médico)</strong>
                               <div class="fee-badge" style="margin: 0; flex-shrink: 0;">
                                 <strong>TAXA: R$ ${parseFloat(linkedFee.amount).toFixed(2)}</strong>
                               </div>
