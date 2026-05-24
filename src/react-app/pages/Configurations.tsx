@@ -160,13 +160,13 @@ function StepsConfiguration({ steps, onUpdate }: { steps: ProcessStep[], onUpdat
       </div>
       <div className="p-6">
         <div className="space-y-4">
-          {steps.filter(step => step.type !== 'prova').map((step) => {
+          {steps.filter(step => step.type !== 'prova').map((step, index) => {
             const isEditable = EDITABLE_STEP_TYPES.includes(step.type);
             return (
               <div key={step.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center justify-center w-10 h-10 bg-orange-100 text-orange-600 rounded-full font-bold">
-                    {step.sort_order}
+                    {index + 1}
                   </div>
                   <div>
                     <h3 className="font-medium text-gray-900">{step.name}</h3>
