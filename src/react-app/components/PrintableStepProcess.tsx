@@ -914,11 +914,18 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                             </div>
                         `}
 
-                        ${linkedFee ? `
+                        ${linkedFee ? (
+                          (step.type === 'medico' && processData.selected_steps.some((s: any) => s.type === 'prova')) ? `
+                            <div class="fee-badge" style="display: flex; justify-content: space-between; align-items: center; gap: 6px;">
+                              <span style="font-size: 8.5px; color: #333; line-height: 1.3; flex: 1;">Esta taxa será cobrada 3X<br/>(Uma por Médico)</span>
+                              <strong style="white-space: nowrap;">TAXA: R$ ${parseFloat(linkedFee.amount).toFixed(2)}</strong>
+                            </div>
+                          ` : `
                             <div class="fee-badge">
                                 <strong>${(['medico', 'psicologo'].includes(step.type)) ? 'TAXA' : `TAXA ${linkedFee.name}`}: R$ ${parseFloat(linkedFee.amount).toFixed(2)}</strong>
                             </div>
-                        ` : ''}
+                          `
+                        ) : ''}
                     </div>
                 </div>
               `;
@@ -940,9 +947,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
               const allSteps = processData.all_steps || processData.selected_steps;
               const provaStep = allSteps.find(step => step.type === 'prova');
               const isSelected = provaStep ? processData.selected_steps.find(s => s.id === provaStep.id) : false;
-              const professional = (isSelected && provaStep) ? processData.selected_professionals[provaStep.id.toString()] : null;
-              
-              if (!provaStep || !isSelected || !professional) {
+              if (!provaStep || !isSelected) {
                 return `
                   <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
                     <div style="background-color: white; border: 2px solid black; padding: 9px; border-radius: 5px; text-align: center; max-width: 400px;">
@@ -973,39 +978,36 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
               });
               stepNumber++; // Incrementar para o passo atual (prova)
               
-              return `
+              (() => {
+                const pcdFee = processData.selected_fees.find((fee: Fee) => fee.linked_professional_type === 'prova');
+                const pcdFeeAmount = pcdFee ? parseFloat(String(pcdFee.amount)).toFixed(2) : '0.00';
+                const medicoFeeForBonus = processData.selected_fees.find((fee: Fee) => fee.linked_professional_type === 'medico');
+                const medicoBonus = medicoFeeForBonus ? parseFloat(String(medicoFeeForBonus.amount)) * 2 : 0;
+                const totalWithPCD = (processData.selected_fees.reduce((sum: number, fee: Fee) => sum + parseFloat(String(fee.amount)), 0) + medicoBonus).toFixed(2);
+                return `
                 <div style="display: flex; flex-direction: column; gap: 6px; width: 100%;">
                   <div style="display: flex; gap: 8px; align-items: stretch;">
-                    <div class="prova-card" style="flex: 1;">
-                        <div class="prova-header">
-                            <div class="step-icon">📝</div>
-                            <div class="prova-title">
+                    <div class="step-card-with-fee" style="flex: 1;">
+                        <div class="step-header">
+                            <div class="step-icon" style="font-size: 28px;">♿</div>
+                            <div class="step-number-and-title">
                                 <p class="step-number-text"><strong>(${stepNumber}º) PASSO</strong></p>
-                                <div class="step-title"><strong>PROVA PCD</strong></div>
+                                <div class="step-title"><strong>AGENDAMENTO PROVA DE DIREÇÃO PCD</strong></div>
                             </div>
                         </div>
-                        <div class="prova-content">
-                            <div class="professional-name"><strong>${professional.name}</strong></div>
-                            ${professional.attendance_type ? `
-                                <div class="schedule-info">
-                                    <div class="schedule-label"><strong>${professional.attendance_type}:</strong></div>
-                                    ${professional.phone ? `
-                                        <div class="professional-info" style="font-size: ${sizes.professionalPhone};"><strong>${professional.phone}</strong> - Somente mensagem WhatsApp</div>
-                                    ` : ''}
+                        <div class="step-content-with-fee">
+                            <div style="font-size: 12px; line-height: 1.8; color: black; padding: 4px 0;">
+                                <div><strong>1º Passo:</strong> Pagar a Taxa</div>
+                                <div><strong>2º Passo:</strong> Enviar uma mensagem WhatsApp para</div>
+                                <div style="display: flex; align-items: center; gap: 12px; margin-top: 6px;">
+                                    <strong style="font-size: 13px;">(47) 99227-4189</strong>
+                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=72x72&data=https://wa.me/5547992274189" alt="QR WhatsApp" style="width: 72px; height: 72px; display: block;" />
                                 </div>
-                            ` : ''}
-                            ${professional.email ? `
-                                <div class="professional-info"><strong>Email:</strong> ${professional.email}</div>
-                            ` : ''}
-                            ${professional.observations ? `
-                                <div class="professional-info"><strong>OBS:</strong> ${professional.observations}</div>
-                            ` : ''}
+                            </div>
                         </div>
-                    </div>
-                    <div style="flex: 1; border: 2px solid black; border-radius: 5px; padding: 12px; display: flex; align-items: center; justify-content: center; background-color: #fff;">
-                      <p style="font-size: 13px; font-weight: bold; color: black; margin: 0; line-height: 1.5; text-align: center;">
-                        Caso seja registrada restrição PCD pelo médico, será necessário passar por mais dois médicos, quitar as taxas correspondentes a cada um e, em seguida, agendar e realizar a Prova de Direção Veicular.
-                      </p>
+                        <div class="fee-badge">
+                            <strong>TAXA: R$ ${pcdFeeAmount}</strong>
+                        </div>
                     </div>
                   </div>
                   
@@ -1015,12 +1017,12 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                     </div>
                     <div class="total-amount-card">
                       <div class="total-amount-box">
-                          <div class="total-amount-text"><strong>VALOR TOTAL: R$ ${processData.selected_fees.reduce((sum: number, fee: Fee) => sum + parseFloat(String(fee.amount)), 0).toFixed(2)}</strong></div>
+                          <div class="total-amount-text"><strong>VALOR TOTAL: R$ ${totalWithPCD}</strong></div>
                       </div>
                     </div>
                   </div>
                 </div>
-              `;
+              `})();
             })()}
         </div>
 

@@ -362,6 +362,10 @@ export default function StepProcess() {
             const emissaoCNHFee = fees.find(f => f.name === 'Emissão da CNH');
             if (emissaoCNHFee) newFees = newFees.filter(id => id !== emissaoCNHFee.id);
           }
+          if (step?.type === 'prova') {
+            const pcdFee = fees.find(f => f.linked_professional_type === 'prova');
+            if (pcdFee) newFees = newFees.filter(id => id !== pcdFee.id);
+          }
         }
         
         return {
@@ -401,6 +405,9 @@ export default function StepProcess() {
         if (emissaoCNHFee && !newFees.includes(emissaoCNHFee.id)) {
           newFees.push(emissaoCNHFee.id);
         }
+      } else if (step?.type === 'prova') {
+        const pcdFee = fees.find(f => f.linked_professional_type === 'prova');
+        if (pcdFee && !newFees.includes(pcdFee.id)) newFees.push(pcdFee.id);
       }
 
       // Regra de exclusão da Prova PCD e Transferência
@@ -577,7 +584,6 @@ export default function StepProcess() {
   };
 
   const calculateTotal = () => {
-    // 1. Pegar IDs de taxas que devem estar selecionadas baseado na lógica de vínculo
     const autoSelectedFeeIds = fees.filter(fee => {
       if (!fee.linked_professional_type) return false;
       const step = processSteps.find(s => s.type === fee.linked_professional_type);
@@ -587,14 +593,23 @@ export default function StepProcess() {
       return isStepSelected && (['medico', 'psicologo'].includes(step.type) ? hasProfessional : true);
     }).map(f => f.id);
 
-    // 2. Unir as taxas selecionadas manualmente com as que devem estar vinculadas
     const allUniqueFeeIds = Array.from(new Set([...formData.selected_fees, ...autoSelectedFeeIds]));
 
-    // 3. Calcular o total real
-    return allUniqueFeeIds.reduce((total, feeId) => {
+    const base = allUniqueFeeIds.reduce((total, feeId) => {
       const fee = fees.find(f => f.id === feeId);
       return total + (fee ? parseFloat(fee.amount) : 0);
     }, 0);
+
+    // Bônus PCD: taxa do médico cobrada 3x quando etapa PCD selecionada + médico com credenciado
+    const provaStep = processSteps.find(s => s.type === 'prova');
+    const isPCDSelected = provaStep ? formData.selected_steps.includes(provaStep.id) : false;
+    const medicoStep = processSteps.find(s => s.type === 'medico');
+    const medicoFee = fees.find(f => f.linked_professional_type === 'medico');
+    const pcdBonus = (isPCDSelected && medicoStep && medicoFee && formData.selected_professionals[medicoStep.id])
+      ? parseFloat(medicoFee.amount) * 2
+      : 0;
+
+    return base + pcdBonus;
   };
 
   const handleSubmit = async () => {
@@ -979,7 +994,7 @@ export default function StepProcess() {
                     {/* Professional selection for selected steps (excluding taxa and new course/exam steps) */}
                     {formData.selected_steps.filter(stepId => {
                       const step = processSteps.find(s => s.id === stepId);
-                      const excludedTypes = ['taxa', 'curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'];
+                      const excludedTypes = ['taxa', 'curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica', 'prova'];
                       return step && !excludedTypes.includes(step.type);
                     }).length > 0 && (
                       <div className="mt-6">
@@ -987,7 +1002,7 @@ export default function StepProcess() {
                         <div className="space-y-4">
                           {formData.selected_steps.filter(stepId => {
                             const step = processSteps.find(s => s.id === stepId);
-                            const excludedTypes = ['taxa', 'curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'];
+                            const excludedTypes = ['taxa', 'curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica', 'prova'];
                             return step && !excludedTypes.includes(step.type);
                           }).map(stepId => {
                             const step = processSteps.find(s => s.id === stepId);
@@ -1235,7 +1250,7 @@ export default function StepProcess() {
                             // Verificar se todos os steps que precisam de profissional têm profissionais selecionados
                             formData.selected_steps.filter(stepId => {
                               const step = processSteps.find(s => s.id === stepId);
-                              const excludedTypes = ['taxa', 'curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'];
+                              const excludedTypes = ['taxa', 'curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica', 'prova'];
                               return step && !excludedTypes.includes(step.type);
                             }).some(stepId => !formData.selected_professionals[stepId])
                           ))
