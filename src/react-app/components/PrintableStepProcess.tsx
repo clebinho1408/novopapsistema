@@ -916,9 +916,11 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
 
                         ${linkedFee ? (
                           (step.type === 'medico' && processData.selected_steps.some((s: any) => s.type === 'prova')) ? `
-                            <div class="fee-badge" style="display: flex; justify-content: space-between; align-items: center; gap: 6px;">
-                              <span style="font-size: 8.5px; color: #333; line-height: 1.3; flex: 1;">Esta taxa será cobrada 3X<br/>(Uma por Médico)</span>
-                              <strong style="white-space: nowrap;">TAXA: R$ ${parseFloat(linkedFee.amount).toFixed(2)}</strong>
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 8px 6px 8px; gap: 6px;">
+                              <span style="font-size: 8.5px; color: #333; line-height: 1.3; font-style: italic;">Esta taxa será cobrada 3X (Uma por Médico)</span>
+                              <div class="fee-badge" style="margin: 0; flex-shrink: 0;">
+                                <strong>TAXA: R$ ${parseFloat(linkedFee.amount).toFixed(2)}</strong>
+                              </div>
                             </div>
                           ` : `
                             <div class="fee-badge">
@@ -978,7 +980,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
               });
               stepNumber++; // Incrementar para o passo atual (prova)
               
-              (() => {
+              return (() => {
                 const pcdFee = processData.selected_fees.find((fee: Fee) => fee.linked_professional_type === 'prova');
                 const pcdFeeAmount = pcdFee ? parseFloat(String(pcdFee.amount)).toFixed(2) : '0.00';
                 const medicoFeeForBonus = processData.selected_fees.find((fee: Fee) => fee.linked_professional_type === 'medico');
