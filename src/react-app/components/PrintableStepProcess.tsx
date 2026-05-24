@@ -20,6 +20,7 @@ interface PrintableStepProcessProps {
     total_amount: string; // Database returns as string (decimal/numeric)
     show_toxicologico_message?: boolean;
     show_toxicologico_habilitacao?: boolean;
+    general_instructions?: string;
   };
 }
 
@@ -76,7 +77,13 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
     try {
       const response = await fetch('/api/instructions', { credentials: 'include' });
       const data = await response.json();
-      setGeneralInstructions(data.general_instructions || '');
+      const is1aHab = processData.client_name === '1º Habilitação';
+      const hasProvaPratica = processData.selected_steps.some(s => s.type === 'prova_pratica');
+      const useFirstHab = is1aHab || (!processData.client_name && hasProvaPratica);
+      const resolved = useFirstHab
+        ? (data.instructions_primeira_habilitacao || '')
+        : (data.general_instructions || '');
+      setGeneralInstructions(resolved);
     } catch (error) {
       console.error('Error fetching instructions:', error);
     }
