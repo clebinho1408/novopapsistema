@@ -74,6 +74,7 @@ export default function StepProcess() {
     const provaTeoricoStep = processSteps.find(step => step.type === 'prova_teorica');
     const cursoPraticoStep = processSteps.find(step => step.type === 'curso_pratico');
     const provaPraticaStep = processSteps.find(step => step.type === 'prova_pratica');
+    const provaStep = processSteps.find(step => step.type === 'prova');
     
     if (!emissaoCNHFee || !transferenciaFee) return;
     
@@ -102,6 +103,14 @@ export default function StepProcess() {
         },
         'Renovação + EAR': {
           steps: ['foto', 'taxa', 'psicologo', 'medico'],
+          fees: ['Emissão da CNH']
+        },
+        'Renovação + PCD': {
+          steps: ['foto', 'taxa', 'medico', 'prova'],
+          fees: ['Emissão da CNH']
+        },
+        'Renovação + EAR + PCD': {
+          steps: ['foto', 'taxa', 'psicologo', 'medico', 'prova'],
           fees: ['Emissão da CNH']
         },
         'Transferência + Renovação': {
@@ -157,6 +166,9 @@ export default function StepProcess() {
         }
         if (rule.steps.includes('prova_pratica') && provaPraticaStep) {
           newSelectedSteps.push(provaPraticaStep.id);
+        }
+        if (rule.steps.includes('prova') && provaStep) {
+          newSelectedSteps.push(provaStep.id);
         }
         
         // Auto-selecionar taxas baseado na regra
@@ -920,6 +932,8 @@ export default function StepProcess() {
                         <option value="Alteração de Dados + EAR">Alteração de Dados + EAR</option>
                         <option value="Renovação">Renovação</option>
                         <option value="Renovação + EAR">Renovação + EAR</option>
+                        <option value="Renovação + PCD">Renovação + PCD</option>
+                        <option value="Renovação + EAR + PCD">Renovação + EAR + PCD</option>
                         <option value="Transferência + Renovação">Transferência + Renovação</option>
                         <option value="Transferência + Renovação + EAR">Transferência + Renovação + EAR</option>
                         <option value="Transferência + Alteração de Dados">Transferência + Alteração de Dados</option>

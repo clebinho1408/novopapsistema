@@ -25,6 +25,8 @@ Do not make changes to the `worker/` folder unless explicitly instructed, as it 
         * **Alteração de Dados + EAR**: Auto-selects Foto, Taxa, Exame Psicológico steps + Emissão da CNH fee
         * **Renovação**: Auto-selects Foto, Taxa, Exame Médico steps + Emissão da CNH fee
         * **Renovação + EAR**: Auto-selects Foto, Taxa, Exame Psicológico, Exame Médico steps + Emissão da CNH fee
+        * **Renovação + PCD**: Auto-selects Foto, Taxa, Exame Médico, PCD steps + Emissão da CNH fee
+        * **Renovação + EAR + PCD**: Auto-selects Foto, Taxa, Exame Psicológico, Exame Médico, PCD steps + Emissão da CNH fee
         * **Transferência + Renovação**: Auto-selects Foto, Taxa, Exame Médico steps + Emissão da CNH, Transferência fees
         * **Transferência + Renovação + EAR**: Auto-selects Foto, Taxa, Exame Psicológico, Exame Médico steps + Emissão da CNH, Transferência fees
         * **Transferência + Alteração de Dados**: Auto-selects Foto, Taxa steps + Emissão da CNH, Transferência fees
