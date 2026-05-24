@@ -673,7 +673,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
             }
         }
         @page {
-            margin: 5mm;
+            margin: 5mm 5mm 0mm 5mm;
             size: A4;
             orphans: 4;
             widows: 4;
