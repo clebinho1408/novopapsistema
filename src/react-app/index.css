@@ -99,6 +99,30 @@
 .dark ::-webkit-scrollbar-thumb  { background: #334155; border-radius: 4px; }
 .dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
 
+/* ---- Tela de Login / Registro ---- */
+
+/* Gradiente de fundo da página (from-blue-50 via-indigo-50 to-purple-50) */
+.dark .from-blue-50 {
+  --tw-gradient-from: #0f172a !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(15,23,42,0)) !important;
+}
+.dark .via-indigo-50 {
+  --tw-gradient-via: #1e1b4b !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-via), var(--tw-gradient-to, rgba(30,27,75,0)) !important;
+}
+.dark .to-purple-50   { --tw-gradient-to: #1a0533 !important; }
+
+/* Card com fundo branco semi-transparente (bg-white/80) */
+.dark .bg-white\/80   { background-color: rgba(15, 23, 42, 0.95) !important; }
+
+/* Borda translúcida do card (border-white/20) */
+.dark .border-white\/20 { border-color: rgba(148, 163, 184, 0.15) !important; }
+
+/* Caixa de erro */
+.dark .bg-red-50      { background-color: #450a0a !important; }
+.dark .border-red-200 { border-color: #991b1b !important; }
+.dark .text-red-700   { color: #fca5a5 !important; }
+
 /* Otimização de fontes */
 @layer base {
   * {
