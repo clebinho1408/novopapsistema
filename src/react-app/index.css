@@ -7,6 +7,9 @@
    Aplicado quando <html class="dark"> está ativo
    ============================================= */
 
+/* Cor base do corpo — cobre <p>, <strong>, <span> sem classe explícita */
+.dark body               { color: #e2e8f0; }
+
 /* Fundos principais */
 .dark .bg-white          { background-color: #1e293b !important; }
 .dark .bg-gray-50        { background-color: #0f172a !important; }

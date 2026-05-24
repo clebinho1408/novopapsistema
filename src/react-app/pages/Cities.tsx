@@ -2,6 +2,7 @@ import Layout from '@/react-app/components/Layout';
 import { useState, useEffect } from 'react';
 import { MapPin, Plus, Edit, Trash2, Search } from 'lucide-react';
 import type { City } from '@/shared/types';
+import { useDialog } from '@/react-app/components/Dialog';
 
 function Cities() {
   const [cities, setCities] = useState<City[]>([]);
@@ -10,6 +11,7 @@ function Cities() {
   const [editingCity, setEditingCity] = useState<City | null>(null);
   const [formData, setFormData] = useState({ name: '' });
   const [isLoading, setIsLoading] = useState(false);
+  const { showConfirm, DialogComponent } = useDialog();
 
   useEffect(() => {
     fetchCities();
@@ -54,7 +56,7 @@ function Cities() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Tem certeza que deseja excluir esta cidade?')) return;
+    if (!await showConfirm('Tem certeza que deseja excluir esta cidade?', 'Excluir Cidade', 'error')) return;
 
     try {
       await fetch(`/api/cities/${id}`, {
@@ -193,6 +195,7 @@ function Cities() {
           </div>
         </div>
       )}
+      {DialogComponent}
     </Layout>
   );
 }

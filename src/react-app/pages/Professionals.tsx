@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Users, Plus, Edit, Trash2, Search, Phone, MapPin, Clock, CalendarClock, X, Trash } from 'lucide-react';
 import type { Professional, City, ProfessionalType, AttendanceType } from '@/shared/types';
 import { PROFESSIONAL_TYPE_LABELS } from '@/shared/types';
+import { useDialog } from '@/react-app/components/Dialog';
 
 const DAYS = [
   { value: 'monday', label: 'Segunda' },
@@ -54,6 +55,7 @@ export default function Professionals() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [userRole, setUserRole] = useState<string>('');
+  const { showAlert, showConfirm, DialogComponent } = useDialog();
 
   // Schedule modal state
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
@@ -128,8 +130,8 @@ export default function Professionals() {
     setIsLoading(true);
 
     try {
-      if (!formData.name.trim()) { alert('Nome é obrigatório'); setIsLoading(false); return; }
-      if (!formData.city_id) { alert('Cidade é obrigatória'); setIsLoading(false); return; }
+      if (!formData.name.trim()) { await showAlert('Nome é obrigatório.', 'warning'); setIsLoading(false); return; }
+      if (!formData.city_id) { await showAlert('Cidade é obrigatória.', 'warning'); setIsLoading(false); return; }
 
       const method = editingProfessional ? 'PATCH' : 'POST';
       const url = editingProfessional ? `/api/professionals/${editingProfessional.id}` : '/api/professionals';
@@ -162,23 +164,23 @@ export default function Professionals() {
         resetForm();
       } else {
         const errorData = await response.json().catch(() => ({}));
-        alert(errorData.error || `Erro HTTP ${response.status}`);
+        await showAlert(errorData.error || `Erro HTTP ${response.status}`, 'error');
       }
     } catch (networkError: any) {
-      alert(`Erro de conexão: ${networkError instanceof Error ? networkError.message : 'Erro desconhecido'}`);
+      await showAlert(`Erro de conexão: ${networkError instanceof Error ? networkError.message : 'Erro desconhecido'}`, 'error');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Tem certeza que deseja excluir este credenciado?')) return;
+    if (!await showConfirm('Tem certeza que deseja excluir este credenciado?', 'Excluir Credenciado', 'error')) return;
     try {
       const response = await fetch(`/api/professionals/${id}`, { method: 'DELETE', credentials: 'include' });
-      if (response.ok) { fetchProfessionals(); alert('Credenciado excluído com sucesso!'); }
-      else alert('Erro ao excluir credenciado. Tente novamente.');
+      if (response.ok) { fetchProfessionals(); await showAlert('Credenciado excluído com sucesso!', 'success'); }
+      else await showAlert('Erro ao excluir credenciado. Tente novamente.', 'error');
     } catch (error) {
-      alert(`Erro ao excluir: ${error instanceof Error ? error.message : 'Erro de conexão'}`);
+      await showAlert(`Erro ao excluir: ${error instanceof Error ? error.message : 'Erro de conexão'}`, 'error');
     }
   };
 
@@ -197,9 +199,9 @@ export default function Professionals() {
   const handleScheduleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!schedulingProfessional) return;
-    if (!scheduleForm.scheduled_at) { alert('Informe a data e hora do agendamento'); return; }
+    if (!scheduleForm.scheduled_at) { await showAlert('Informe a data e hora do agendamento.', 'warning'); return; }
     if (!scheduleForm.change_working_days && !scheduleForm.change_working_hours && !scheduleForm.change_observations) {
-      alert('Selecione pelo menos um campo para alterar');
+      await showAlert('Selecione pelo menos um campo para alterar.', 'warning');
       return;
     }
     setIsScheduleLoading(true);
@@ -217,15 +219,15 @@ export default function Professionals() {
         body: JSON.stringify(payload),
       });
       if (response.ok) {
-        alert('Alteração agendada com sucesso!');
+        await showAlert('Alteração agendada com sucesso!', 'success');
         setScheduleForm({ scheduled_at: '', working_days: [], working_hours: {}, observations: '', change_working_days: false, change_working_hours: false, change_observations: false });
         fetchScheduledChanges(schedulingProfessional.id);
       } else {
         const err = await response.json().catch(() => ({}));
-        alert(err.error || 'Erro ao agendar alteração');
+        await showAlert(err.error || 'Erro ao agendar alteração', 'error');
       }
     } catch (error) {
-      alert('Erro de conexão');
+      await showAlert('Erro de conexão.', 'error');
     } finally {
       setIsScheduleLoading(false);
     }
@@ -233,15 +235,15 @@ export default function Professionals() {
 
   const handleDeleteSchedule = async (changeId: number) => {
     if (!schedulingProfessional) return;
-    if (!confirm('Cancelar este agendamento?')) return;
+    if (!await showConfirm('Cancelar este agendamento?', 'Cancelar Agendamento', 'warning')) return;
     try {
       const response = await fetch(`/api/professionals/${schedulingProfessional.id}/scheduled-changes/${changeId}`, {
         method: 'DELETE', credentials: 'include'
       });
       if (response.ok) fetchScheduledChanges(schedulingProfessional.id);
-      else alert('Erro ao cancelar agendamento');
+      else await showAlert('Erro ao cancelar agendamento.', 'error');
     } catch {
-      alert('Erro de conexão');
+      await showAlert('Erro de conexão.', 'error');
     }
   };
 
@@ -688,6 +690,7 @@ export default function Professionals() {
           </div>
         </div>
       )}
+      {DialogComponent}
     </Layout>
   );
 }

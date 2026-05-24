@@ -5,6 +5,7 @@ import type { ProcessStep, Fee, ProfessionalType } from '@/shared/types';
 import { PROFESSIONAL_TYPE_LABELS } from '@/shared/types';
 import RichTextEditor from '@/react-app/components/RichTextEditor';
 import UserManagement from '@/react-app/components/UserManagement';
+import { useDialog } from '@/react-app/components/Dialog';
 
 type TabType = 'steps' | 'fees' | 'users' | 'instructions' | 'agency' | 'processes';
 
@@ -104,6 +105,7 @@ function StepsConfiguration({ steps, onUpdate }: { steps: ProcessStep[], onUpdat
   const [editingStep, setEditingStep] = useState<ProcessStep | null>(null);
   const [formData, setFormData] = useState({ title: '', description: '', obs: '' });
   const [isLoading, setIsLoading] = useState(false);
+  const { showAlert, DialogComponent: StepsDialog } = useDialog();
 
   const handleEdit = (step: ProcessStep) => {
     setEditingStep(step);
@@ -140,11 +142,11 @@ function StepsConfiguration({ steps, onUpdate }: { steps: ProcessStep[], onUpdat
         onUpdate();
       } else {
         const error = await response.json();
-        alert(error.error || 'Erro ao salvar etapa');
+        await showAlert(error.error || 'Erro ao salvar etapa', 'error');
       }
     } catch (error) {
       console.error('Error saving step:', error);
-      alert('Erro ao salvar etapa');
+      await showAlert('Erro ao salvar etapa', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -251,6 +253,7 @@ function StepsConfiguration({ steps, onUpdate }: { steps: ProcessStep[], onUpdat
           </div>
         </div>
       )}
+      {StepsDialog}
     </div>
   );
 }
@@ -260,6 +263,7 @@ function FeesConfiguration({ fees, onUpdate }: { fees: Fee[], onUpdate: () => vo
   const [editingFee, setEditingFee] = useState<Fee | null>(null);
   const [formData, setFormData] = useState({ name: '', amount: '' });
   const [isLoading, setIsLoading] = useState(false);
+  const { showAlert, DialogComponent: FeesDialog } = useDialog();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -285,11 +289,11 @@ function FeesConfiguration({ fees, onUpdate }: { fees: Fee[], onUpdate: () => vo
         onUpdate();
       } else {
         const error = await response.json();
-        alert(error.error || 'Erro ao salvar taxa');
+        await showAlert(error.error || 'Erro ao salvar taxa', 'error');
       }
     } catch (error) {
       console.error('Error saving fee:', error);
-      alert('Erro ao salvar taxa');
+      await showAlert('Erro ao salvar taxa', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -397,6 +401,7 @@ function FeesConfiguration({ fees, onUpdate }: { fees: Fee[], onUpdate: () => vo
           </div>
         </div>
       )}
+      {FeesDialog}
     </div>
   );
 }
@@ -406,6 +411,7 @@ function InstructionsConfiguration() {
   const [instructionsPrimeiraHabilitacao, setInstructionsPrimeiraHabilitacao] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const { showAlert, DialogComponent: InstructionsDialog } = useDialog();
 
   useEffect(() => {
     fetchInstructions();
@@ -440,14 +446,14 @@ function InstructionsConfiguration() {
       });
 
       if (response.ok) {
-        alert('Instruções salvas com sucesso!');
+        await showAlert('Instruções salvas com sucesso!', 'success');
       } else {
         const error = await response.json();
-        alert(error.error || 'Erro ao salvar instruções');
+        await showAlert(error.error || 'Erro ao salvar instruções', 'error');
       }
     } catch (error) {
       console.error('Error saving instructions:', error);
-      alert('Erro ao salvar instruções');
+      await showAlert('Erro ao salvar instruções', 'error');
     } finally {
       setIsSaving(false);
     }
@@ -514,6 +520,7 @@ function InstructionsConfiguration() {
           </div>
         </div>
       </div>
+      {InstructionsDialog}
     </div>
   );
 }
@@ -523,6 +530,7 @@ function InstructionsConfiguration() {
 function ProcessesManagement() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [processCount, setProcessCount] = useState(0);
+  const { showAlert, showConfirm, DialogComponent: ProcessesDialog } = useDialog();
 
   useEffect(() => {
     fetchProcessCount();
@@ -539,13 +547,17 @@ function ProcessesManagement() {
   };
 
   const handleDeleteAll = async () => {
-    if (!confirm(`Tem certeza que deseja EXCLUIR TODOS os ${processCount} passo a passos criados? Esta ação não pode ser desfeita!`)) {
-      return;
-    }
+    if (!await showConfirm(
+      `Tem certeza que deseja EXCLUIR TODOS os ${processCount} passo a passos criados? Esta ação não pode ser desfeita!`,
+      'Excluir Todos os Processos',
+      'error'
+    )) return;
 
-    if (!confirm('ATENÇÃO: Esta ação é irreversível! Confirma a exclusão de TODOS os processos?')) {
-      return;
-    }
+    if (!await showConfirm(
+      'ATENÇÃO: Esta ação é irreversível! Confirma a exclusão de TODOS os processos?',
+      'Confirmação Final',
+      'error'
+    )) return;
 
     setIsDeleting(true);
     try {
@@ -555,15 +567,15 @@ function ProcessesManagement() {
       });
 
       if (response.ok) {
-        alert('Todos os processos foram excluídos com sucesso!');
+        await showAlert('Todos os processos foram excluídos com sucesso!', 'success');
         fetchProcessCount();
       } else {
         const error = await response.json();
-        alert(error.error || 'Erro ao excluir processos');
+        await showAlert(error.error || 'Erro ao excluir processos', 'error');
       }
     } catch (error) {
       console.error('Error deleting processes:', error);
-      alert('Erro ao excluir processos');
+      await showAlert('Erro ao excluir processos', 'error');
     } finally {
       setIsDeleting(false);
     }
@@ -609,11 +621,13 @@ function ProcessesManagement() {
           </div>
         </div>
       </div>
+      {ProcessesDialog}
     </div>
   );
 }
 
 function AgencyDataConfiguration() {
+  const { showAlert, DialogComponent: AgencyDialog } = useDialog();
   const [agencyData, setAgencyData] = useState<any>(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -685,14 +699,14 @@ function AgencyDataConfiguration() {
         const updatedData = await response.json();
         setAgencyData(updatedData);
         setIsEditing(false);
-        alert('Dados da agência atualizados com sucesso!');
+        await showAlert('Dados da agência atualizados com sucesso!', 'success');
       } else {
         const error = await response.json();
-        alert(error.error || 'Erro ao atualizar dados da agência');
+        await showAlert(error.error || 'Erro ao atualizar dados da agência', 'error');
       }
     } catch (error) {
       console.error('Error updating agency data:', error);
-      alert('Erro ao atualizar dados da agência');
+      await showAlert('Erro ao atualizar dados da agência', 'error');
     } finally {
       setIsSaving(false);
     }
@@ -715,12 +729,12 @@ function AgencyDataConfiguration() {
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      alert('Apenas arquivos de imagem são permitidos');
+      await showAlert('Apenas arquivos de imagem são permitidos.', 'warning');
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      alert('Arquivo muito grande. Máximo 5MB');
+      await showAlert('Arquivo muito grande. Máximo 5MB.', 'warning');
       return;
     }
 
@@ -740,14 +754,14 @@ function AgencyDataConfiguration() {
         const data = await response.json();
         setHasLogo(true);
         setPreviewUrl(`/api/files/${encodeURIComponent(data.logo_key)}`);
-        alert('Logo atualizada com sucesso!');
+        await showAlert('Logo atualizada com sucesso!', 'success');
       } else {
         const error = await response.json();
-        alert(error.error || 'Erro ao fazer upload da logo');
+        await showAlert(error.error || 'Erro ao fazer upload da logo', 'error');
       }
     } catch (error) {
       console.error('Error uploading logo:', error);
-      alert('Erro ao fazer upload da logo');
+      await showAlert('Erro ao fazer upload da logo', 'error');
     } finally {
       setIsUploading(false);
     }
@@ -993,6 +1007,7 @@ function AgencyDataConfiguration() {
           </div>
         </div>
       </div>
+      {AgencyDialog}
     </div>
   );
 }

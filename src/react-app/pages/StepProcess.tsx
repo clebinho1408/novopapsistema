@@ -3,10 +3,12 @@ import PrintableStepProcess from '@/react-app/components/PrintableStepProcess';
 import { useState, useEffect, useRef } from 'react';
 import { FileText, MapPin, DollarSign, CheckCircle, Eye, AlertTriangle } from 'lucide-react';
 import type { City, ProcessStep, Fee, Professional } from '@/shared/types';
+import { useDialog } from '@/react-app/components/Dialog';
 
 export default function StepProcess() {
   const [currentStep, setCurrentStep] = useState(1);
   const saveButtonRef = useRef<HTMLButtonElement>(null);
+  const { showAlert, DialogComponent } = useDialog();
   const [cities, setCities] = useState<City[]>([]);
   const [processSteps, setProcessSteps] = useState<ProcessStep[]>([]);
   const [fees, setFees] = useState<Fee[]>([]);
@@ -599,12 +601,12 @@ export default function StepProcess() {
     try {
       // Validate form data before sending
       if (!formData.city_id) {
-        alert('Por favor, selecione uma cidade.');
+        await showAlert('Por favor, selecione uma cidade.', 'warning');
         return;
       }
 
       if (formData.selected_steps.length === 0) {
-        alert('Por favor, selecione pelo menos uma etapa.');
+        await showAlert('Por favor, selecione pelo menos uma etapa.', 'warning');
         return;
       }
 
@@ -704,11 +706,11 @@ export default function StepProcess() {
       } else {
         console.error('Error response:', response.status, responseData);
         const errorMessage = responseData.error || 'Erro ao salvar processo. Tente novamente.';
-        alert(errorMessage);
+        await showAlert(errorMessage, 'error');
       }
     } catch (error) {
       console.error('Error creating process:', error);
-      alert('Erro de conexão. Verifique sua internet e tente novamente.');
+      await showAlert('Erro de conexão. Verifique sua internet e tente novamente.', 'error');
     } finally {
       setIsSaving(false);
     }
@@ -1489,6 +1491,7 @@ export default function StepProcess() {
           processData={currentPrintData}
         />
       )}
+      {DialogComponent}
     </Layout>
   );
 }
