@@ -988,31 +988,42 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                 const totalWithPCD = (processData.selected_fees.reduce((sum: number, fee: Fee) => sum + parseFloat(String(fee.amount)), 0) + medicoBonus).toFixed(2);
                 return `
                 <div style="display: flex; flex-direction: column; gap: 6px; width: 100%;">
-                  <div style="display: flex; gap: 8px; align-items: stretch;">
-                    <div class="step-card-with-fee" style="flex: 1;">
-                        <div class="step-header">
-                            <div class="step-icon" style="font-size: 28px;">♿</div>
-                            <div class="step-number-and-title">
-                                <p class="step-number-text"><strong>(${stepNumber}º) PASSO</strong></p>
-                                <div class="step-title"><strong>AGENDAMENTO PROVA DE DIREÇÃO PCD</strong></div>
-                            </div>
-                        </div>
-                        <div class="step-content-with-fee">
-                            <div style="font-size: 12px; line-height: 1.8; color: black; padding: 4px 0;">
-                                <div><strong>1º Passo:</strong> Pagar a Taxa</div>
-                                <div><strong>2º Passo:</strong> Enviar uma mensagem WhatsApp para</div>
-                                <div style="display: flex; align-items: center; gap: 12px; margin-top: 6px;">
-                                    <strong style="font-size: 13px;">(47) 99227-4189</strong>
-                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=72x72&data=https://wa.me/5547992274189" alt="QR WhatsApp" style="width: 72px; height: 72px; display: block;" />
-                                </div>
-                            </div>
-                        </div>
-                        <div class="fee-badge">
-                            <strong>TAXA: R$ ${pcdFeeAmount}</strong>
+                  <!-- Bloco PCD principal -->
+                  <div style="border: 2px solid black; border-radius: 5px; background: white; width: 100%; box-sizing: border-box;">
+                    <!-- Cabeçalho -->
+                    <div class="step-header" style="border-bottom: 1px solid #ccc;">
+                        <div class="step-icon" style="font-size: 28px;">♿</div>
+                        <div class="step-number-and-title">
+                            <p class="step-number-text"><strong>(${stepNumber}º) PASSO</strong></p>
+                            <div class="step-title"><strong>AGENDAMENTO PROVA DE DIREÇÃO PCD</strong></div>
                         </div>
                     </div>
+                    <!-- Conteúdo em duas colunas -->
+                    <div style="display: flex; gap: 0; align-items: stretch; min-height: 110px;">
+                      <!-- Coluna esquerda: passos + QR code -->
+                      <div style="flex: 1; padding: 10px 12px; border-right: 1px solid #ccc; font-size: 12px; line-height: 1.8; color: black;">
+                          <div><strong>1º Passo:</strong> Pagar a Taxa</div>
+                          <div><strong>2º Passo:</strong> Enviar uma mensagem WhatsApp para</div>
+                          <div style="display: flex; align-items: center; gap: 10px; margin-top: 6px;">
+                              <strong style="font-size: 13px;">(47) 99227-4189</strong>
+                              <img src="https://api.qrserver.com/v1/create-qr-code/?size=72x72&data=https://wa.me/5547992274189" alt="QR WhatsApp" style="width: 72px; height: 72px; display: block;" />
+                          </div>
+                      </div>
+                      <!-- Coluna direita: aviso -->
+                      <div style="flex: 1.2; padding: 10px 14px; display: flex; flex-direction: column; justify-content: space-between;">
+                          <p style="font-size: 11.5px; font-weight: bold; color: black; line-height: 1.5; margin: 0; text-align: justify;">
+                            ATENÇÃO: O DETRAN não fornece veículo para a prova de direção. O condutor deve apresentar seu próprio veículo, já configurado com as restrições indicadas pelo médico na CNH. Se sua CNH estiver vencida, a prova deve ser realizada em uma autoescola ou em veículo com duplo comando de um instrutor autônomo.
+                          </p>
+                          <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
+                            <div class="fee-badge" style="margin: 0;">
+                                <strong>TAXA: R$ ${pcdFeeAmount}</strong>
+                            </div>
+                          </div>
+                      </div>
+                    </div>
                   </div>
-                  
+
+                  <!-- Total + aviso CNH -->
                   <div style="display: flex; gap: 10px; align-items: center; justify-content: space-between; width: 100%;">
                     <div style="background-color: white; border: 2px solid black; padding: 9px; border-radius: 5px; text-align: center; max-width: 400px;">
                       <div style="font-size: 12px; font-weight: bold; color: black; line-height: 1.3;">⚠️ ATENÇÃO: PRAZO PARA RETIRAR A CNH/PID FÍSICA SERÁ DE 180 DIAS, CONTANDO A PARTIR DA DATA DA SUA EMISSÃO</div>
