@@ -889,7 +889,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
         ${processData.show_toxicologico_habilitacao ? `
         <div style="width: 100%; margin-top: 5px; border: 2px solid black; border-radius: 6px; background-color: #fffbeb; padding: 10px 16px; box-sizing: border-box;">
           <div style="font-size: 12px; font-weight: bold; color: black; line-height: 1.5; text-align: center;">
-            ⚠️ Atenção: Para obter sua CNH, você deve fazer o exame toxicológico em um laboratório credenciado ao SENATRAN. A carteira só será emitida com resultado positivo do teste.
+            ⚠️ ATENÇÃO: PARA OBTER SUA CNH, VOCÊ DEVE FAZER O EXAME TOXICOLÓGICO EM UM LABORATÓRIO CREDENCIADO AO SENATRAN. A CARTEIRA SÓ SERÁ EMITIDA COM RESULTADO POSITIVO DO TESTE.
           </div>
         </div>
         ` : ''}
