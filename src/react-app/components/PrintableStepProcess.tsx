@@ -494,7 +494,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
             margin-bottom: 4px;
         }
         .instructions-content {
-            line-height: 1.2;
+            line-height: 1.1;
             color: #333;
             word-wrap: break-word;
             overflow-wrap: break-word;
@@ -503,11 +503,11 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
         .instructions-content p {
             margin: 0;
             padding: 0;
-            line-height: 1.15;
+            line-height: 1.1;
         }
         .instructions-content ul,
         .instructions-content ol {
-            margin: 3px 0;
+            margin: 2px 0;
             padding-left: 22px;
         }
         .instructions-content li {
@@ -523,7 +523,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
         .instructions-content br {
             display: block;
             content: "";
-            margin: 2px 0;
+            margin: 0;
         }
         .footer {
             margin-top: auto;
