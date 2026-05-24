@@ -692,6 +692,12 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                     <h1 style="font-size: ${sizes.headerTitle}; font-weight: bold; margin: 0;">SIGA O PASSO A PASSO</h1>
                 </div>
             </div>
+            ${currentUserName ? `
+            <div class="header-info">
+                <p style="font-size: 11px; margin: 0; line-height: 1.3;">Impresso por:</p>
+                <p style="font-size: 12px; font-weight: bold; margin: 0; line-height: 1.3;">${currentUserName}</p>
+            </div>
+            ` : ''}
         </div>
 
         <!-- Steps Grid -->
@@ -1027,13 +1033,6 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
         </div>
         ` : ''}
 
-        <!-- Footer -->
-        <div class="footer">
-            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                <p>Documento gerado pelo PAP - Sistema - ${new Date().toLocaleDateString('pt-BR')}</p>
-                ${currentUserName ? `<p>Impresso por: ${currentUserName}</p>` : ''}
-            </div>
-        </div>
     </div>
     <script>
         // Auto-adjust font size to fit content in one page
