@@ -492,7 +492,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
         }
         .instructions {
             border-top: 2px solid black;
-            padding-top: 4px;
+            padding-top: 8px;
             page-break-inside: avoid;
         }
         .instructions h3 {
@@ -545,6 +545,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
         .footer {
             margin-top: auto;
             padding-top: 4px;
+            padding-bottom: 8mm;
             border-top: 1px solid black;
             page-break-after: avoid;
             page-break-before: avoid;
