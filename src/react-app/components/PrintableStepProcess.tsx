@@ -898,8 +898,8 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                             <div class="fee-section">
                                 <h4><strong>TAXAS A PAGAR:</strong></h4>
                                 ${processData.selected_fees.filter(fee => {
-                                  // Incluir taxas sem vínculo OU com vínculo à prova, exceto LADV (exibida no card Curso Prático)
-                                  return (!fee.linked_professional_type || fee.linked_professional_type === 'prova') && fee.name !== 'LADV';
+                                  // Incluir apenas taxas sem vínculo, exceto LADV (exibida no card Curso Prático)
+                                  return !fee.linked_professional_type && fee.name !== 'LADV';
                                 }).map(fee => `
                                     <div class="fee-item"><strong>${fee.name}: R$ ${parseFloat(fee.amount).toFixed(2)}</strong></div>
                                 `).join('')}
@@ -917,7 +917,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                         ${linkedFee ? (
                           (step.type === 'medico' && processData.selected_steps.some((s: any) => s.type === 'prova')) ? `
                             <div style="position: absolute; bottom: 7px; right: 7px; display: flex; align-items: center; gap: 8px;">
-                              <strong style="font-size: 11px; color: #333; line-height: 1.3; white-space: nowrap;">Taxa cobrada 3X (Uma por Médico)</strong>
+                              <strong style="font-size: 12px; color: black; line-height: 1.3; white-space: nowrap;">Taxa cobrada 3X (Uma por Médico)</strong>
                               <span style="font-size: 12.5px; font-weight: bold; color: black; background-color: #f5f5f5; padding: 4px 10px; border: 2px solid black; border-radius: 4px; white-space: nowrap;">TAXA: R$ ${parseFloat(linkedFee.amount).toFixed(2)}</span>
                             </div>
                           ` : `
@@ -1013,9 +1013,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                             ATENÇÃO: O DETRAN não fornece veículo para a prova de direção. O condutor deve apresentar seu próprio veículo, já configurado com as restrições indicadas pelo médico na CNH. Se sua CNH estiver vencida, a prova deve ser realizada em uma autoescola ou em veículo com duplo comando de um instrutor autônomo.
                           </p>
                           <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
-                            <div class="fee-badge" style="margin: 0;">
-                                <strong>TAXA: R$ ${pcdFeeAmount}</strong>
-                            </div>
+                            <span style="font-size: 12.5px; font-weight: bold; color: black; background-color: #f5f5f5; padding: 4px 10px; border: 2px solid black; border-radius: 4px; white-space: nowrap;">TAXA: R$ ${pcdFeeAmount}</span>
                           </div>
                       </div>
                     </div>
