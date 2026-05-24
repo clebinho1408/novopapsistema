@@ -494,25 +494,34 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
             margin-bottom: 4px;
         }
         .instructions-content {
-            line-height: 1.1;
+            line-height: 1.1 !important;
             color: #333;
             word-wrap: break-word;
             overflow-wrap: break-word;
             font-size: ${sizes.instructions};
         }
+        .instructions-content * {
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            line-height: 1.1 !important;
+        }
         .instructions-content p {
-            margin: 0;
-            padding: 0;
-            line-height: 1.1;
+            margin: 0 !important;
+            padding: 0 !important;
+            line-height: 1.1 !important;
+            display: block;
         }
         .instructions-content ul,
         .instructions-content ol {
-            margin: 2px 0;
-            padding-left: 22px;
+            margin: 0 !important;
+            padding-left: 22px !important;
         }
         .instructions-content li {
-            margin: 0;
-            padding: 0;
+            margin: 0 !important;
+            padding: 0 !important;
+            line-height: 1.1 !important;
         }
         .instructions-content strong {
             font-weight: bold;
@@ -523,7 +532,8 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
         .instructions-content br {
             display: block;
             content: "";
-            margin: 0;
+            margin: 0 !important;
+            line-height: 0 !important;
         }
         .footer {
             margin-top: auto;
@@ -547,7 +557,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
             }
             .container { 
                 max-width: none;
-                margin: 2mm 4mm 4mm 4mm;
+                margin: 2mm 4mm 1mm 4mm;
                 min-height: calc(297mm - 18mm);
                 max-height: calc(297mm - 18mm);
                 overflow: hidden;
@@ -568,7 +578,23 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
             }
             .instructions-content {
                 font-size: clamp(8px, 1.1vw, 11px);
-                line-height: 1.05;
+                line-height: 1.1 !important;
+            }
+            .instructions-content * {
+                margin-top: 0 !important;
+                margin-bottom: 0 !important;
+                padding-top: 0 !important;
+                padding-bottom: 0 !important;
+                line-height: 1.1 !important;
+            }
+            .instructions-content p {
+                margin: 0 !important;
+                padding: 0 !important;
+                line-height: 1.1 !important;
+            }
+            .instructions-content br {
+                margin: 0 !important;
+                line-height: 0 !important;
             }
             .header {
                 margin-bottom: 6px;
@@ -1011,6 +1037,13 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                 if (container) container.setAttribute('data-adjusted', 'true');
                 return;
             }
+
+            // Reset all paragraph/list margins immediately on load
+            instructions.querySelectorAll('p, li, ul, ol, br, span').forEach(function(el) {
+                el.style.setProperty('margin', '0', 'important');
+                el.style.setProperty('padding', '0', 'important');
+                el.style.setProperty('line-height', '1.1', 'important');
+            });
             
             // Maximum height in pixels (287mm = ~1084px at 96dpi)
             const maxHeight = 1084;
@@ -1024,7 +1057,13 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                 if (currentHeight > maxHeight && fontSize > 5 && attempts < maxAttempts) {
                     fontSize -= 0.3; // Smaller steps for finer control
                     instructions.style.setProperty('font-size', fontSize + 'px', 'important');
-                    instructions.style.setProperty('line-height', '1.05', 'important');
+                    instructions.style.setProperty('line-height', '1.1', 'important');
+                    // Reset margins on all child elements
+                    instructions.querySelectorAll('p, li, ul, ol, br').forEach(function(el) {
+                        el.style.setProperty('margin', '0', 'important');
+                        el.style.setProperty('padding', '0', 'important');
+                        el.style.setProperty('line-height', '1.1', 'important');
+                    });
                     attempts++;
                     
                     // Use requestAnimationFrame to ensure DOM has updated
