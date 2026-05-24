@@ -1353,10 +1353,16 @@ app.post("/api/step-processes/send-email", systemAuthMiddleware, async (c) => {
 
     // Get agency instructions
     const instructions = await c.env.DB.prepare(
-      "SELECT general_instructions FROM agency_instructions WHERE agency_id = ?"
+      "SELECT general_instructions, instructions_primeira_habilitacao FROM agency_instructions WHERE agency_id = ?"
     ).bind(user.agency_id as number).first();
 
-    const generalInstructions = (instructions as any)?.general_instructions || '';
+    const is1aHab = processData.client_name === '1º Habilitação';
+    const hasProvaPratica = Array.isArray(processData.selected_steps) &&
+      processData.selected_steps.some((s: any) => s.type === 'prova_pratica');
+    const useFirstHab = is1aHab || (!processData.client_name && hasProvaPratica);
+    const generalInstructions = useFirstHab
+      ? ((instructions as any)?.instructions_primeira_habilitacao || '')
+      : ((instructions as any)?.general_instructions || '');
 
     // Generate email HTML using the same function from the frontend
     const emailHTML = generateEmailHTML(processData, logoUrl, generalInstructions);
@@ -1847,15 +1853,15 @@ app.post("/api/instructions", systemAuthMiddleware, async (c) => {
     if (existing) {
       // Update existing
       const result = await c.env.DB.prepare(
-        "UPDATE agency_instructions SET general_instructions = ?, required_documents = ?, updated_at = CURRENT_TIMESTAMP WHERE agency_id = ? RETURNING *"
-      ).bind(body.general_instructions || '', body.required_documents || '', user.agency_id).first();
+        "UPDATE agency_instructions SET general_instructions = ?, instructions_primeira_habilitacao = ?, required_documents = ?, updated_at = CURRENT_TIMESTAMP WHERE agency_id = ? RETURNING *"
+      ).bind(body.general_instructions || '', body.instructions_primeira_habilitacao || '', body.required_documents || '', user.agency_id).first();
 
       return c.json(result);
     } else {
       // Create new
       const result = await c.env.DB.prepare(
-        "INSERT INTO agency_instructions (agency_id, general_instructions, required_documents) VALUES (?, ?, ?) RETURNING *"
-      ).bind(user.agency_id, body.general_instructions || '', body.required_documents || '').first();
+        "INSERT INTO agency_instructions (agency_id, general_instructions, instructions_primeira_habilitacao, required_documents) VALUES (?, ?, ?, ?) RETURNING *"
+      ).bind(user.agency_id, body.general_instructions || '', body.instructions_primeira_habilitacao || '', body.required_documents || '').first();
 
       return c.json(result);
     }

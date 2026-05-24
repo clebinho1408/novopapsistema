@@ -31,7 +31,7 @@ export default function StepProcess() {
 
   const [isSaving, setIsSaving] = useState(false);
   const [showWarningModal, setShowWarningModal] = useState(false);
-  const [instructions, setInstructions] = useState<{ general_instructions?: string; required_documents?: string }>({});
+  const [instructions, setInstructions] = useState<{ general_instructions?: string; instructions_primeira_habilitacao?: string; required_documents?: string }>({});
   const [enableSecondCity, setEnableSecondCity] = useState(false);
   const [formData, setFormData] = useState({
     city_id: '',
@@ -672,7 +672,14 @@ export default function StepProcess() {
           total_amount: calculateTotal().toString(),
           show_toxicologico_message: formData.show_toxicologico_message,
           show_toxicologico_habilitacao: formData.show_toxicologico_habilitacao,
-          general_instructions: instructions.general_instructions || ''
+          general_instructions: (() => {
+            const is1aHab = formData.client_name === '1º Habilitação';
+            const hasProvaPratica = selectedSteps.some(s => s.type === 'prova_pratica');
+            const useFirstHab = is1aHab || (!formData.client_name && hasProvaPratica);
+            return useFirstHab
+              ? (instructions.instructions_primeira_habilitacao || '')
+              : (instructions.general_instructions || '');
+          })()
         };
 
         // Show print modal immediately
@@ -726,7 +733,15 @@ export default function StepProcess() {
           total_amount: process.total_amount || 0,
           show_toxicologico_message: data.show_toxicologico_message || false,
           show_toxicologico_habilitacao: data.show_toxicologico_habilitacao || false,
-          general_instructions: instructions.general_instructions || ''
+          general_instructions: (() => {
+            const is1aHab = process.client_name === '1º Habilitação';
+            const steps = data.steps || [];
+            const hasProvaPratica = steps.some((s: any) => s.type === 'prova_pratica');
+            const useFirstHab = is1aHab || (!process.client_name && hasProvaPratica);
+            return useFirstHab
+              ? (instructions.instructions_primeira_habilitacao || '')
+              : (instructions.general_instructions || '');
+          })()
         };
         setCurrentPrintData(printData);
         setShowPrintModal(true);
@@ -742,7 +757,12 @@ export default function StepProcess() {
           selected_professionals: {},
           selected_fees: [],
           total_amount: process.total_amount || 0,
-          general_instructions: instructions.general_instructions || ''
+          general_instructions: (() => {
+            const is1aHab = process.client_name === '1º Habilitação';
+            return is1aHab
+              ? (instructions.instructions_primeira_habilitacao || '')
+              : (instructions.general_instructions || '');
+          })()
         };
         setCurrentPrintData(printData);
         setShowPrintModal(true);

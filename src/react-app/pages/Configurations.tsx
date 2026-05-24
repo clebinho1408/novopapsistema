@@ -403,6 +403,7 @@ function FeesConfiguration({ fees, onUpdate }: { fees: Fee[], onUpdate: () => vo
 
 function InstructionsConfiguration() {
   const [generalInstructions, setGeneralInstructions] = useState('');
+  const [instructionsPrimeiraHabilitacao, setInstructionsPrimeiraHabilitacao] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -416,6 +417,7 @@ function InstructionsConfiguration() {
       const response = await fetch('/api/instructions', { credentials: 'include' });
       const data = await response.json();
       setGeneralInstructions(data.general_instructions || '');
+      setInstructionsPrimeiraHabilitacao(data.instructions_primeira_habilitacao || '');
     } catch (error) {
       console.error('Error fetching instructions:', error);
     } finally {
@@ -432,7 +434,8 @@ function InstructionsConfiguration() {
         credentials: 'include',
         body: JSON.stringify({
           general_instructions: generalInstructions,
-          required_documents: '' // Keep empty to maintain API compatibility
+          instructions_primeira_habilitacao: instructionsPrimeiraHabilitacao,
+          required_documents: ''
         })
       });
 
@@ -470,13 +473,33 @@ function InstructionsConfiguration() {
         <p className="text-sm text-gray-600">Configure instruções e orientações para os processos</p>
       </div>
       <div className="p-6">
-        <div className="space-y-6">
+        <div className="space-y-8">
           <div>
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">
+              Instruções — Outros Serviços
+            </h3>
+            <p className="text-xs text-gray-500 mb-3">
+              Exibidas quando qualquer serviço (exceto 1º Habilitação) for selecionado, ou quando nenhum serviço estiver selecionado e a etapa Prova Prática não estiver marcada.
+            </p>
             <RichTextEditor
               value={generalInstructions}
               onChange={setGeneralInstructions}
-              placeholder="Digite as instruções gerais para os processos de habilitação..."
-              height={400}
+              placeholder="Digite as instruções para outros serviços..."
+              height={350}
+            />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">
+              Instruções — 1º Habilitação / Prova Prática
+            </h3>
+            <p className="text-xs text-gray-500 mb-3">
+              Exibidas quando o serviço 1º Habilitação for selecionado, ou quando nenhum serviço estiver selecionado e a etapa Prova Prática estiver marcada.
+            </p>
+            <RichTextEditor
+              value={instructionsPrimeiraHabilitacao}
+              onChange={setInstructionsPrimeiraHabilitacao}
+              placeholder="Digite as instruções para 1º Habilitação / Prova Prática..."
+              height={350}
             />
           </div>
           <div className="flex justify-end">

@@ -158,6 +158,7 @@ export const agencyInstructions = pgTable('agency_instructions', {
   id: serial('id').primaryKey(),
   agencyId: integer('agency_id').notNull().references(() => agencies.id),
   generalInstructions: text('general_instructions'),
+  instructionsPrimeiraHabilitacao: text('instructions_primeira_habilitacao'),
   requiredDocuments: text('required_documents'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
