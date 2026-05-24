@@ -160,7 +160,7 @@ function StepsConfiguration({ steps, onUpdate }: { steps: ProcessStep[], onUpdat
       </div>
       <div className="p-6">
         <div className="space-y-4">
-          {steps.map((step) => {
+          {steps.filter(step => step.type !== 'prova').map((step) => {
             const isEditable = EDITABLE_STEP_TYPES.includes(step.type);
             return (
               <div key={step.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
@@ -322,7 +322,7 @@ function FeesConfiguration({ fees, onUpdate }: { fees: Fee[], onUpdate: () => vo
                     <div>
                       <h3 className="font-medium text-gray-900">{fee.name}</h3>
                       <p className="text-lg font-semibold text-green-600">R$ {parseFloat(fee.amount).toFixed(2)}</p>
-                      {fee.linked_professional_type && (
+                      {fee.linked_professional_type && fee.linked_professional_type !== 'prova' && (
                         <div className="mt-1">
                           <span className="inline-flex px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
                             Vinculada: {PROFESSIONAL_TYPE_LABELS[fee.linked_professional_type as ProfessionalType]}

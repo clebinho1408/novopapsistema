@@ -977,7 +977,7 @@ export default function StepProcess() {
                               className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                             />
                             <span className="text-gray-900">
-                              {step.name}
+                              {step.type === 'prova' ? 'Prova de direção PCD' : step.name}
                               {step.type === 'curso_teorico' && (
                                 <span className="ml-2 text-sm text-red-600 font-medium italic">
                                   Obs.: Se ainda não fez o curso teórico pelo aplicativo CNH do Brasil, marque esta etapa.
