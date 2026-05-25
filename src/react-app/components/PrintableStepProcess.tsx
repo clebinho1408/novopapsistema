@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, lazy } from 'react';
 import type { ProcessStep, Professional, Fee, City } from '@/shared/types';
 
+const TOXICOLOGICO_ATIVO = new Date() >= new Date('2026-06-01');
+
 // Lazy load ícones apenas quando necessário
 const X = lazy(() => import('lucide-react').then(mod => ({ default: mod.X })));
 const Printer = lazy(() => import('lucide-react').then(mod => ({ default: mod.Printer })));
@@ -881,7 +883,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                               return workingInfo;
                             })()}
                             ${professional.observations ? `<div class="professional-info" style="margin-top: 6px;">${professional.observations}</div>` : ''}
-                            ${step.type === 'medico' && processData.show_toxicologico_message ? `
+                            ${TOXICOLOGICO_ATIVO && step.type === 'medico' && processData.show_toxicologico_message ? `
                               <div style="margin-top: 6px; text-align: center;">
                                 <div style="font-size: 11px; font-weight: bold; color: black;">
                                   <strong>*** LEVAR O TOXICOLÓGICO ***</strong>
@@ -933,7 +935,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
             })()}
         </div>
 
-        ${processData.show_toxicologico_habilitacao ? `
+        ${TOXICOLOGICO_ATIVO && processData.show_toxicologico_habilitacao ? `
         <div style="width: 100%; margin-top: 5px; border: 2px solid black; border-radius: 6px; background-color: #fffbeb; padding: 10px 16px; box-sizing: border-box;">
           <div style="font-size: 12px; font-weight: bold; color: black; line-height: 1.5; text-align: center;">
             ⚠️ ATENÇÃO: PARA OBTER SUA CNH, VOCÊ DEVE FAZER O EXAME TOXICOLÓGICO EM UM LABORATÓRIO CREDENCIADO AO SENATRAN. A CARTEIRA SÓ SERÁ EMITIDA COM RESULTADO NEGATIVO DO TESTE.
@@ -1281,7 +1283,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
         }
         
         // Mensagem toxicológico
-        if (step.type === 'medico' && processData.show_toxicologico_message) {
+        if (TOXICOLOGICO_ATIVO && step.type === 'medico' && processData.show_toxicologico_message) {
           content += `\n>> LEVAR O TOXICOLÓGICO <<\n`;
         }
         
@@ -1615,7 +1617,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                           })()}
                           
                           {/* Toxicológico message for medical exam */}
-                          {step.type === 'medico' && processData.show_toxicologico_message && (
+                          {TOXICOLOGICO_ATIVO && step.type === 'medico' && processData.show_toxicologico_message && (
                             <div className="mt-3 text-center">
                               <p className="text-xs font-bold text-black">
                                 LEVAR O TOXICOLÓGICO
