@@ -1049,8 +1049,8 @@ export default function StepProcess() {
                                   </p>
                                 )}
                                 
-                                {/* Special checkbox for medical exam — oculto quando Toxicológico (1ª Hab) está ativo ou antes de 01/06/2026 */}
-                                {TOXICOLOGICO_ATIVO && step?.type === 'medico' && formData.selected_professionals[stepId] && !formData.show_toxicologico_habilitacao && (
+                                {/* Special checkbox for medical exam — oculto quando Toxicológico (1ª Hab) está ativo */}
+                                {step?.type === 'medico' && formData.selected_professionals[stepId] && !formData.show_toxicologico_habilitacao && (
                                   <div className="mt-3">
                                     <label className="flex items-center space-x-2">
                                       <input

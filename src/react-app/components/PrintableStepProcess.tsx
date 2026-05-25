@@ -883,7 +883,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                               return workingInfo;
                             })()}
                             ${professional.observations ? `<div class="professional-info" style="margin-top: 6px;">${professional.observations}</div>` : ''}
-                            ${TOXICOLOGICO_ATIVO && step.type === 'medico' && processData.show_toxicologico_message ? `
+                            ${step.type === 'medico' && processData.show_toxicologico_message ? `
                               <div style="margin-top: 6px; text-align: center;">
                                 <div style="font-size: 11px; font-weight: bold; color: black;">
                                   <strong>*** LEVAR O TOXICOLÓGICO ***</strong>
@@ -1283,7 +1283,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
         }
         
         // Mensagem toxicológico
-        if (TOXICOLOGICO_ATIVO && step.type === 'medico' && processData.show_toxicologico_message) {
+        if (step.type === 'medico' && processData.show_toxicologico_message) {
           content += `\n>> LEVAR O TOXICOLÓGICO <<\n`;
         }
         
@@ -1617,7 +1617,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                           })()}
                           
                           {/* Toxicológico message for medical exam */}
-                          {TOXICOLOGICO_ATIVO && step.type === 'medico' && processData.show_toxicologico_message && (
+                          {step.type === 'medico' && processData.show_toxicologico_message && (
                             <div className="mt-3 text-center">
                               <p className="text-xs font-bold text-black">
                                 LEVAR O TOXICOLÓGICO
