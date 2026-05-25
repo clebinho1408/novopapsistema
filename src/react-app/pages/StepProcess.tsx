@@ -5,6 +5,9 @@ import { FileText, MapPin, DollarSign, CheckCircle, Eye, AlertTriangle } from 'l
 import type { City, ProcessStep, Fee, Professional } from '@/shared/types';
 import { useDialog } from '@/react-app/components/Dialog';
 
+const TOXICOLOGICO_RELEASE_DATE = new Date('2026-06-01');
+const TOXICOLOGICO_ATIVO = new Date() >= TOXICOLOGICO_RELEASE_DATE;
+
 export default function StepProcess() {
   const [currentStep, setCurrentStep] = useState(1);
   const saveButtonRef = useRef<HTMLButtonElement>(null);
@@ -988,8 +991,8 @@ export default function StepProcess() {
                         );
                       })}
 
-                      {/* Toxicológico (1ª Habilitação) — visível sempre que Prova Prática estiver selecionada */}
-                      {(() => {
+                      {/* Toxicológico (1ª Habilitação) — visível a partir de 01/06/2026 */}
+                      {TOXICOLOGICO_ATIVO && (() => {
                         const provaPraticaStep = processSteps.find(s => s.type === 'prova_pratica');
                         return provaPraticaStep && formData.selected_steps.includes(provaPraticaStep.id);
                       })() && (
@@ -1046,8 +1049,8 @@ export default function StepProcess() {
                                   </p>
                                 )}
                                 
-                                {/* Special checkbox for medical exam — oculto quando Toxicológico (1ª Hab) está ativo */}
-                                {step?.type === 'medico' && formData.selected_professionals[stepId] && !formData.show_toxicologico_habilitacao && (
+                                {/* Special checkbox for medical exam — oculto quando Toxicológico (1ª Hab) está ativo ou antes de 01/06/2026 */}
+                                {TOXICOLOGICO_ATIVO && step?.type === 'medico' && formData.selected_professionals[stepId] && !formData.show_toxicologico_habilitacao && (
                                   <div className="mt-3">
                                     <label className="flex items-center space-x-2">
                                       <input
