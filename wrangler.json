@@ -1,14 +1,11 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "papsistema",
-  "pages_build_output_dir": "./dist",
+  "main": "src/worker-cf.ts",
   "compatibility_date": "2025-06-17",
   "compatibility_flags": ["nodejs_compat"],
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "pap-sistema-producao",
-      "database_id": "f57092b8-0b17-4a0f-834a-be1c9c3d9b1a"
-    }
-  ]
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS"
+  }
 }
