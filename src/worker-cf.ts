@@ -1,13 +1,12 @@
 /**
  * Cloudflare Workers entry point
- * - API requests (/api/*) → Hono app with Neon D1 adapter
- * - Everything else → static assets (with SPA fallback to index.html)
+ * - API requests (/api/*) → Hono app com D1 nativo (c.env.DB)
+ * - Tudo mais → assets estáticos (com fallback SPA para index.html)
  */
 import { app } from './server/app';
-import { NeonD1Database } from './server/d1-adapter-neon';
 
 interface Env {
-  NEON_DATABASE_URL: string;
+  DB: D1Database;
   ASSETS: Fetcher;
 }
 
@@ -16,8 +15,7 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname.startsWith('/api/')) {
-      const db = new NeonD1Database(env.NEON_DATABASE_URL);
-      return app.fetch(request, { DB: db, ...env }, ctx);
+      return app.fetch(request, env, ctx);
     }
 
     const response = await env.ASSETS.fetch(request);
