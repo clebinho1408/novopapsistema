@@ -139,6 +139,14 @@ export default function StepProcess() {
         'Estrangeiro': {
           steps: ['foto', 'taxa', 'psicologo', 'medico'],
           fees: ['Emissão da CNH']
+        },
+        'Adição de Categoria A': {
+          steps: ['foto', 'taxa', 'psicologo', 'medico'],
+          fees: ['Emissão da CNH']
+        },
+        'Adição de Categoria B': {
+          steps: ['foto', 'taxa', 'psicologo', 'medico'],
+          fees: ['Emissão da CNH']
         }
       };
       
@@ -943,6 +951,8 @@ export default function StepProcess() {
                         <option value="Transferência + Alteração de Dados + EAR">Transferência + Alteração de Dados + EAR</option>
                         <option value="Transferência + Definitiva">Transferência + Definitiva</option>
                         <option value="Estrangeiro">Estrangeiro</option>
+                        <option value="Adição de Categoria A">Adição de Categoria A</option>
+                        <option value="Adição de Categoria B">Adição de Categoria B</option>
                       </select>
                     </div>
                   </div>
