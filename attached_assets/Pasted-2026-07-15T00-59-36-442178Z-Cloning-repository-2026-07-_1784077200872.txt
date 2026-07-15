@@ -1,0 +1,43 @@
+2026-07-15T00:59:36.442178Z	Cloning repository...
+2026-07-15T00:59:37.893137Z	From https://github.com/clebinho1408/novopapsistema
+2026-07-15T00:59:37.893435Z	 * branch            3799e1b071e96b984ee73ae980fafc525401dc77 -> FETCH_HEAD
+2026-07-15T00:59:37.8935Z	
+2026-07-15T00:59:38.019022Z	HEAD is now at 3799e1b Add options to add vehicle categories to the service menu
+2026-07-15T00:59:38.019397Z	
+2026-07-15T00:59:38.084901Z	
+2026-07-15T00:59:38.085313Z	Using v2 root directory strategy
+2026-07-15T00:59:38.107865Z	Success: Finished cloning repository files
+2026-07-15T00:59:40.488885Z	Checking for configuration in a Wrangler configuration file (BETA)
+2026-07-15T00:59:40.490597Z	
+2026-07-15T00:59:40.491459Z	Found wrangler.json file. Reading build configuration...
+2026-07-15T00:59:40.736393Z	A Wrangler configuration file was found but it does not appear to be valid. Did you mean to use wrangler.toml to configure Pages? If so, then make sure the file is valid and contains the `pages_build_output_dir` property. Skipping file and continuing.
+2026-07-15T00:59:41.156291Z	Detected the following tools from environment: npm@10.9.2, nodejs@22.16.0
+2026-07-15T00:59:41.157186Z	Installing project dependencies: npm clean-install --progress=false
+2026-07-15T00:59:44.866817Z	npm warn deprecated lodash.isequal@4.5.0: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
+2026-07-15T00:59:44.878039Z	npm warn deprecated @esbuild-kit/esm-loader@2.6.5: Merged into tsx: https://tsx.is
+2026-07-15T00:59:44.888472Z	npm warn deprecated @types/bcryptjs@3.0.0: This is a stub types definition. bcryptjs provides its own type definitions, so you do not need this installed.
+2026-07-15T00:59:44.962916Z	npm warn deprecated @esbuild-kit/core-utils@3.3.2: Merged into tsx: https://tsx.is
+2026-07-15T00:59:49.824464Z	
+2026-07-15T00:59:49.824962Z	added 84 packages, and audited 85 packages in 7s
+2026-07-15T00:59:49.825087Z	
+2026-07-15T00:59:49.825455Z	11 packages are looking for funding
+2026-07-15T00:59:49.82565Z	  run `npm fund` for details
+2026-07-15T00:59:49.904826Z	
+2026-07-15T00:59:49.905231Z	12 vulnerabilities (1 low, 4 moderate, 5 high, 2 critical)
+2026-07-15T00:59:49.90539Z	
+2026-07-15T00:59:49.905447Z	To address issues that do not require attention, run:
+2026-07-15T00:59:49.905499Z	  npm audit fix
+2026-07-15T00:59:49.905559Z	
+2026-07-15T00:59:49.905625Z	To address all issues (including breaking changes), run:
+2026-07-15T00:59:49.905747Z	  npm audit fix --force
+2026-07-15T00:59:49.905819Z	
+2026-07-15T00:59:49.905884Z	Run `npm audit` for details.
+2026-07-15T00:59:49.978709Z	Executing user command: npm run build
+2026-07-15T00:59:50.414834Z	
+2026-07-15T00:59:50.415139Z	> mocha-app@0.0.0 build
+2026-07-15T00:59:50.415213Z	> tsc -b && vite build
+2026-07-15T00:59:50.415262Z	
+2026-07-15T00:59:50.422522Z	sh: 1: tsc: not found
+2026-07-15T00:59:50.435547Z	Failed: Error while executing user command. Exited with error code: 127
+2026-07-15T00:59:50.443153Z	Failed: build command exited with code: 1
+2026-07-15T00:59:51.144443Z	Failed: error occurred while running build command
