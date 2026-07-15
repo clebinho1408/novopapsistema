@@ -721,8 +721,10 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                 // Para outras etapas condicionais, só mostrar se selecionadas
                 const conditionalTypes = ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'];
                 
-                // Caso especial: CURSO TEÓRICO só aparece se Prova Teórica, Curso Prático ou Prova Prática estiverem selecionados
+                // Caso especial: CURSO TEÓRICO nunca aparece para Adição de Categoria A/B
                 if (step.type === 'curso_teorico') {
+                  const isAdicaoCategoria = processData.client_name === 'Adição de Categoria A' || processData.client_name === 'Adição de Categoria B';
+                  if (isAdicaoCategoria) return false;
                   const hasRelatedSteps = ['prova_teorica', 'curso_pratico', 'prova_pratica'].some(type => 
                     processData.selected_steps.some(s => s.type === type)
                   );
@@ -1187,8 +1189,11 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
     const conditionalTypes = ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'];
 
     // Filtrar etapas (excluindo prova para processar separadamente e etapas condicionais não selecionadas)
+    const isAdicaoCategoriaText = processData.client_name === 'Adição de Categoria A' || processData.client_name === 'Adição de Categoria B';
     const filteredSteps = (processData.all_steps || processData.selected_steps).filter((step: any) => {
       if (step.type === 'prova') return false;
+      // Nunca mostrar curso_teorico para Adição de Categoria A/B
+      if (step.type === 'curso_teorico' && isAdicaoCategoriaText) return false;
       // Para etapas condicionais, só mostrar se selecionadas
       if (conditionalTypes.includes(step.type)) {
         return processData.selected_steps.find((s: any) => s.id === step.id);
