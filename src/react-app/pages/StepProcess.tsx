@@ -232,9 +232,9 @@ export default function StepProcess() {
   useEffect(() => {
     if (processSteps.length === 0) return;
     const provaTeoricoStep = processSteps.find(s => s.type === 'prova_teorica');
-    const hasProvaTeórica = provaTeoricoStep ? formData.selected_steps.includes(provaTeoricoStep.id) : false;
+    const hasProvaTeorica = provaTeoricoStep ? formData.selected_steps.includes(provaTeoricoStep.id) : false;
     const isAdicaoCategoria = formData.client_name === 'Adição de Categoria A' || formData.client_name === 'Adição de Categoria B';
-    const shouldShow = hasProvaTeórica && !formData.show_toxicologico_message && !isAdicaoCategoria;
+    const shouldShow = hasProvaTeorica && !formData.show_toxicologico_message && !isAdicaoCategoria;
     setFormData(prev => {
       if (prev.show_toxicologico_habilitacao === shouldShow) return prev;
       return { ...prev, show_toxicologico_habilitacao: shouldShow };
