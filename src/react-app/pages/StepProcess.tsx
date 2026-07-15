@@ -883,6 +883,13 @@ export default function StepProcess() {
   };
 
   const isAdicaoCategoriaService = formData.client_name === 'Adição de Categoria A' || formData.client_name === 'Adição de Categoria B';
+  const isEarModalService = isAdicaoCategoriaService || [
+    'Alteração de Dados',
+    'Renovação',
+    'Renovação + PCD',
+    'Transferência + Renovação',
+    'Transferência + Alteração de Dados',
+  ].includes(formData.client_name);
 
   const earModal = showEarModal && createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center">
@@ -1376,7 +1383,7 @@ export default function StepProcess() {
                     {currentStep < 4 ? (
                       <button
                         onClick={() => {
-                          if (currentStep === 1 && isAdicaoCategoriaService) {
+                          if (currentStep === 1 && isEarModalService) {
                             setShowEarModal(true);
                           } else {
                             setCurrentStep(prev => prev + 1);
