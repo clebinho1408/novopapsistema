@@ -1,6 +1,7 @@
 import Layout from '@/react-app/components/Layout';
 import PrintableStepProcess from '@/react-app/components/PrintableStepProcess';
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { FileText, MapPin, DollarSign, CheckCircle, Eye, AlertTriangle } from 'lucide-react';
 import type { City, ProcessStep, Fee, Professional } from '@/shared/types';
 import { useDialog } from '@/react-app/components/Dialog';
@@ -866,6 +867,34 @@ export default function StepProcess() {
     return filtered;
   };
 
+  const categoryModal = showCategoryModal && createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+      <div className="fixed inset-0 bg-black/50" onClick={handleCategoryModalCancel} />
+      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 p-6 z-10">
+        <h3 className="text-lg font-semibold text-gray-900 mb-1 text-center">Adição de Categoria A</h3>
+        <p className="text-sm text-gray-600 mb-5 text-center">Qual é a categoria atual do condutor?</p>
+        <div className="grid grid-cols-2 gap-3">
+          {(['B', 'C', 'D', 'E'] as const).map(cat => (
+            <button
+              key={cat}
+              onClick={() => handleCategorySelect(cat)}
+              className="py-4 rounded-lg border-2 border-gray-300 text-2xl font-bold text-gray-800 hover:border-blue-500 hover:bg-blue-50 transition-colors"
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={handleCategoryModalCancel}
+          className="mt-4 w-full py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 text-sm font-medium"
+        >
+          Cancelar
+        </button>
+      </div>
+    </div>,
+    document.body
+  );
+
   if (showForm) {
     return (
       <Layout>
@@ -1470,6 +1499,7 @@ export default function StepProcess() {
             </div>
           </div>
         )}
+        {categoryModal}
       </Layout>
     );
   }
@@ -1572,32 +1602,7 @@ export default function StepProcess() {
         />
       )}
       {/* Modal de seleção de categoria (Adição de Categoria A) */}
-      {showCategoryModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center">
-          <div className="fixed inset-0 bg-black/50" onClick={handleCategoryModalCancel} />
-          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 p-6 z-10">
-            <h3 className="text-lg font-semibold text-gray-900 mb-1 text-center">Adição de Categoria A</h3>
-            <p className="text-sm text-gray-600 mb-5 text-center">Qual é a categoria atual do condutor?</p>
-            <div className="grid grid-cols-2 gap-3">
-              {(['B', 'C', 'D', 'E'] as const).map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => handleCategorySelect(cat)}
-                  className="py-4 rounded-lg border-2 border-gray-300 text-2xl font-bold text-gray-800 hover:border-blue-500 hover:bg-blue-50 transition-colors"
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-            <button
-              onClick={handleCategoryModalCancel}
-              className="mt-4 w-full py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 text-sm font-medium"
-            >
-              Cancelar
-            </button>
-          </div>
-        </div>
-      )}
+      {categoryModal}
 
       {DialogComponent}
     </Layout>
