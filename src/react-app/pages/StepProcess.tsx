@@ -892,16 +892,16 @@ export default function StepProcess() {
         <p className="text-sm text-gray-600 mb-5 text-center">O condutor irá adicionar EAR à sua CNH?</p>
         <div className="grid grid-cols-2 gap-3">
           <button
-            onClick={() => handleEarSelect(true)}
-            className="py-4 rounded-lg border-2 border-gray-300 text-base font-bold text-gray-800 hover:border-blue-500 hover:bg-blue-50 transition-colors"
-          >
-            Com EAR
-          </button>
-          <button
             onClick={() => handleEarSelect(false)}
             className="py-4 rounded-lg border-2 border-gray-300 text-base font-bold text-gray-800 hover:border-gray-500 hover:bg-gray-50 transition-colors"
           >
             Sem EAR
+          </button>
+          <button
+            onClick={() => handleEarSelect(true)}
+            className="py-4 rounded-lg border-2 border-gray-300 text-base font-bold text-gray-800 hover:border-blue-500 hover:bg-blue-50 transition-colors"
+          >
+            Com EAR
           </button>
         </div>
       </div>
