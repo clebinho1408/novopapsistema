@@ -1,0 +1,41 @@
+2026-07-15T01:02:25.297902Z	Cloning repository...
+2026-07-15T01:02:26.570697Z	From https://github.com/clebinho1408/novopapsistema
+2026-07-15T01:02:26.571087Z	 * branch            3799e1b071e96b984ee73ae980fafc525401dc77 -> FETCH_HEAD
+2026-07-15T01:02:26.571176Z	
+2026-07-15T01:02:26.664701Z	HEAD is now at 3799e1b Add options to add vehicle categories to the service menu
+2026-07-15T01:02:26.665281Z	
+2026-07-15T01:02:26.706267Z	
+2026-07-15T01:02:26.706579Z	Using v2 root directory strategy
+2026-07-15T01:02:26.717816Z	Success: Finished cloning repository files
+2026-07-15T01:02:28.917815Z	Checking for configuration in a Wrangler configuration file (BETA)
+2026-07-15T01:02:28.918324Z	
+2026-07-15T01:02:28.918633Z	Found wrangler.json file. Reading build configuration...
+2026-07-15T01:02:29.067954Z	A Wrangler configuration file was found but it does not appear to be valid. Did you mean to use wrangler.toml to configure Pages? If so, then make sure the file is valid and contains the `pages_build_output_dir` property. Skipping file and continuing.
+2026-07-15T01:02:29.593041Z	Detected the following tools from environment: npm@10.9.2, nodejs@22.16.0
+2026-07-15T01:02:29.593435Z	Installing project dependencies: npm clean-install --progress=false
+2026-07-15T01:02:32.442084Z	npm warn deprecated lodash.isequal@4.5.0: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
+2026-07-15T01:02:32.445167Z	npm warn deprecated @types/bcryptjs@3.0.0: This is a stub types definition. bcryptjs provides its own type definitions, so you do not need this installed.
+2026-07-15T01:02:32.466609Z	npm warn deprecated @esbuild-kit/esm-loader@2.6.5: Merged into tsx: https://tsx.is
+2026-07-15T01:02:32.490821Z	npm warn deprecated @esbuild-kit/core-utils@3.3.2: Merged into tsx: https://tsx.is
+2026-07-15T01:02:35.780349Z	
+2026-07-15T01:02:35.780662Z	added 84 packages, and audited 85 packages in 5s
+2026-07-15T01:02:35.780715Z	
+2026-07-15T01:02:35.780759Z	11 packages are looking for funding
+2026-07-15T01:02:35.780791Z	  run `npm fund` for details
+2026-07-15T01:02:35.826471Z	
+2026-07-15T01:02:35.826738Z	12 vulnerabilities (1 low, 4 moderate, 5 high, 2 critical)
+2026-07-15T01:02:35.826802Z	
+2026-07-15T01:02:35.82684Z	To address issues that do not require attention, run:
+2026-07-15T01:02:35.82687Z	  npm audit fix
+2026-07-15T01:02:35.826911Z	
+2026-07-15T01:02:35.826944Z	To address all issues (including breaking changes), run:
+2026-07-15T01:02:35.826975Z	  npm audit fix --force
+2026-07-15T01:02:35.82701Z	
+2026-07-15T01:02:35.827075Z	Run `npm audit` for details.
+2026-07-15T01:02:35.875539Z	Executing user command: pnpm run cf-build
+2026-07-15T01:02:36.459901Z	 ERR_PNPM_NO_SCRIPT  Missing script: cf-build
+2026-07-15T01:02:36.46033Z	
+2026-07-15T01:02:36.460427Z	Command "cf-build" not found. Did you mean "pnpm run build"?
+2026-07-15T01:02:36.49715Z	Failed: Error while executing user command. Exited with error code: 1
+2026-07-15T01:02:36.504451Z	Failed: build command exited with code: 1
+2026-07-15T01:02:37.203321Z	Failed: error occurred while running build command
