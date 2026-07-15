@@ -1569,7 +1569,7 @@ export default function StepProcess() {
         />
       )}
       {/* Modal de seleção de categoria (Adição de Categoria A) */}
-      {showCategoryModal && (
+      {showCategoryModal && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center">
           <div className="fixed inset-0 bg-black/50" onClick={handleCategoryModalCancel} />
           <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 p-6 z-10">
@@ -1593,7 +1593,8 @@ export default function StepProcess() {
               Cancelar
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {DialogComponent}
