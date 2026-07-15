@@ -151,11 +151,11 @@ export default function StepProcess() {
           fees: ['Emissão da CNH']
         },
         'Adição de Categoria A': {
-          steps: ['taxa', 'curso_pratico', 'prova_pratica'],
+          steps: ['foto', 'taxa', 'medico', 'curso_pratico', 'prova_pratica'],
           fees: ['Emissão da CNH']
         },
         'Adição de Categoria B': {
-          steps: ['taxa', 'curso_pratico', 'prova_pratica'],
+          steps: ['foto', 'taxa', 'medico', 'curso_pratico', 'prova_pratica'],
           fees: ['Emissão da CNH']
         }
       };
