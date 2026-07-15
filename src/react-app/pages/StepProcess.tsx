@@ -1140,10 +1140,17 @@ export default function StepProcess() {
                       <div className="mt-6">
                         <h3 className="font-medium text-gray-900 mb-4">Selecione o Local/Credenciado</h3>
                         <div className="space-y-4">
-                          {formData.selected_steps.filter(stepId => {
+                          {[...formData.selected_steps].filter(stepId => {
                             const step = processSteps.find(s => s.id === stepId);
                             const excludedTypes = ['taxa', 'curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica', 'prova'];
                             return step && !excludedTypes.includes(step.type);
+                          }).sort((a, b) => {
+                            const typeOrder = ['foto', 'psicologo', 'medico'];
+                            const typeA = processSteps.find(s => s.id === a)?.type || '';
+                            const typeB = processSteps.find(s => s.id === b)?.type || '';
+                            const orderA = typeOrder.indexOf(typeA) !== -1 ? typeOrder.indexOf(typeA) : 99;
+                            const orderB = typeOrder.indexOf(typeB) !== -1 ? typeOrder.indexOf(typeB) : 99;
+                            return orderA - orderB;
                           }).map(stepId => {
                             const step = processSteps.find(s => s.id === stepId);
                             const stepProfessionals = getStepProfessionals(step?.type || '', formData.city_id, formData.second_city_id);
