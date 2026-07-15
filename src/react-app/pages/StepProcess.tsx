@@ -919,7 +919,7 @@ export default function StepProcess() {
   const categoryModal = showCategoryModal && createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center">
       <div className="fixed inset-0 bg-black/50" onClick={handleCategoryModalCancel} />
-      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 p-6 z-10">
+      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 p-6 z-10 text-gray-900">
         <h3 className="text-base font-semibold text-gray-900 mb-1 text-center">Adição de Categoria A</h3>
         <p className="text-base font-bold text-red-600 mb-5 text-center">Qual é a categoria atual do condutor?</p>
         <div className="grid grid-cols-2 gap-3">
@@ -927,7 +927,7 @@ export default function StepProcess() {
             <button
               key={cat}
               onClick={() => handleCategorySelect(cat)}
-              className="py-4 rounded-lg border-2 border-gray-300 text-2xl font-bold text-gray-800 hover:border-blue-500 hover:bg-blue-50 transition-colors"
+              className="py-4 rounded-lg border-2 border-gray-300 text-2xl font-bold text-gray-800 hover:border-blue-500 hover:bg-blue-50 hover:text-gray-900 transition-colors"
             >
               {cat}
             </button>
@@ -935,7 +935,7 @@ export default function StepProcess() {
         </div>
         <button
           onClick={handleCategoryModalCancel}
-          className="mt-4 w-full py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 text-sm font-medium"
+          className="mt-4 w-full py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 hover:text-gray-700 text-sm font-medium"
         >
           Cancelar
         </button>
