@@ -151,11 +151,11 @@ export default function StepProcess() {
           fees: ['Emissão da CNH']
         },
         'Adição de Categoria A': {
-          steps: ['foto', 'medico', 'curso_pratico', 'prova_pratica'],
+          steps: ['taxa', 'curso_pratico', 'prova_pratica'],
           fees: ['Emissão da CNH']
         },
         'Adição de Categoria B': {
-          steps: ['foto', 'medico', 'curso_pratico', 'prova_pratica'],
+          steps: ['taxa', 'curso_pratico', 'prova_pratica'],
           fees: ['Emissão da CNH']
         }
       };
@@ -1036,8 +1036,9 @@ export default function StepProcess() {
                         const hasConflictSelected = ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'].some(type => currentStepTypes.includes(type));
                         const isProvaPCD = step.type === 'prova';
                         
-                        // Desabilitar etapas de curso/prova apenas se um serviço for selecionado e não for "1º Habilitação"
-                        const isNotPrimeiraHabilitacao = formData.client_name !== '' && formData.client_name !== '1º Habilitação';
+                        // Desabilitar etapas de curso/prova apenas se um serviço for selecionado e não for "1º Habilitação" nem "Adição de Categoria"
+                        const isAdicaoCategoria = formData.client_name === 'Adição de Categoria A' || formData.client_name === 'Adição de Categoria B';
+                        const isNotPrimeiraHabilitacao = formData.client_name !== '' && formData.client_name !== '1º Habilitação' && !isAdicaoCategoria;
                         const isCourseOrExamStep = ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'].includes(step.type);
                         
                         // Desabilitar Prova PCD se alguma das etapas novas estiver marcada
@@ -1068,8 +1069,8 @@ export default function StepProcess() {
                         );
                       })}
 
-                      {/* Toxicológico (1ª Habilitação) — visível a partir de 01/06/2026 */}
-                      {TOXICOLOGICO_ATIVO && (() => {
+                      {/* Toxicológico (1ª Habilitação) — visível a partir de 01/06/2026, nunca para Adição de Categoria */}
+                      {TOXICOLOGICO_ATIVO && !(formData.client_name === 'Adição de Categoria A' || formData.client_name === 'Adição de Categoria B') && (() => {
                         const provaPraticaStep = processSteps.find(s => s.type === 'prova_pratica');
                         return provaPraticaStep && formData.selected_steps.includes(provaPraticaStep.id);
                       })() && (
