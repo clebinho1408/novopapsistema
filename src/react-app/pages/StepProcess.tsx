@@ -1093,6 +1093,9 @@ export default function StepProcess() {
 
                         if (isDisabled) return null;
 
+                        // Quando serviço está selecionado, ocultar etapas não marcadas (exceto Curso Teórico)
+                        if (formData.service && !formData.selected_steps.includes(step.id) && step.type !== 'curso_teorico') return null;
+
                         return (
                           <label key={step.id} className="flex items-center space-x-3">
                             <input
