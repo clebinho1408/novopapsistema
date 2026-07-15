@@ -65,6 +65,13 @@ export default function StepProcess() {
     }
   }, [currentStep]);
 
+  // Abre o modal de categoria quando "Adição de Categoria A" é selecionado sem categoria definida
+  useEffect(() => {
+    if (formData.client_name === 'Adição de Categoria A' && !formData.categoria_atual) {
+      setShowCategoryModal(true);
+    }
+  }, [formData.client_name, formData.categoria_atual]);
+
   useEffect(() => {
     if (fees.length === 0 || processSteps.length === 0 || !formData.client_name) return;
     
@@ -954,10 +961,6 @@ export default function StepProcess() {
                         value={formData.client_name}
                         onChange={(e) => {
                           const newService = e.target.value;
-                          if (newService === 'Adição de Categoria A') {
-                            setShowCategoryModal(true);
-                            return;
-                          }
                           if (newService) {
                             setEnableSecondCity(false);
                           }
