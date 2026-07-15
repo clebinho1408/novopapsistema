@@ -147,6 +147,7 @@ export const CreateStepProcessRequestSchema = z.object({
   selected_professionals: z.record(z.string(), z.number()),
   selected_fees: z.array(z.number()),
   show_toxicologico_message: z.boolean().optional(),
+  categoria_atual: z.string().optional().nullable(),
 });
 
 export type CreateCityRequest = z.infer<typeof CreateCityRequestSchema>;

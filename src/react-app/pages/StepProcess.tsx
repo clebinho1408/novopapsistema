@@ -46,8 +46,11 @@ export default function StepProcess() {
     selected_professionals: {} as Record<string, number>,
     selected_fees: [] as number[],
     show_toxicologico_message: false,
-    show_toxicologico_habilitacao: false
+    show_toxicologico_habilitacao: false,
+    categoria_atual: '' as string
   });
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [pendingService, setPendingService] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -141,11 +144,11 @@ export default function StepProcess() {
           fees: ['Emissão da CNH']
         },
         'Adição de Categoria A': {
-          steps: ['foto', 'taxa', 'psicologo', 'medico'],
+          steps: ['foto', 'medico', 'curso_pratico', 'prova_pratica'],
           fees: ['Emissão da CNH']
         },
         'Adição de Categoria B': {
-          steps: ['foto', 'taxa', 'psicologo', 'medico'],
+          steps: ['foto', 'medico', 'curso_pratico', 'prova_pratica'],
           fees: ['Emissão da CNH']
         }
       };
@@ -216,16 +219,17 @@ export default function StepProcess() {
   }, [formData.client_name, fees, processSteps]);
 
   // Auto-selecionar/desselecionar Toxicológico (1ª Habilitação) quando prova prática for selecionada
+  // NÃO ativa se show_toxicologico_message já estiver true (exclusão mútua)
   useEffect(() => {
     if (processSteps.length === 0) return;
     const provaPraticaStep = processSteps.find(s => s.type === 'prova_pratica');
     const hasProvaPratica = provaPraticaStep ? formData.selected_steps.includes(provaPraticaStep.id) : false;
-    const shouldShow = hasProvaPratica;
+    const shouldShow = hasProvaPratica && !formData.show_toxicologico_message;
     setFormData(prev => {
       if (prev.show_toxicologico_habilitacao === shouldShow) return prev;
       return { ...prev, show_toxicologico_habilitacao: shouldShow };
     });
-  }, [formData.selected_steps, processSteps]);
+  }, [formData.selected_steps, formData.show_toxicologico_message, processSteps]);
 
     // Auto-selecionar credenciado de Foto e taxas vinculadas quando a cidade ou passos mudarem
     useEffect(() => {
@@ -665,7 +669,8 @@ export default function StepProcess() {
           selected_professionals: formData.selected_professionals,
           selected_fees: formData.selected_fees,
           show_toxicologico_message: formData.show_toxicologico_message,
-          show_toxicologico_habilitacao: formData.show_toxicologico_habilitacao
+          show_toxicologico_habilitacao: formData.show_toxicologico_habilitacao,
+          categoria_atual: formData.categoria_atual || null
         })
       });
 
@@ -712,6 +717,7 @@ export default function StepProcess() {
           total_amount: calculateTotal().toString(),
           show_toxicologico_message: formData.show_toxicologico_message,
           show_toxicologico_habilitacao: formData.show_toxicologico_habilitacao,
+          categoria_atual: formData.categoria_atual || undefined,
           general_instructions: (() => {
             const is1aHab = formData.client_name === '1º Habilitação';
             const hasProvaPratica = selectedSteps.some(s => s.type === 'prova_pratica');
@@ -736,7 +742,8 @@ export default function StepProcess() {
           selected_professionals: {},
           selected_fees: [],
           show_toxicologico_message: false,
-          show_toxicologico_habilitacao: false
+          show_toxicologico_habilitacao: false,
+          categoria_atual: ''
         });
         
         // Refresh the process list
@@ -773,6 +780,7 @@ export default function StepProcess() {
           total_amount: process.total_amount || 0,
           show_toxicologico_message: data.show_toxicologico_message || false,
           show_toxicologico_habilitacao: data.show_toxicologico_habilitacao || false,
+          categoria_atual: data.categoria_atual || undefined,
           general_instructions: (() => {
             const is1aHab = process.client_name === '1º Habilitação';
             const steps = data.steps || [];
@@ -807,6 +815,25 @@ export default function StepProcess() {
         setCurrentPrintData(printData);
         setShowPrintModal(true);
       });
+  };
+
+  const handleCategorySelect = (categoria: string) => {
+    setShowCategoryModal(false);
+    setEnableSecondCity(false);
+    const isToxicologico = ['C', 'D', 'E'].includes(categoria);
+    setFormData(prev => ({
+      ...prev,
+      client_name: pendingService,
+      categoria_atual: categoria,
+      second_city_id: '',
+      show_toxicologico_message: isToxicologico
+    }));
+    setPendingService('');
+  };
+
+  const handleCategoryModalCancel = () => {
+    setShowCategoryModal(false);
+    setPendingService('');
   };
 
   const getSelectedCity = () => cities.find(c => c.id.toString() === formData.city_id);
@@ -929,10 +956,15 @@ export default function StepProcess() {
                         value={formData.client_name}
                         onChange={(e) => {
                           const newService = e.target.value;
+                          if (newService === 'Adição de Categoria A') {
+                            setPendingService(newService);
+                            setShowCategoryModal(true);
+                            return;
+                          }
                           if (newService) {
                             setEnableSecondCity(false);
                           }
-                          setFormData(prev => ({ ...prev, client_name: newService, second_city_id: newService ? '' : prev.second_city_id }));
+                          setFormData(prev => ({ ...prev, client_name: newService, categoria_atual: '', second_city_id: newService ? '' : prev.second_city_id }));
                         }}
                         disabled={enableSecondCity}
                         className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${enableSecondCity ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : ''}`}
@@ -1533,6 +1565,34 @@ export default function StepProcess() {
           processData={currentPrintData}
         />
       )}
+      {/* Modal de seleção de categoria (Adição de Categoria A) */}
+      {showCategoryModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+          <div className="fixed inset-0 bg-black/50" onClick={handleCategoryModalCancel} />
+          <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 p-6 z-10">
+            <h3 className="text-lg font-semibold text-gray-900 mb-1 text-center">Adição de Categoria A</h3>
+            <p className="text-sm text-gray-600 mb-5 text-center">Qual é a categoria atual do condutor?</p>
+            <div className="grid grid-cols-2 gap-3">
+              {(['B', 'C', 'D', 'E'] as const).map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => handleCategorySelect(cat)}
+                  className="py-4 rounded-lg border-2 border-gray-300 text-2xl font-bold text-gray-800 hover:border-blue-500 hover:bg-blue-50 transition-colors"
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={handleCategoryModalCancel}
+              className="mt-4 w-full py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 text-sm font-medium"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+
       {DialogComponent}
     </Layout>
   );

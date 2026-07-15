@@ -23,6 +23,7 @@ interface PrintableStepProcessProps {
     show_toxicologico_message?: boolean;
     show_toxicologico_habilitacao?: boolean;
     general_instructions?: string;
+    categoria_atual?: string;
   };
 }
 
@@ -694,12 +695,15 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                     <h1 style="font-size: ${sizes.headerTitle}; font-weight: bold; margin: 0;">SIGA O PASSO A PASSO</h1>
                 </div>
             </div>
-            ${currentUserName ? `
             <div class="header-info">
+                ${processData.client_name === 'Adição de Categoria A' && processData.categoria_atual ? `
+                <p style="font-size: 11px; margin: 0 0 4px 0; line-height: 1.3;">Categoria Atual: <strong>${processData.categoria_atual}</strong></p>
+                ` : ''}
+                ${currentUserName ? `
                 <p style="font-size: 11px; margin: 0; line-height: 1.3;">Impresso por:</p>
                 <p style="font-size: 12px; font-weight: bold; margin: 0; line-height: 1.3;">${currentUserName}</p>
+                ` : ''}
             </div>
-            ` : ''}
         </div>
 
         <!-- Steps Grid -->
