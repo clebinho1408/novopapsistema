@@ -51,6 +51,7 @@ export default function StepProcess() {
     categoria_atual: '' as string
   });
   const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showEarModal, setShowEarModal] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -842,6 +843,20 @@ export default function StepProcess() {
     setFormData(prev => ({ ...prev, client_name: '', categoria_atual: '', show_toxicologico_message: false }));
   };
 
+  const handleEarSelect = (comEar: boolean) => {
+    setShowEarModal(false);
+    setFormData(prev => {
+      const psicologicoStep = processSteps.find(s => s.type === 'psicologo');
+      if (!psicologicoStep) return prev;
+      const withoutPsico = prev.selected_steps.filter(id => id !== psicologicoStep.id);
+      return {
+        ...prev,
+        selected_steps: comEar ? [...withoutPsico, psicologicoStep.id] : withoutPsico
+      };
+    });
+    setCurrentStep(2);
+  };
+
   const getSelectedCity = () => cities.find(c => c.id.toString() === formData.city_id);
   const getStepProfessionals = (stepType: string, cityId: string, secondCityId?: string) => {
     console.log('getStepProfessionals called with:', { stepType, cityId, secondCityId });
@@ -866,6 +881,33 @@ export default function StepProcess() {
     console.log(`Filtered ${stepType} professionals (all cities):`, filtered);
     return filtered;
   };
+
+  const isAdicaoCategoriaService = formData.client_name === 'Adição de Categoria A' || formData.client_name === 'Adição de Categoria B';
+
+  const earModal = showEarModal && createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+      <div className="fixed inset-0 bg-black/50" />
+      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 p-6 z-10">
+        <h3 className="text-lg font-semibold text-gray-900 mb-1 text-center">Exame Psicológico (EAR)</h3>
+        <p className="text-sm text-gray-600 mb-5 text-center">O condutor irá adicionar EAR à sua CNH?</p>
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={() => handleEarSelect(true)}
+            className="py-4 rounded-lg border-2 border-gray-300 text-base font-bold text-gray-800 hover:border-blue-500 hover:bg-blue-50 transition-colors"
+          >
+            Com EAR
+          </button>
+          <button
+            onClick={() => handleEarSelect(false)}
+            className="py-4 rounded-lg border-2 border-gray-300 text-base font-bold text-gray-800 hover:border-gray-500 hover:bg-gray-50 transition-colors"
+          >
+            Sem EAR
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
 
   const categoryModal = showCategoryModal && createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center">
@@ -1036,15 +1078,16 @@ export default function StepProcess() {
                         const hasConflictSelected = ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'].some(type => currentStepTypes.includes(type));
                         const isProvaPCD = step.type === 'prova';
                         
-                        // Desabilitar etapas de curso/prova apenas se um serviço for selecionado e não for "1º Habilitação" nem "Adição de Categoria"
-                        const isAdicaoCategoria = formData.client_name === 'Adição de Categoria A' || formData.client_name === 'Adição de Categoria B';
-                        const isNotPrimeiraHabilitacao = formData.client_name !== '' && formData.client_name !== '1º Habilitação' && !isAdicaoCategoria;
+                        // Para Adição de Categoria, ocultar Curso Teórico e Prova Teórica; para demais serviços ocultar todas as etapas de curso/prova exceto 1ª Habilitação
+                        const isNotPrimeiraHabilitacao = formData.client_name !== '' && formData.client_name !== '1º Habilitação' && !isAdicaoCategoriaService;
                         const isCourseOrExamStep = ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'].includes(step.type);
-                        
+                        const isTeorico = ['curso_teorico', 'prova_teorica'].includes(step.type);
+
                         // Desabilitar Prova PCD se alguma das etapas novas estiver marcada
                         // Desabilitar as etapas novas se Prova PCD estiver marcada
                         // Desabilitar etapas de curso/prova se não for 1ª Habilitação
-                        const isDisabled = (isProvaPCD && hasConflictSelected) || (isConflictStep && currentStepTypes.includes('prova')) || (isCourseOrExamStep && isNotPrimeiraHabilitacao);
+                        // Para Adição de Categoria: ocultar sempre Curso Teórico e Prova Teórica
+                        const isDisabled = (isProvaPCD && hasConflictSelected) || (isConflictStep && currentStepTypes.includes('prova')) || (isCourseOrExamStep && isNotPrimeiraHabilitacao) || (isTeorico && isAdicaoCategoriaService);
 
                         if (isDisabled) return null;
 
@@ -1337,7 +1380,13 @@ export default function StepProcess() {
                     </button>
                     {currentStep < 4 ? (
                       <button
-                        onClick={() => setCurrentStep(prev => prev + 1)}
+                        onClick={() => {
+                          if (currentStep === 1 && isAdicaoCategoriaService) {
+                            setShowEarModal(true);
+                          } else {
+                            setCurrentStep(prev => prev + 1);
+                          }
+                        }}
                         disabled={
                           (currentStep === 1 && !formData.city_id) ||
                           (currentStep === 2 && (
@@ -1501,6 +1550,7 @@ export default function StepProcess() {
           </div>
         )}
         {categoryModal}
+        {earModal}
       </Layout>
     );
   }
@@ -1604,6 +1654,7 @@ export default function StepProcess() {
       )}
       {/* Modal de seleção de categoria (Adição de Categoria A) */}
       {categoryModal}
+      {earModal}
 
       {DialogComponent}
     </Layout>
