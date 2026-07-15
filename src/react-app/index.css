@@ -41,6 +41,8 @@
 /* Hover de fundos */
 .dark .hover\:bg-gray-50:hover  { background-color: #334155 !important; }
 .dark .hover\:bg-gray-100:hover { background-color: #334155 !important; }
+.dark .hover\:bg-blue-50:hover  { background-color: #1e3a5f !important; }
+.dark .hover\:bg-blue-100:hover { background-color: #1e3a5f !important; }
 
 /* Azul claro (seleção ativa, badges) */
 .dark .bg-blue-50        { background-color: #1e3a5f !important; }
