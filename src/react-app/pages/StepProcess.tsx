@@ -50,7 +50,6 @@ export default function StepProcess() {
     categoria_atual: '' as string
   });
   const [showCategoryModal, setShowCategoryModal] = useState(false);
-  const [pendingService, setPendingService] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -818,22 +817,20 @@ export default function StepProcess() {
   };
 
   const handleCategorySelect = (categoria: string) => {
+    const isToxicologico = ['C', 'D', 'E'].includes(categoria);
     setShowCategoryModal(false);
     setEnableSecondCity(false);
-    const isToxicologico = ['C', 'D', 'E'].includes(categoria);
     setFormData(prev => ({
       ...prev,
-      client_name: pendingService,
+      client_name: 'Adição de Categoria A',
       categoria_atual: categoria,
       second_city_id: '',
       show_toxicologico_message: isToxicologico
     }));
-    setPendingService('');
   };
 
   const handleCategoryModalCancel = () => {
     setShowCategoryModal(false);
-    setPendingService('');
     setFormData(prev => ({ ...prev, client_name: '', categoria_atual: '', show_toxicologico_message: false }));
   };
 
@@ -958,7 +955,6 @@ export default function StepProcess() {
                         onChange={(e) => {
                           const newService = e.target.value;
                           if (newService === 'Adição de Categoria A') {
-                            setPendingService(newService);
                             setShowCategoryModal(true);
                             return;
                           }
