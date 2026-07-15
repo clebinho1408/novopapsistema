@@ -231,10 +231,10 @@ export default function StepProcess() {
   // NÃO ativa para Adição de Categoria A ou B
   useEffect(() => {
     if (processSteps.length === 0) return;
-    const provaPraticaStep = processSteps.find(s => s.type === 'prova_pratica');
-    const hasProvaPratica = provaPraticaStep ? formData.selected_steps.includes(provaPraticaStep.id) : false;
+    const provaTeoricoStep = processSteps.find(s => s.type === 'prova_teorica');
+    const hasProvaTeórica = provaTeoricoStep ? formData.selected_steps.includes(provaTeoricoStep.id) : false;
     const isAdicaoCategoria = formData.client_name === 'Adição de Categoria A' || formData.client_name === 'Adição de Categoria B';
-    const shouldShow = hasProvaPratica && !formData.show_toxicologico_message && !isAdicaoCategoria;
+    const shouldShow = hasProvaTeórica && !formData.show_toxicologico_message && !isAdicaoCategoria;
     setFormData(prev => {
       if (prev.show_toxicologico_habilitacao === shouldShow) return prev;
       return { ...prev, show_toxicologico_habilitacao: shouldShow };
@@ -1121,8 +1121,8 @@ export default function StepProcess() {
 
                       {/* Toxicológico (1ª Habilitação) — visível a partir de 01/06/2026, nunca para Adição de Categoria */}
                       {TOXICOLOGICO_ATIVO && !(formData.client_name === 'Adição de Categoria A' || formData.client_name === 'Adição de Categoria B') && (() => {
-                        const provaPraticaStep = processSteps.find(s => s.type === 'prova_pratica');
-                        return provaPraticaStep && formData.selected_steps.includes(provaPraticaStep.id);
+                        const provaTeoricoStep = processSteps.find(s => s.type === 'prova_teorica');
+                        return provaTeoricoStep && formData.selected_steps.includes(provaTeoricoStep.id);
                       })() && (
                         <label className="flex items-center space-x-3">
                           <input
