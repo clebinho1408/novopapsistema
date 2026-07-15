@@ -228,16 +228,18 @@ export default function StepProcess() {
 
   // Auto-selecionar/desselecionar Toxicológico (1ª Habilitação) quando prova prática for selecionada
   // NÃO ativa se show_toxicologico_message já estiver true (exclusão mútua)
+  // NÃO ativa para Adição de Categoria A ou B
   useEffect(() => {
     if (processSteps.length === 0) return;
     const provaPraticaStep = processSteps.find(s => s.type === 'prova_pratica');
     const hasProvaPratica = provaPraticaStep ? formData.selected_steps.includes(provaPraticaStep.id) : false;
-    const shouldShow = hasProvaPratica && !formData.show_toxicologico_message;
+    const isAdicaoCategoria = formData.client_name === 'Adição de Categoria A' || formData.client_name === 'Adição de Categoria B';
+    const shouldShow = hasProvaPratica && !formData.show_toxicologico_message && !isAdicaoCategoria;
     setFormData(prev => {
       if (prev.show_toxicologico_habilitacao === shouldShow) return prev;
       return { ...prev, show_toxicologico_habilitacao: shouldShow };
     });
-  }, [formData.selected_steps, formData.show_toxicologico_message, processSteps]);
+  }, [formData.selected_steps, formData.show_toxicologico_message, formData.client_name, processSteps]);
 
     // Auto-selecionar credenciado de Foto e taxas vinculadas quando a cidade ou passos mudarem
     useEffect(() => {

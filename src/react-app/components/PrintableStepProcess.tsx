@@ -28,6 +28,7 @@ interface PrintableStepProcessProps {
 }
 
 export default function PrintableStepProcess({ isOpen, onClose, autoPrint, processData }: PrintableStepProcessProps) {
+  const isAdicaoCategoria = processData.client_name === 'Adição de Categoria A' || processData.client_name === 'Adição de Categoria B';
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [generalInstructions, setGeneralInstructions] = useState<string>('');
   const [emailModal, setEmailModal] = useState({ isOpen: false, email: '' });
@@ -941,7 +942,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
             })()}
         </div>
 
-        ${TOXICOLOGICO_ATIVO && processData.show_toxicologico_habilitacao ? `
+        ${TOXICOLOGICO_ATIVO && processData.show_toxicologico_habilitacao && !isAdicaoCategoria ? `
         <div style="width: 100%; margin-top: 5px; border: 2px solid black; border-radius: 6px; background-color: #fffbeb; padding: 10px 16px; box-sizing: border-box;">
           <div style="font-size: 12px; font-weight: bold; color: black; line-height: 1.5; text-align: center;">
             ⚠️ ATENÇÃO: PARA OBTER SUA CNH, VOCÊ DEVE FAZER O EXAME TOXICOLÓGICO EM UM LABORATÓRIO CREDENCIADO AO SENATRAN. A CARTEIRA SÓ SERÁ EMITIDA COM O RESULTADO NEGATIVO.
@@ -963,7 +964,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                     </div>
                     <div class="total-amount-box">
                       <div class="total-amount-text"><strong>VALOR TOTAL: R$ ${processData.selected_fees.reduce((sum: number, fee: Fee) => sum + parseFloat(String(fee.amount)), 0).toFixed(2)}</strong></div>
-                      ${TOXICOLOGICO_ATIVO && processData.show_toxicologico_habilitacao ? `<div style="font-size: 10px; font-weight: bold; color: black; margin-top: 3px;">+ Valor do Toxicológico</div>` : ''}
+                      ${TOXICOLOGICO_ATIVO && processData.show_toxicologico_habilitacao && !isAdicaoCategoria ? `<div style="font-size: 10px; font-weight: bold; color: black; margin-top: 3px;">+ Valor do Toxicológico</div>` : ''}
                     </div>
                   </div>
                 `;
@@ -1036,7 +1037,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                     <div class="total-amount-card">
                       <div class="total-amount-box">
                           <div class="total-amount-text"><strong>VALOR TOTAL: R$ ${totalWithPCD}</strong></div>
-                          ${TOXICOLOGICO_ATIVO && processData.show_toxicologico_habilitacao ? `<div style="font-size: 10px; font-weight: bold; color: black; margin-top: 3px;">+ Valor do Toxicológico</div>` : ''}
+                          ${TOXICOLOGICO_ATIVO && processData.show_toxicologico_habilitacao && !isAdicaoCategoria ? `<div style="font-size: 10px; font-weight: bold; color: black; margin-top: 3px;">+ Valor do Toxicológico</div>` : ''}
                       </div>
                     </div>
                   </div>
@@ -1353,7 +1354,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
     // Valor total
     content += `======================================\n`;
     content += `VALOR TOTAL: R$ ${parseFloat(processData.total_amount).toFixed(2)}\n`;
-    if (TOXICOLOGICO_ATIVO && processData.show_toxicologico_habilitacao) {
+    if (TOXICOLOGICO_ATIVO && processData.show_toxicologico_habilitacao && !isAdicaoCategoria) {
       content += `+ Valor do Toxicológico\n`;
     }
     content += `======================================\n\n`;
@@ -1710,7 +1711,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                         <div className="text-sm font-bold text-black">
                           <strong>VALOR TOTAL: R$ {parseFloat(processData.total_amount).toFixed(2)}</strong>
                         </div>
-                        {TOXICOLOGICO_ATIVO && processData.show_toxicologico_habilitacao && (
+                        {TOXICOLOGICO_ATIVO && processData.show_toxicologico_habilitacao && !isAdicaoCategoria && (
                           <div className="text-xs font-bold text-black mt-1">+ Valor do Toxicológico</div>
                         )}
                       </div>
@@ -1794,7 +1795,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                         <div className="text-sm font-bold text-black">
                           VALOR TOTAL: R$ {parseFloat(processData.total_amount).toFixed(2)}
                         </div>
-                        {TOXICOLOGICO_ATIVO && processData.show_toxicologico_habilitacao && (
+                        {TOXICOLOGICO_ATIVO && processData.show_toxicologico_habilitacao && !isAdicaoCategoria && (
                           <div className="text-xs font-bold text-black mt-1">+ Valor do Toxicológico</div>
                         )}
                       </div>
