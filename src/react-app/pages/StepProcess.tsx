@@ -834,6 +834,7 @@ export default function StepProcess() {
   const handleCategoryModalCancel = () => {
     setShowCategoryModal(false);
     setPendingService('');
+    setFormData(prev => ({ ...prev, client_name: '', categoria_atual: '', show_toxicologico_message: false }));
   };
 
   const getSelectedCity = () => cities.find(c => c.id.toString() === formData.city_id);
@@ -964,7 +965,13 @@ export default function StepProcess() {
                           if (newService) {
                             setEnableSecondCity(false);
                           }
-                          setFormData(prev => ({ ...prev, client_name: newService, categoria_atual: '', second_city_id: newService ? '' : prev.second_city_id }));
+                          setFormData(prev => ({
+                            ...prev,
+                            client_name: newService,
+                            categoria_atual: '',
+                            show_toxicologico_message: false,
+                            second_city_id: newService ? '' : prev.second_city_id
+                          }));
                         }}
                         disabled={enableSecondCity}
                         className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${enableSecondCity ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : ''}`}
