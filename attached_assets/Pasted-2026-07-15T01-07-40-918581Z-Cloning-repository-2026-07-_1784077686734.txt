@@ -1,0 +1,44 @@
+2026-07-15T01:07:40.918581Z	Cloning repository...
+2026-07-15T01:07:42.778814Z	From https://github.com/clebinho1408/novopapsistema
+2026-07-15T01:07:42.779173Z	 * branch            423843ef8d08e77ec62d78fdeeffb1f8f4c267f0 -> FETCH_HEAD
+2026-07-15T01:07:42.779244Z	
+2026-07-15T01:07:42.902762Z	HEAD is now at 423843e Push local changes to GitHub to enable Cloudflare Pages deployment
+2026-07-15T01:07:42.903362Z	
+2026-07-15T01:07:44.000911Z	
+2026-07-15T01:07:44.001956Z	Using v2 root directory strategy
+2026-07-15T01:07:44.025013Z	Success: Finished cloning repository files
+2026-07-15T01:07:45.835208Z	Checking for configuration in a Wrangler configuration file (BETA)
+2026-07-15T01:07:45.835665Z	
+2026-07-15T01:07:45.843401Z	Found wrangler.json file. Reading build configuration...
+2026-07-15T01:07:46.088162Z	A Wrangler configuration file was found but it does not appear to be valid. Did you mean to use wrangler.toml to configure Pages? If so, then make sure the file is valid and contains the `pages_build_output_dir` property. Skipping file and continuing.
+2026-07-15T01:07:46.687026Z	Detected the following tools from environment: npm@10.9.2, nodejs@22.16.0
+2026-07-15T01:07:46.687662Z	Installing project dependencies: npm clean-install --progress=false
+2026-07-15T01:07:50.465733Z	npm warn deprecated @esbuild-kit/esm-loader@2.6.5: Merged into tsx: https://tsx.is
+2026-07-15T01:07:50.490868Z	npm warn deprecated @types/bcryptjs@3.0.0: This is a stub types definition. bcryptjs provides its own type definitions, so you do not need this installed.
+2026-07-15T01:07:50.501116Z	npm warn deprecated @esbuild-kit/core-utils@3.3.2: Merged into tsx: https://tsx.is
+2026-07-15T01:07:50.576138Z	npm warn deprecated lodash.isequal@4.5.0: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
+2026-07-15T01:07:56.047138Z	
+2026-07-15T01:07:56.047485Z	added 84 packages, and audited 85 packages in 8s
+2026-07-15T01:07:56.047574Z	
+2026-07-15T01:07:56.047632Z	11 packages are looking for funding
+2026-07-15T01:07:56.047696Z	  run `npm fund` for details
+2026-07-15T01:07:56.121751Z	
+2026-07-15T01:07:56.122104Z	12 vulnerabilities (1 low, 4 moderate, 5 high, 2 critical)
+2026-07-15T01:07:56.122256Z	
+2026-07-15T01:07:56.122424Z	To address issues that do not require attention, run:
+2026-07-15T01:07:56.122633Z	  npm audit fix
+2026-07-15T01:07:56.122737Z	
+2026-07-15T01:07:56.122788Z	To address all issues (including breaking changes), run:
+2026-07-15T01:07:56.122845Z	  npm audit fix --force
+2026-07-15T01:07:56.122892Z	
+2026-07-15T01:07:56.122943Z	Run `npm audit` for details.
+2026-07-15T01:07:56.296608Z	Executing user command: pnpm run cf-build
+2026-07-15T01:07:57.466791Z	
+2026-07-15T01:07:57.467856Z	> mocha-app@0.0.0 cf-build /opt/buildhome/repo
+2026-07-15T01:07:57.470048Z	> vite build
+2026-07-15T01:07:57.470125Z	
+2026-07-15T01:07:57.487432Z	sh: 1: vite: not found
+2026-07-15T01:07:57.519603Z	 ELIFECYCLE  Command failed.
+2026-07-15T01:07:57.571281Z	Failed: Error while executing user command. Exited with error code: 1
+2026-07-15T01:07:57.579197Z	Failed: build command exited with code: 1
+2026-07-15T01:07:58.366553Z	Failed: error occurred while running build command
