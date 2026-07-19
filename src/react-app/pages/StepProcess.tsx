@@ -48,7 +48,8 @@ export default function StepProcess() {
     selected_fees: [] as number[],
     show_toxicologico_message: false,
     show_toxicologico_habilitacao: false,
-    categoria_atual: '' as string
+    categoria_atual: '' as string,
+    aviso_reinicio: false
   });
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showEarModal, setShowEarModal] = useState(false);
@@ -603,7 +604,9 @@ export default function StepProcess() {
       selected_professionals: {},
       selected_fees: [],
       show_toxicologico_message: false,
-      show_toxicologico_habilitacao: false
+      show_toxicologico_habilitacao: false,
+      categoria_atual: '',
+      aviso_reinicio: false
     });
     // Reset to first step
     setCurrentStep(1);
@@ -631,6 +634,13 @@ export default function StepProcess() {
     }).map(f => f.id);
 
     const allUniqueFeeIds = Array.from(new Set([...formData.selected_fees, ...autoSelectedFeeIds]));
+
+    if (formData.aviso_reinicio) {
+      const ptFee = fees.find(f => f.name === 'Prova Teórica');
+      const ppFee = fees.find(f => f.name === 'Prova Prática');
+      if (ptFee && !allUniqueFeeIds.includes(ptFee.id)) allUniqueFeeIds.push(ptFee.id);
+      if (ppFee && !allUniqueFeeIds.includes(ppFee.id)) allUniqueFeeIds.push(ppFee.id);
+    }
 
     const base = allUniqueFeeIds.reduce((total, feeId) => {
       const fee = fees.find(f => f.id === feeId);
@@ -677,10 +687,20 @@ export default function StepProcess() {
           client_name: formData.client_name || null,
           selected_steps: formData.selected_steps,
           selected_professionals: formData.selected_professionals,
-          selected_fees: formData.selected_fees,
+          selected_fees: (() => {
+            const feeIds = [...formData.selected_fees];
+            if (formData.aviso_reinicio) {
+              const ptFee = fees.find(f => f.name === 'Prova Teórica');
+              const ppFee = fees.find(f => f.name === 'Prova Prática');
+              if (ptFee && !feeIds.includes(ptFee.id)) feeIds.push(ptFee.id);
+              if (ppFee && !feeIds.includes(ppFee.id)) feeIds.push(ppFee.id);
+            }
+            return feeIds;
+          })(),
           show_toxicologico_message: formData.show_toxicologico_message,
           show_toxicologico_habilitacao: formData.show_toxicologico_habilitacao,
-          categoria_atual: formData.categoria_atual || null
+          categoria_atual: formData.categoria_atual || null,
+          aviso_reinicio: formData.aviso_reinicio
         })
       });
 
@@ -715,7 +735,13 @@ export default function StepProcess() {
           return isStepSelected && (['medico', 'psicologo'].includes(step.type) ? hasProfessional : true);
         }).map(f => f.id);
         const allFeeIds = Array.from(new Set([...formData.selected_fees, ...autoLinkedFeeIds]));
-        const selectedFees = fees.filter(fee => allFeeIds.includes(fee.id));
+        let selectedFees = fees.filter(fee => allFeeIds.includes(fee.id));
+        if (formData.aviso_reinicio) {
+          const ptFee = fees.find(f => f.name === 'Prova Teórica');
+          const ppFee = fees.find(f => f.name === 'Prova Prática');
+          if (ptFee && !selectedFees.find(f => f.id === ptFee.id)) selectedFees = [...selectedFees, ptFee];
+          if (ppFee && !selectedFees.find(f => f.id === ppFee.id)) selectedFees = [...selectedFees, ppFee];
+        }
         
         const printData = {
           client_name: formData.client_name,
@@ -727,6 +753,7 @@ export default function StepProcess() {
           total_amount: calculateTotal().toString(),
           show_toxicologico_message: formData.show_toxicologico_message,
           show_toxicologico_habilitacao: formData.show_toxicologico_habilitacao,
+          aviso_reinicio: formData.aviso_reinicio,
           categoria_atual: formData.categoria_atual || undefined,
           general_instructions: (() => {
             const is1aHab = formData.client_name === '1º Habilitação';
@@ -753,7 +780,8 @@ export default function StepProcess() {
           selected_fees: [],
           show_toxicologico_message: false,
           show_toxicologico_habilitacao: false,
-          categoria_atual: ''
+          categoria_atual: '',
+          aviso_reinicio: false
         });
         
         // Refresh the process list
@@ -791,6 +819,7 @@ export default function StepProcess() {
           show_toxicologico_message: data.show_toxicologico_message || false,
           show_toxicologico_habilitacao: data.show_toxicologico_habilitacao || false,
           categoria_atual: data.categoria_atual || undefined,
+          aviso_reinicio: data.aviso_reinicio || false,
           general_instructions: (() => {
             const is1aHab = process.client_name === '1º Habilitação';
             const steps = data.steps || [];
@@ -1049,6 +1078,7 @@ export default function StepProcess() {
                             client_name: newService,
                             categoria_atual: '',
                             show_toxicologico_message: false,
+                            aviso_reinicio: false,
                             second_city_id: newService ? '' : prev.second_city_id
                           }));
                         }}
@@ -1134,6 +1164,17 @@ export default function StepProcess() {
                           <span className="text-gray-900">Toxicológico (1º Habilitação)</span>
                         </label>
                       )}
+
+                      {/* Aviso Reinício de 1ª Habilitação — sempre visível */}
+                      <label className="flex items-center space-x-3">
+                        <input
+                          type="checkbox"
+                          checked={formData.aviso_reinicio}
+                          onChange={(e) => setFormData(prev => ({ ...prev, aviso_reinicio: e.target.checked }))}
+                          className="h-4 w-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                        />
+                        <span className="font-medium" style={{ color: '#b45309' }}>Aviso Reinício (1ª Habilitação)</span>
+                      </label>
                     </div>
 
                     {/* Professional selection for selected steps (excluding taxa and new course/exam steps) */}

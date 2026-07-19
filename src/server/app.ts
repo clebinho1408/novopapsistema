@@ -1094,8 +1094,8 @@ app.post("/api/step-processes", systemAuthMiddleware, async (c) => {
 
     // Create step process
     const result = await c.env.DB.prepare(
-      "INSERT INTO step_processes (agency_id, user_id, city_id, client_name, total_amount, show_toxicologico_message, show_toxicologico_habilitacao, categoria_atual, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *"
-    ).bind(user.agency_id, user.id, cityId, body.client_name || null, totalAmount, body.show_toxicologico_message || false, body.show_toxicologico_habilitacao || false, body.categoria_atual || null, 'completed').first() as any;
+      "INSERT INTO step_processes (agency_id, user_id, city_id, client_name, total_amount, show_toxicologico_message, show_toxicologico_habilitacao, categoria_atual, aviso_reinicio, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *"
+    ).bind(user.agency_id, user.id, cityId, body.client_name || null, totalAmount, body.show_toxicologico_message || false, body.show_toxicologico_habilitacao || false, body.categoria_atual || null, body.aviso_reinicio || false, 'completed').first() as any;
 
     if (!result) {
       return c.json({ error: "Failed to create process" }, 500);
@@ -1300,7 +1300,8 @@ app.get("/api/step-processes/:id", systemAuthMiddleware, async (c) => {
     fees,
     show_toxicologico_message: process.show_toxicologico_message || false,
     show_toxicologico_habilitacao: process.show_toxicologico_habilitacao || false,
-    categoria_atual: (process as any).categoria_atual || null
+    categoria_atual: (process as any).categoria_atual || null,
+    aviso_reinicio: (process as any).aviso_reinicio || false
   });
 });
 

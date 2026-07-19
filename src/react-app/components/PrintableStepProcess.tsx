@@ -24,6 +24,7 @@ interface PrintableStepProcessProps {
     show_toxicologico_habilitacao?: boolean;
     general_instructions?: string;
     categoria_atual?: string;
+    aviso_reinicio?: boolean;
   };
 }
 
@@ -710,9 +711,12 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
         <!-- Steps Grid -->
         <div class="steps-grid">
             ${(() => {
+              const avisoReinicio = processData.aviso_reinicio || false;
               const filteredSteps = (processData.all_steps || processData.selected_steps).filter(step => {
                 // Excluir prova (processada separadamente)
                 if (step.type === 'prova') return false;
+                // Quando aviso_reinicio está ativo, ocultar etapas de curso/prova
+                if (avisoReinicio && ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'].includes(step.type)) return false;
                 
                 const isSelected = processData.selected_steps.find(s => s.id === step.id);
                 
@@ -946,6 +950,14 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
         <div style="width: 100%; margin-top: 5px; border: 2px solid black; border-radius: 6px; background-color: #fffbeb; padding: 10px 16px; box-sizing: border-box;">
           <div style="font-size: 12px; font-weight: bold; color: black; line-height: 1.5; text-align: center;">
             ⚠️ ATENÇÃO: PARA OBTER SUA CNH, VOCÊ DEVE FAZER O EXAME TOXICOLÓGICO EM UM LABORATÓRIO CREDENCIADO AO SENATRAN. A CARTEIRA SÓ SERÁ EMITIDA COM O RESULTADO NEGATIVO.
+          </div>
+        </div>
+        ` : ''}
+
+        ${avisoReinicio ? `
+        <div style="width: 100%; margin-top: 8px; border: 3px solid #b45309; border-radius: 6px; background-color: #fef3c7; padding: 12px 16px; box-sizing: border-box;">
+          <div style="font-size: 13px; font-weight: bold; color: #92400e; line-height: 1.6; text-align: center;">
+            ⚠️ ATENÇÃO: Este processo é de Reinício de 1ª Habilitação. Todos os cursos e provas seguintes — Curso Teórico, Prova Teórica, Curso Prático e Prova Prática — devem ser realizados obrigatoriamente em uma autoescola de sua escolha.
           </div>
         </div>
         ` : ''}
@@ -1191,10 +1203,13 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
 
     // Filtrar etapas (excluindo prova para processar separadamente e etapas condicionais não selecionadas)
     const isAdicaoCategoriaText = processData.client_name === 'Adição de Categoria A' || processData.client_name === 'Adição de Categoria B';
+    const avisoReinicioEmail = processData.aviso_reinicio || false;
     const filteredSteps = (processData.all_steps || processData.selected_steps).filter((step: any) => {
       if (step.type === 'prova') return false;
       // Nunca mostrar curso_teorico para Adição de Categoria A/B
       if (step.type === 'curso_teorico' && isAdicaoCategoriaText) return false;
+      // Quando aviso_reinicio está ativo, ocultar etapas de curso/prova
+      if (avisoReinicioEmail && ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'].includes(step.type)) return false;
       // Para etapas condicionais, só mostrar se selecionadas
       if (conditionalTypes.includes(step.type)) {
         return processData.selected_steps.find((s: any) => s.id === step.id);
@@ -1359,6 +1374,12 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
     }
     content += `======================================\n\n`;
 
+    if (avisoReinicioEmail) {
+      content += `⚠️  AVISO REINÍCIO DE 1ª HABILITAÇÃO:\n`;
+      content += `ATENÇÃO: Este processo é de Reinício de 1ª Habilitação. Todos os cursos e provas seguintes — Curso Teórico, Prova Teórica, Curso Prático e Prova Prática — devem ser realizados obrigatoriamente em uma autoescola de sua escolha.\n`;
+      content += `${'-'.repeat(40)}\n\n`;
+    }
+
     // Aviso sobre prazo para retirada da CNH
     content += `⚠️  AVISO IMPORTANTE:\n`;
     content += `ATENÇÃO: PRAZO PARA RETIRAR A CNH/PID FÍSICA SERÁ DE 180 DIAS, CONTANDO A PARTIR DA DATA DA SUA EMISSÃO\n`;
@@ -1489,7 +1510,12 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
             {/* Steps Grid */}
             <div className="grid grid-cols-2 gap-3 mb-4">
               {(() => {
-                const filteredSteps = (processData.all_steps || processData.selected_steps).filter(step => step.type !== 'prova');
+                const avisoReinicioJSX = processData.aviso_reinicio || false;
+                const filteredSteps = (processData.all_steps || processData.selected_steps).filter(step => {
+                  if (step.type === 'prova') return false;
+                  if (avisoReinicioJSX && ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'].includes(step.type)) return false;
+                  return true;
+                });
                 let stepCounter = 0;
                 
                 // Tipos de etapas que não precisam de credenciado
@@ -1691,6 +1717,15 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                 });
               })()}
             </div>
+
+            {/* Aviso Reinício de 1ª Habilitação */}
+            {processData.aviso_reinicio && (
+              <div className="w-full mt-2 mb-2 p-3 rounded-lg border-2" style={{ borderColor: '#b45309', backgroundColor: '#fef3c7' }}>
+                <div className="font-bold text-center" style={{ fontSize: '13px', color: '#92400e', lineHeight: '1.6' }}>
+                  ⚠️ ATENÇÃO: Este processo é de Reinício de 1ª Habilitação. Todos os cursos e provas seguintes — Curso Teórico, Prova Teórica, Curso Prático e Prova Prática — devem ser realizados obrigatoriamente em uma autoescola de sua escolha.
+                </div>
+              </div>
+            )}
 
             {/* Total Amount Card and Prova Card Container */}
             <div className="flex items-start gap-2 mb-4 justify-between">
