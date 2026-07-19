@@ -954,7 +954,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
         </div>
         ` : ''}
 
-        ${avisoReinicio ? `
+        ${processData.aviso_reinicio ? `
         <div style="width: 100%; margin-top: 8px; border: 3px solid #b45309; border-radius: 6px; background-color: #fef3c7; padding: 12px 16px; box-sizing: border-box;">
           <div style="font-size: 13px; font-weight: bold; color: #92400e; line-height: 1.6; text-align: center;">
             ⚠️ ATENÇÃO: Este processo é de Reinício de 1ª Habilitação. Todos os cursos e provas seguintes — Curso Teórico, Prova Teórica, Curso Prático e Prova Prática — devem ser realizados obrigatoriamente em uma autoescola de sua escolha.
