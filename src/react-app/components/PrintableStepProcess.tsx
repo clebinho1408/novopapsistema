@@ -946,18 +946,18 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
             })()}
         </div>
 
-        ${TOXICOLOGICO_ATIVO && processData.show_toxicologico_habilitacao && !isAdicaoCategoria ? `
-        <div style="width: 100%; margin-top: 5px; border: 2px solid black; border-radius: 6px; background-color: #fffbeb; padding: 10px 16px; box-sizing: border-box;">
-          <div style="font-size: 12px; font-weight: bold; color: black; line-height: 1.5; text-align: center;">
-            ⚠️ ATENÇÃO: PARA OBTER SUA CNH, VOCÊ DEVE FAZER O EXAME TOXICOLÓGICO EM UM LABORATÓRIO CREDENCIADO AO SENATRAN. A CARTEIRA SÓ SERÁ EMITIDA COM O RESULTADO NEGATIVO.
+        ${processData.aviso_reinicio ? `
+        <div style="width: 100%; margin-top: 8px; border: 3px solid black; border-radius: 6px; background-color: #fef3c7; padding: 12px 16px; box-sizing: border-box;">
+          <div style="font-size: 16px; font-weight: bold; color: black; line-height: 1.6; text-align: center; text-transform: uppercase;">
+            ⚠️ ATENÇÃO: Este processo é de Reinício de 1ª Habilitação. Todos os cursos e provas seguintes — Curso Teórico, Prova Teórica, Curso Prático e Prova Prática — devem ser realizados obrigatoriamente em uma autoescola de sua escolha.
           </div>
         </div>
         ` : ''}
 
-        ${processData.aviso_reinicio ? `
-        <div style="width: 100%; margin-top: 8px; border: 3px solid black; border-radius: 6px; background-color: #fef3c7; padding: 12px 16px; box-sizing: border-box;">
-          <div style="font-size: 13px; font-weight: bold; color: black; line-height: 1.6; text-align: center;">
-            ⚠️ ATENÇÃO: Este processo é de Reinício de 1ª Habilitação. Todos os cursos e provas seguintes — Curso Teórico, Prova Teórica, Curso Prático e Prova Prática — devem ser realizados obrigatoriamente em uma autoescola de sua escolha.
+        ${TOXICOLOGICO_ATIVO && processData.show_toxicologico_habilitacao && !isAdicaoCategoria ? `
+        <div style="width: 100%; margin-top: 5px; border: 2px solid black; border-radius: 6px; background-color: #fffbeb; padding: 10px 16px; box-sizing: border-box;">
+          <div style="font-size: 12px; font-weight: bold; color: black; line-height: 1.5; text-align: center;">
+            ⚠️ ATENÇÃO: PARA OBTER SUA CNH, VOCÊ DEVE FAZER O EXAME TOXICOLÓGICO EM UM LABORATÓRIO CREDENCIADO AO SENATRAN. A CARTEIRA SÓ SERÁ EMITIDA COM O RESULTADO NEGATIVO.
           </div>
         </div>
         ` : ''}
@@ -1721,7 +1721,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
             {/* Aviso Reinício de 1ª Habilitação */}
             {processData.aviso_reinicio && (
               <div className="w-full mt-2 mb-2 p-3 rounded-lg border-2" style={{ borderColor: 'black', backgroundColor: '#fef3c7' }}>
-                <div className="font-bold text-center" style={{ fontSize: '13px', color: 'black', lineHeight: '1.6' }}>
+                <div className="font-bold text-center" style={{ fontSize: '16px', color: 'black', lineHeight: '1.6', textTransform: 'uppercase' }}>
                   ⚠️ ATENÇÃO: Este processo é de Reinício de 1ª Habilitação. Todos os cursos e provas seguintes — Curso Teórico, Prova Teórica, Curso Prático e Prova Prática — devem ser realizados obrigatoriamente em uma autoescola de sua escolha.
                 </div>
               </div>
