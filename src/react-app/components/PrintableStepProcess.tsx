@@ -955,8 +955,8 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
         ` : ''}
 
         ${processData.aviso_reinicio ? `
-        <div style="width: 100%; margin-top: 8px; border: 3px solid #b45309; border-radius: 6px; background-color: #fef3c7; padding: 12px 16px; box-sizing: border-box;">
-          <div style="font-size: 13px; font-weight: bold; color: #92400e; line-height: 1.6; text-align: center;">
+        <div style="width: 100%; margin-top: 8px; border: 3px solid black; border-radius: 6px; background-color: #fef3c7; padding: 12px 16px; box-sizing: border-box;">
+          <div style="font-size: 13px; font-weight: bold; color: black; line-height: 1.6; text-align: center;">
             ⚠️ ATENÇÃO: Este processo é de Reinício de 1ª Habilitação. Todos os cursos e provas seguintes — Curso Teórico, Prova Teórica, Curso Prático e Prova Prática — devem ser realizados obrigatoriamente em uma autoescola de sua escolha.
           </div>
         </div>
@@ -1720,8 +1720,8 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
 
             {/* Aviso Reinício de 1ª Habilitação */}
             {processData.aviso_reinicio && (
-              <div className="w-full mt-2 mb-2 p-3 rounded-lg border-2" style={{ borderColor: '#b45309', backgroundColor: '#fef3c7' }}>
-                <div className="font-bold text-center" style={{ fontSize: '13px', color: '#92400e', lineHeight: '1.6' }}>
+              <div className="w-full mt-2 mb-2 p-3 rounded-lg border-2" style={{ borderColor: 'black', backgroundColor: '#fef3c7' }}>
+                <div className="font-bold text-center" style={{ fontSize: '13px', color: 'black', lineHeight: '1.6' }}>
                   ⚠️ ATENÇÃO: Este processo é de Reinício de 1ª Habilitação. Todos os cursos e provas seguintes — Curso Teórico, Prova Teórica, Curso Prático e Prova Prática — devem ser realizados obrigatoriamente em uma autoescola de sua escolha.
                 </div>
               </div>
