@@ -1176,16 +1176,18 @@ export default function StepProcess() {
                         </label>
                       )}
 
-                      {/* Aviso Reinício de 1ª Habilitação — sempre visível */}
-                      <label className="flex items-center space-x-3">
-                        <input
-                          type="checkbox"
-                          checked={formData.aviso_reinicio}
-                          onChange={(e) => setFormData(prev => ({ ...prev, aviso_reinicio: e.target.checked }))}
-                          className="h-4 w-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
-                        />
-                        <span className="font-medium" style={{ color: '#b45309' }}>Aviso Reinício (1ª Habilitação)</span>
-                      </label>
+                      {/* Aviso Reinício de 1ª Habilitação — visível apenas sem serviço selecionado ou com Reinicio */}
+                      {(!formData.client_name || formData.client_name === 'Reinicio (1º Habilitação)') && (
+                        <label className="flex items-center space-x-3">
+                          <input
+                            type="checkbox"
+                            checked={formData.aviso_reinicio}
+                            onChange={(e) => setFormData(prev => ({ ...prev, aviso_reinicio: e.target.checked }))}
+                            className="h-4 w-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                          />
+                          <span className="font-medium" style={{ color: '#b45309' }}>Aviso Reinício (1ª Habilitação)</span>
+                        </label>
+                      )}
                     </div>
 
                     {/* Professional selection for selected steps (excluding taxa and new course/exam steps) */}
