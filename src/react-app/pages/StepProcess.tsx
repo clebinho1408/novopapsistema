@@ -640,10 +640,12 @@ export default function StepProcess() {
     const allUniqueFeeIds = Array.from(new Set([...formData.selected_fees, ...autoSelectedFeeIds]));
 
     if (formData.aviso_reinicio) {
-      const ptFee = fees.find(f => f.name === 'Prova Teórica');
-      const ppFee = fees.find(f => f.name === 'Prova Prática');
-      if (ptFee && !allUniqueFeeIds.includes(ptFee.id)) allUniqueFeeIds.push(ptFee.id);
-      if (ppFee && !allUniqueFeeIds.includes(ppFee.id)) allUniqueFeeIds.push(ppFee.id);
+      const exameLegislacaoFee = fees.find(f => f.linked_professional_type === 'prova_teorica');
+      const ladvFee = fees.find(f => f.name === 'LADV');
+      const exameDirecaoFee = fees.find(f => f.linked_professional_type === 'prova_pratica');
+      if (exameLegislacaoFee && !allUniqueFeeIds.includes(exameLegislacaoFee.id)) allUniqueFeeIds.push(exameLegislacaoFee.id);
+      if (ladvFee && !allUniqueFeeIds.includes(ladvFee.id)) allUniqueFeeIds.push(ladvFee.id);
+      if (exameDirecaoFee && !allUniqueFeeIds.includes(exameDirecaoFee.id)) allUniqueFeeIds.push(exameDirecaoFee.id);
     }
 
     const base = allUniqueFeeIds.reduce((total, feeId) => {
@@ -694,10 +696,12 @@ export default function StepProcess() {
           selected_fees: (() => {
             const feeIds = [...formData.selected_fees];
             if (formData.aviso_reinicio) {
-              const ptFee = fees.find(f => f.name === 'Prova Teórica');
-              const ppFee = fees.find(f => f.name === 'Prova Prática');
-              if (ptFee && !feeIds.includes(ptFee.id)) feeIds.push(ptFee.id);
-              if (ppFee && !feeIds.includes(ppFee.id)) feeIds.push(ppFee.id);
+              const exameLegislacaoFee = fees.find(f => f.linked_professional_type === 'prova_teorica');
+              const ladvFee = fees.find(f => f.name === 'LADV');
+              const exameDirecaoFee = fees.find(f => f.linked_professional_type === 'prova_pratica');
+              if (exameLegislacaoFee && !feeIds.includes(exameLegislacaoFee.id)) feeIds.push(exameLegislacaoFee.id);
+              if (ladvFee && !feeIds.includes(ladvFee.id)) feeIds.push(ladvFee.id);
+              if (exameDirecaoFee && !feeIds.includes(exameDirecaoFee.id)) feeIds.push(exameDirecaoFee.id);
             }
             return feeIds;
           })(),
@@ -741,10 +745,12 @@ export default function StepProcess() {
         const allFeeIds = Array.from(new Set([...formData.selected_fees, ...autoLinkedFeeIds]));
         let selectedFees = fees.filter(fee => allFeeIds.includes(fee.id));
         if (formData.aviso_reinicio) {
-          const ptFee = fees.find(f => f.name === 'Prova Teórica');
-          const ppFee = fees.find(f => f.name === 'Prova Prática');
-          if (ptFee && !selectedFees.find(f => f.id === ptFee.id)) selectedFees = [...selectedFees, ptFee];
-          if (ppFee && !selectedFees.find(f => f.id === ppFee.id)) selectedFees = [...selectedFees, ppFee];
+          const exameLegislacaoFee = fees.find(f => f.linked_professional_type === 'prova_teorica');
+          const ladvFee = fees.find(f => f.name === 'LADV');
+          const exameDirecaoFee = fees.find(f => f.linked_professional_type === 'prova_pratica');
+          if (exameLegislacaoFee && !selectedFees.find(f => f.id === exameLegislacaoFee.id)) selectedFees = [...selectedFees, exameLegislacaoFee];
+          if (ladvFee && !selectedFees.find(f => f.id === ladvFee.id)) selectedFees = [...selectedFees, ladvFee];
+          if (exameDirecaoFee && !selectedFees.find(f => f.id === exameDirecaoFee.id)) selectedFees = [...selectedFees, exameDirecaoFee];
         }
         
         const printData = {
