@@ -231,7 +231,7 @@ export default function StepProcess() {
     });
   }, [formData.client_name, fees, processSteps]);
 
-  // Auto-selecionar/desselecionar Toxicológico (1ª Habilitação) quando prova prática for selecionada
+  // Auto-selecionar/desselecionar Toxicológico (1ª Habilitação) quando prova teórica for selecionada OU aviso_reinicio ativo
   // NÃO ativa se show_toxicologico_message já estiver true (exclusão mútua)
   // NÃO ativa para Adição de Categoria A ou B
   useEffect(() => {
@@ -239,12 +239,12 @@ export default function StepProcess() {
     const provaTeoricoStep = processSteps.find(s => s.type === 'prova_teorica');
     const hasProvaTeorica = provaTeoricoStep ? formData.selected_steps.includes(provaTeoricoStep.id) : false;
     const isAdicaoCategoria = formData.client_name === 'Adição de Categoria A' || formData.client_name === 'Adição de Categoria B';
-    const shouldShow = hasProvaTeorica && !formData.show_toxicologico_message && !isAdicaoCategoria;
+    const shouldShow = (hasProvaTeorica || formData.aviso_reinicio) && !formData.show_toxicologico_message && !isAdicaoCategoria;
     setFormData(prev => {
       if (prev.show_toxicologico_habilitacao === shouldShow) return prev;
       return { ...prev, show_toxicologico_habilitacao: shouldShow };
     });
-  }, [formData.selected_steps, formData.show_toxicologico_message, formData.client_name, processSteps]);
+  }, [formData.selected_steps, formData.aviso_reinicio, formData.show_toxicologico_message, formData.client_name, processSteps]);
 
     // Auto-selecionar credenciado de Foto e taxas vinculadas quando a cidade ou passos mudarem
     useEffect(() => {
