@@ -21,6 +21,7 @@ Do not make changes to the `worker/` folder unless explicitly instructed, as it 
 - **User Roles**: Three-tier permission system: Administrator (full access), Supervisor (access to specific pages, create/edit but no delete), and Collaborator (access to own processes).
 - **Process Automation**:
     - Intelligent auto-selection of steps and fees based on selected service:
+        * **Reinicio (1º Habilitação)**: Auto-selects Foto, Taxa, Exame Psicológico, Exame Médico steps + Emissão da CNH fee; auto-enables Aviso Reinício flag
         * **Alteração de Dados**: Auto-selects Foto, Taxa steps + Emissão da CNH fee
         * **Alteração de Dados + EAR**: Auto-selects Foto, Taxa, Exame Psicológico steps + Emissão da CNH fee
         * **Renovação**: Auto-selects Foto, Taxa, Exame Médico steps + Emissão da CNH fee

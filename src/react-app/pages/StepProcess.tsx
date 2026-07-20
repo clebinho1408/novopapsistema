@@ -104,6 +104,10 @@ export default function StepProcess() {
           steps: ['foto', 'taxa', 'psicologo', 'medico', 'prova_teorica', 'curso_pratico', 'prova_pratica'],
           fees: ['Emissão da CNH']
         },
+        'Reinicio (1º Habilitação)': {
+          steps: ['foto', 'taxa', 'psicologo', 'medico'],
+          fees: ['Emissão da CNH']
+        },
         'Alteração de Dados': {
           steps: ['foto', 'taxa'],
           fees: ['Emissão da CNH']
@@ -1078,7 +1082,7 @@ export default function StepProcess() {
                             client_name: newService,
                             categoria_atual: '',
                             show_toxicologico_message: false,
-                            aviso_reinicio: false,
+                            aviso_reinicio: newService === 'Reinicio (1º Habilitação)',
                             second_city_id: newService ? '' : prev.second_city_id
                           }));
                         }}
@@ -1087,6 +1091,7 @@ export default function StepProcess() {
                       >
                         <option value="">Selecione um serviço</option>
                         <option value="1º Habilitação">1º Habilitação</option>
+                        <option value="Reinicio (1º Habilitação)">Reinicio (1º Habilitação)</option>
                         <option value="Alteração de Dados">Alteração de Dados</option>
                         <option value="Renovação">Renovação</option>
                         <option value="Renovação + PCD">Renovação + PCD</option>
