@@ -1097,7 +1097,6 @@ export default function StepProcess() {
                       >
                         <option value="">Selecione um serviço</option>
                         <option value="1º Habilitação">1º Habilitação</option>
-                        <option value="Reinicio (1º Habilitação)">Reinicio (1º Habilitação)</option>
                         <option value="Alteração de Dados">Alteração de Dados</option>
                         <option value="Renovação">Renovação</option>
                         <option value="Renovação + PCD">Renovação + PCD</option>
@@ -1105,6 +1104,7 @@ export default function StepProcess() {
                         <option value="Transferência + Alteração de Dados">Transferência + Alteração de Dados</option>
                         <option value="Transferência + Definitiva">Transferência + Definitiva</option>
                         <option value="Estrangeiro">Estrangeiro</option>
+                        <option value="Reinicio (1º Habilitação)">Reinicio (1º Habilitação)</option>
                         <option value="Adição de Categoria A">Adição de Categoria A</option>
                         <option value="Adição de Categoria B">Adição de Categoria B</option>
                       </select>
