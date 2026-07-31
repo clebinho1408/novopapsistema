@@ -906,6 +906,18 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                                 ${step.description ? `<div style="font-size: 14px; font-weight: bold; color: black; margin-bottom: 4px; line-height: 1.2;">${step.description}</div>` : ''}
                                 ${step.obs ? `<div style="font-size: 13px; font-weight: bold; color: black;">Obs.: ${step.obs}</div>` : ''}
                                 ${!step.description && !step.obs ? `<div style="font-size: 13px; color: #666; text-align: center;">Etapa selecionada</div>` : ''}
+                                ${step.type === 'curso_pratico' ? `
+                                <div style="display: flex; gap: 14px; margin-top: 8px; justify-content: center; align-items: center;">
+                                  <div style="display: flex; align-items: center; gap: 5px;">
+                                    <span style="font-size: 10px; font-weight: bold; color: black; line-height: 1.3; text-align: center;">Consultar<br/>Instrutor</span>
+                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=https%3A%2F%2Fportalservicos.senatran.serpro.gov.br%2F%23%2Finstrutor%2Fconsulta" alt="QR Consultar Instrutor" style="width: 60px; height: 60px; display: block;" />
+                                  </div>
+                                  <div style="display: flex; align-items: center; gap: 5px;">
+                                    <span style="font-size: 10px; font-weight: bold; color: black; line-height: 1.3; text-align: center;">Consultar<br/>Autoescola</span>
+                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=https%3A%2F%2Fportalservicos.senatran.serpro.gov.br%2F%23%2Finstrutor%2Fautoescola%2Fconsulta" alt="QR Consultar Autoescola" style="width: 60px; height: 60px; display: block;" />
+                                  </div>
+                                </div>
+                                ` : ''}
                             </div>
                         ` : (step.type === 'taxa' && hasTaxesSelected) ? `
                             <div class="fee-section">
@@ -1676,6 +1688,18 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                           )}
                           {!step.description && !step.obs && (
                             <p className="text-xs text-gray-500 text-center">Etapa selecionada</p>
+                          )}
+                          {step.type === 'curso_pratico' && (
+                            <div className="flex gap-3 mt-2 justify-center items-center">
+                              <div className="flex items-center gap-1">
+                                <span className="text-[10px] font-bold text-black leading-tight text-center">Consultar<br/>Instrutor</span>
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=https%3A%2F%2Fportalservicos.senatran.serpro.gov.br%2F%23%2Finstrutor%2Fconsulta" alt="QR Consultar Instrutor" style={{ width: 60, height: 60, display: 'block' }} />
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <span className="text-[10px] font-bold text-black leading-tight text-center">Consultar<br/>Autoescola</span>
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=https%3A%2F%2Fportalservicos.senatran.serpro.gov.br%2F%23%2Finstrutor%2Fautoescola%2Fconsulta" alt="QR Consultar Autoescola" style={{ width: 60, height: 60, display: 'block' }} />
+                              </div>
+                            </div>
                           )}
                           {step.type === 'curso_pratico' && (() => {
                             const ladvFee = processData.selected_fees.find(fee => fee.name === 'LADV');
