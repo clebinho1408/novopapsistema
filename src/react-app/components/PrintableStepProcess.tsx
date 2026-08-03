@@ -910,11 +910,11 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                                 <div style="display: flex; gap: 14px; margin-top: 8px; justify-content: center; align-items: center;">
                                   <div style="display: flex; align-items: center; gap: 5px;">
                                     <span style="font-size: 10px; font-weight: bold; color: black; line-height: 1.3; text-align: center;">Consultar<br/>Instrutor</span>
-                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=https%3A%2F%2Fportalservicos.senatran.serpro.gov.br%2F%23%2Finstrutor%2Fconsulta" alt="QR Consultar Instrutor" style="width: 60px; height: 60px; display: block;" />
+                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=https%3A%2F%2Fwww.detran.sc.gov.br%2Finstrutores-credenciados%2F" alt="QR Consultar Instrutor" style="width: 60px; height: 60px; display: block;" />
                                   </div>
                                   <div style="display: flex; align-items: center; gap: 5px;">
                                     <span style="font-size: 10px; font-weight: bold; color: black; line-height: 1.3; text-align: center;">Consultar<br/>Autoescola</span>
-                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=https%3A%2F%2Fportalservicos.senatran.serpro.gov.br%2F%23%2Finstrutor%2Fautoescola%2Fconsulta" alt="QR Consultar Autoescola" style="width: 60px; height: 60px; display: block;" />
+                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=https%3A%2F%2Fwww.detran.sc.gov.br%2Fcentro-de-formacao-de-condutores%2F" alt="QR Consultar Autoescola" style="width: 60px; height: 60px; display: block;" />
                                   </div>
                                 </div>
                                 ` : ''}
@@ -1693,11 +1693,11 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                             <div className="flex gap-3 mt-2 justify-center items-center">
                               <div className="flex items-center gap-1">
                                 <span className="text-[10px] font-bold text-black leading-tight text-center">Consultar<br/>Instrutor</span>
-                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=https%3A%2F%2Fportalservicos.senatran.serpro.gov.br%2F%23%2Finstrutor%2Fconsulta" alt="QR Consultar Instrutor" style={{ width: 60, height: 60, display: 'block' }} />
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=https%3A%2F%2Fwww.detran.sc.gov.br%2Finstrutores-credenciados%2F" alt="QR Consultar Instrutor" style={{ width: 60, height: 60, display: 'block' }} />
                               </div>
                               <div className="flex items-center gap-1">
                                 <span className="text-[10px] font-bold text-black leading-tight text-center">Consultar<br/>Autoescola</span>
-                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=https%3A%2F%2Fportalservicos.senatran.serpro.gov.br%2F%23%2Finstrutor%2Fautoescola%2Fconsulta" alt="QR Consultar Autoescola" style={{ width: 60, height: 60, display: 'block' }} />
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=https%3A%2F%2Fwww.detran.sc.gov.br%2Fcentro-de-formacao-de-condutores%2F" alt="QR Consultar Autoescola" style={{ width: 60, height: 60, display: 'block' }} />
                               </div>
                             </div>
                           )}
