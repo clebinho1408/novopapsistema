@@ -105,7 +105,7 @@ export default function StepProcess() {
           fees: ['Emissão da CNH']
         },
         'Reinicio (1º Habilitação)': {
-          steps: ['foto', 'taxa', 'psicologo', 'medico'],
+          steps: ['foto', 'taxa', 'psicologo', 'medico', 'prova_teorica', 'curso_pratico', 'prova_pratica'],
           fees: ['Emissão da CNH']
         },
         'Alteração de Dados': {
@@ -215,8 +215,8 @@ export default function StepProcess() {
           }
         });
         
-        // Regra para 1º Habilitação: Marcar LADV e Prova Prática se necessário (Prova Teórica já é vinculada)
-        if (serviceName === '1º Habilitação') {
+        // Regra para 1º Habilitação e Reinício: garantir taxas do conjunto completo de etapas
+        if (serviceName === '1º Habilitação' || serviceName === 'Reinicio (1º Habilitação)') {
           const ptFee = fees.find(f => f.name === 'Prova Teórica');
           const ladvFee = fees.find(f => f.name === 'LADV');
           const ppFee = fees.find(f => f.name === 'Prova Prática');
@@ -231,7 +231,7 @@ export default function StepProcess() {
     });
   }, [formData.client_name, fees, processSteps]);
 
-  // Auto-selecionar/desselecionar Toxicológico (1ª Habilitação) quando prova teórica for selecionada OU aviso_reinicio ativo
+  // Auto-selecionar/desselecionar Toxicológico (1ª Habilitação) quando prova teórica for selecionada
   // NÃO ativa se show_toxicologico_message já estiver true (exclusão mútua)
   // NÃO ativa para Adição de Categoria A ou B
   useEffect(() => {
@@ -239,12 +239,12 @@ export default function StepProcess() {
     const provaTeoricoStep = processSteps.find(s => s.type === 'prova_teorica');
     const hasProvaTeorica = provaTeoricoStep ? formData.selected_steps.includes(provaTeoricoStep.id) : false;
     const isAdicaoCategoria = formData.client_name === 'Adição de Categoria A' || formData.client_name === 'Adição de Categoria B';
-    const shouldShow = (hasProvaTeorica || formData.aviso_reinicio) && !formData.show_toxicologico_message && !isAdicaoCategoria;
+    const shouldShow = hasProvaTeorica && !formData.show_toxicologico_message && !isAdicaoCategoria;
     setFormData(prev => {
       if (prev.show_toxicologico_habilitacao === shouldShow) return prev;
       return { ...prev, show_toxicologico_habilitacao: shouldShow };
     });
-  }, [formData.selected_steps, formData.aviso_reinicio, formData.show_toxicologico_message, formData.client_name, processSteps]);
+  }, [formData.selected_steps, formData.show_toxicologico_message, formData.client_name, processSteps]);
 
     // Auto-selecionar credenciado de Foto e taxas vinculadas quando a cidade ou passos mudarem
     useEffect(() => {
@@ -639,15 +639,6 @@ export default function StepProcess() {
 
     const allUniqueFeeIds = Array.from(new Set([...formData.selected_fees, ...autoSelectedFeeIds]));
 
-    if (formData.aviso_reinicio) {
-      const exameLegislacaoFee = fees.find(f => f.linked_professional_type === 'prova_teorica');
-      const ladvFee = fees.find(f => f.name === 'LADV');
-      const exameDirecaoFee = fees.find(f => f.linked_professional_type === 'prova_pratica');
-      if (exameLegislacaoFee && !allUniqueFeeIds.includes(exameLegislacaoFee.id)) allUniqueFeeIds.push(exameLegislacaoFee.id);
-      if (ladvFee && !allUniqueFeeIds.includes(ladvFee.id)) allUniqueFeeIds.push(ladvFee.id);
-      if (exameDirecaoFee && !allUniqueFeeIds.includes(exameDirecaoFee.id)) allUniqueFeeIds.push(exameDirecaoFee.id);
-    }
-
     const base = allUniqueFeeIds.reduce((total, feeId) => {
       const fee = fees.find(f => f.id === feeId);
       return total + (fee ? parseFloat(fee.amount) : 0);
@@ -695,14 +686,6 @@ export default function StepProcess() {
           selected_professionals: formData.selected_professionals,
           selected_fees: (() => {
             const feeIds = [...formData.selected_fees];
-            if (formData.aviso_reinicio) {
-              const exameLegislacaoFee = fees.find(f => f.linked_professional_type === 'prova_teorica');
-              const ladvFee = fees.find(f => f.name === 'LADV');
-              const exameDirecaoFee = fees.find(f => f.linked_professional_type === 'prova_pratica');
-              if (exameLegislacaoFee && !feeIds.includes(exameLegislacaoFee.id)) feeIds.push(exameLegislacaoFee.id);
-              if (ladvFee && !feeIds.includes(ladvFee.id)) feeIds.push(ladvFee.id);
-              if (exameDirecaoFee && !feeIds.includes(exameDirecaoFee.id)) feeIds.push(exameDirecaoFee.id);
-            }
             return feeIds;
           })(),
           show_toxicologico_message: formData.show_toxicologico_message,
@@ -744,15 +727,6 @@ export default function StepProcess() {
         }).map(f => f.id);
         const allFeeIds = Array.from(new Set([...formData.selected_fees, ...autoLinkedFeeIds]));
         let selectedFees = fees.filter(fee => allFeeIds.includes(fee.id));
-        if (formData.aviso_reinicio) {
-          const exameLegislacaoFee = fees.find(f => f.linked_professional_type === 'prova_teorica');
-          const ladvFee = fees.find(f => f.name === 'LADV');
-          const exameDirecaoFee = fees.find(f => f.linked_professional_type === 'prova_pratica');
-          if (exameLegislacaoFee && !selectedFees.find(f => f.id === exameLegislacaoFee.id)) selectedFees = [...selectedFees, exameLegislacaoFee];
-          if (ladvFee && !selectedFees.find(f => f.id === ladvFee.id)) selectedFees = [...selectedFees, ladvFee];
-          if (exameDirecaoFee && !selectedFees.find(f => f.id === exameDirecaoFee.id)) selectedFees = [...selectedFees, exameDirecaoFee];
-        }
-        
         const printData = {
           client_name: formData.client_name,
           city: selectedCity!,
@@ -766,7 +740,7 @@ export default function StepProcess() {
           aviso_reinicio: formData.aviso_reinicio,
           categoria_atual: formData.categoria_atual || undefined,
           general_instructions: (() => {
-            const is1aHab = formData.client_name === '1º Habilitação';
+            const is1aHab = ['1º Habilitação', 'Reinicio (1º Habilitação)'].includes(formData.client_name);
             const hasProvaPratica = selectedSteps.some(s => s.type === 'prova_pratica');
             const useFirstHab = is1aHab || (!formData.client_name && hasProvaPratica);
             return useFirstHab
@@ -831,7 +805,7 @@ export default function StepProcess() {
           categoria_atual: data.categoria_atual || undefined,
           aviso_reinicio: data.aviso_reinicio || false,
           general_instructions: (() => {
-            const is1aHab = process.client_name === '1º Habilitação';
+            const is1aHab = ['1º Habilitação', 'Reinicio (1º Habilitação)'].includes(process.client_name);
             const steps = data.steps || [];
             const hasProvaPratica = steps.some((s: any) => s.type === 'prova_pratica');
             const useFirstHab = is1aHab || (!process.client_name && hasProvaPratica);
@@ -855,7 +829,7 @@ export default function StepProcess() {
           selected_fees: [],
           total_amount: process.total_amount || 0,
           general_instructions: (() => {
-            const is1aHab = process.client_name === '1º Habilitação';
+            const is1aHab = ['1º Habilitação', 'Reinicio (1º Habilitação)'].includes(process.client_name);
             return is1aHab
               ? (instructions.instructions_primeira_habilitacao || '')
               : (instructions.general_instructions || '');
@@ -1088,7 +1062,7 @@ export default function StepProcess() {
                             client_name: newService,
                             categoria_atual: '',
                             show_toxicologico_message: false,
-                            aviso_reinicio: newService === 'Reinicio (1º Habilitação)',
+                            aviso_reinicio: false,
                             second_city_id: newService ? '' : prev.second_city_id
                           }));
                         }}
@@ -1124,7 +1098,7 @@ export default function StepProcess() {
                         const isProvaPCD = step.type === 'prova';
                         
                         // Para Adição de Categoria, ocultar Curso Teórico e Prova Teórica; para demais serviços ocultar todas as etapas de curso/prova exceto 1ª Habilitação
-                        const isNotPrimeiraHabilitacao = formData.client_name !== '' && formData.client_name !== '1º Habilitação' && !isAdicaoCategoriaService;
+                        const isNotPrimeiraHabilitacao = formData.client_name !== '' && !['1º Habilitação', 'Reinicio (1º Habilitação)'].includes(formData.client_name) && !isAdicaoCategoriaService;
                         const isCourseOrExamStep = ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'].includes(step.type);
                         const isTeorico = ['curso_teorico', 'prova_teorica'].includes(step.type);
 
@@ -1176,18 +1150,6 @@ export default function StepProcess() {
                         </label>
                       )}
 
-                      {/* Aviso Reinício de 1ª Habilitação — visível apenas sem serviço selecionado ou com Reinicio */}
-                      {(!formData.client_name || formData.client_name === 'Reinicio (1º Habilitação)') && (
-                        <label className="flex items-center space-x-3">
-                          <input
-                            type="checkbox"
-                            checked={formData.aviso_reinicio}
-                            onChange={(e) => setFormData(prev => ({ ...prev, aviso_reinicio: e.target.checked }))}
-                            className="h-4 w-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
-                          />
-                          <span className="font-medium" style={{ color: '#b45309' }}>Aviso Reinício (1ª Habilitação)</span>
-                        </label>
-                      )}
                     </div>
 
                     {/* Professional selection for selected steps (excluding taxa and new course/exam steps) */}

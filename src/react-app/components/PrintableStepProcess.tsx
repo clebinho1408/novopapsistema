@@ -82,7 +82,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
     try {
       const response = await fetch('/api/instructions', { credentials: 'include' });
       const data = await response.json();
-      const is1aHab = processData.client_name === '1º Habilitação';
+      const is1aHab = ['1º Habilitação', 'Reinicio (1º Habilitação)'].includes(processData.client_name || '');
       const hasProvaPratica = processData.selected_steps.some(s => s.type === 'prova_pratica');
       const useFirstHab = is1aHab || (!processData.client_name && hasProvaPratica);
       const resolved = useFirstHab
@@ -711,7 +711,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
         <!-- Steps Grid -->
         <div class="steps-grid">
             ${(() => {
-              const avisoReinicio = processData.aviso_reinicio || false;
+              const avisoReinicio = Boolean(processData.aviso_reinicio && processData.client_name !== 'Reinicio (1º Habilitação)');
               const filteredSteps = (processData.all_steps || processData.selected_steps).filter(step => {
                 // Excluir prova (processada separadamente)
                 if (step.type === 'prova') return false;
@@ -958,7 +958,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
             })()}
         </div>
 
-        ${processData.aviso_reinicio ? `
+        ${processData.aviso_reinicio && processData.client_name !== 'Reinicio (1º Habilitação)' ? `
         <div style="width: 100%; margin-top: 8px; border: 3px solid black; border-radius: 6px; background-color: #fef3c7; padding: 12px 16px; box-sizing: border-box;">
           <div style="font-size: 16px; font-weight: bold; color: black; line-height: 1.6; text-align: center; text-transform: uppercase;">
             ⚠️ ATENÇÃO: Este processo é de Reinício de 1ª Habilitação. Todos os cursos e provas seguintes — Curso Teórico, Prova Teórica, Curso Prático e Prova Prática — devem ser realizados obrigatoriamente em uma autoescola de sua escolha.
@@ -1215,7 +1215,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
 
     // Filtrar etapas (excluindo prova para processar separadamente e etapas condicionais não selecionadas)
     const isAdicaoCategoriaText = processData.client_name === 'Adição de Categoria A' || processData.client_name === 'Adição de Categoria B';
-    const avisoReinicioEmail = processData.aviso_reinicio || false;
+    const avisoReinicioEmail = Boolean(processData.aviso_reinicio && processData.client_name !== 'Reinicio (1º Habilitação)');
     const filteredSteps = (processData.all_steps || processData.selected_steps).filter((step: any) => {
       if (step.type === 'prova') return false;
       // Nunca mostrar curso_teorico para Adição de Categoria A/B
@@ -1522,7 +1522,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
             {/* Steps Grid */}
             <div className="grid grid-cols-2 gap-3 mb-4">
               {(() => {
-                const avisoReinicioJSX = processData.aviso_reinicio || false;
+                const avisoReinicioJSX = Boolean(processData.aviso_reinicio && processData.client_name !== 'Reinicio (1º Habilitação)');
                 const filteredSteps = (processData.all_steps || processData.selected_steps).filter(step => {
                   if (step.type === 'prova') return false;
                   if (avisoReinicioJSX && ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'].includes(step.type)) return false;
@@ -1743,7 +1743,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
             </div>
 
             {/* Aviso Reinício de 1ª Habilitação */}
-            {processData.aviso_reinicio && (
+            {processData.aviso_reinicio && processData.client_name !== 'Reinicio (1º Habilitação)' && (
               <div className="w-full mt-2 mb-2 p-3 rounded-lg border-2" style={{ borderColor: 'black', backgroundColor: '#fef3c7' }}>
                 <div className="font-bold text-center" style={{ fontSize: '16px', color: 'black', lineHeight: '1.6', textTransform: 'uppercase' }}>
                   ⚠️ ATENÇÃO: Este processo é de Reinício de 1ª Habilitação. Todos os cursos e provas seguintes — Curso Teórico, Prova Teórica, Curso Prático e Prova Prática — devem ser realizados obrigatoriamente em uma autoescola de sua escolha.

@@ -1358,7 +1358,7 @@ app.post("/api/step-processes/send-email", systemAuthMiddleware, async (c) => {
       "SELECT general_instructions, instructions_primeira_habilitacao FROM agency_instructions WHERE agency_id = ?"
     ).bind(user.agency_id as number).first();
 
-    const is1aHab = processData.client_name === '1º Habilitação';
+    const is1aHab = ['1º Habilitação', 'Reinicio (1º Habilitação)'].includes(processData.client_name || '');
     const hasProvaPratica = Array.isArray(processData.selected_steps) &&
       processData.selected_steps.some((s: any) => s.type === 'prova_pratica');
     const useFirstHab = is1aHab || (!processData.client_name && hasProvaPratica);
