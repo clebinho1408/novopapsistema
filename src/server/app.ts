@@ -3,6 +3,7 @@ import { cors } from "hono/cors";
 import { getCookie, setCookie } from "hono/cookie";
 import { zValidator } from "@hono/zod-validator";
 import bcrypt from "bcryptjs";
+import { isServiceStepAllowed } from "../shared/rehabilitation";
 import {
   CreateCityRequestSchema,
   CreateProfessionalRequestSchema,
@@ -1552,7 +1553,8 @@ function generateEmailHTML(processData: any, logoUrl: string | null, generalInst
         <!-- Steps Grid -->
         <div class="steps-grid">
             ${(() => {
-              const filteredSteps = (processData.all_steps || processData.selected_steps).filter((step: any) => step.type !== 'prova');
+              const filteredSteps = (processData.all_steps || processData.selected_steps).filter((step: any) =>
+                step.type !== 'prova' && isServiceStepAllowed(processData.client_name, step.type));
               let stepCounter = 0;
 
               return filteredSteps.map((step: any) => {
@@ -1594,7 +1596,7 @@ function generateEmailHTML(processData: any, logoUrl: string | null, generalInst
                               <div>
                                   <h4 style="font-size: 14px; font-weight: bold; margin: 0 0 8px 0;">TAXAS A PAGAR:</h4>
                                   ${processData.selected_fees.filter((fee: any) => !fee.linked_professional_type).map((fee: any) => `
-                                      <div style="font-size: 12px; margin-bottom: 3px;">${fee.name}: R$ ${fee.amount.toFixed(2)}</div>
+                                      <div style="font-size: 12px; margin-bottom: 3px;">${fee.name}: R$ ${Number(fee.amount).toFixed(2)}</div>
                                   `).join('')}
                               </div>
                           ` : `
@@ -1612,7 +1614,7 @@ function generateEmailHTML(processData: any, logoUrl: string | null, generalInst
         <!-- Total Amount -->
         <div class="total-amount-card">
             <div class="total-amount-box">
-                <div class="total-amount-text">VALOR TOTAL: R$ ${processData.total_amount.toFixed(2)}</div>
+                <div class="total-amount-text">VALOR TOTAL: R$ ${Number(processData.total_amount).toFixed(2)}</div>
             </div>
         </div>
 

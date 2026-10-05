@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { FileText, MapPin, DollarSign, CheckCircle, Eye, AlertTriangle } from 'lucide-react';
 import type { City, ProcessStep, Fee, Professional } from '@/shared/types';
 import { useDialog } from '@/react-app/components/Dialog';
+import { REHABILITATION_SERVICE, REHABILITATION_STEP_TYPES, isServiceStepAllowed } from '@/shared/rehabilitation';
 
 const TOXICOLOGICO_RELEASE_DATE = new Date('2026-06-01');
 const TOXICOLOGICO_ATIVO = new Date() >= TOXICOLOGICO_RELEASE_DATE;
@@ -53,6 +54,8 @@ export default function StepProcess() {
   });
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showEarModal, setShowEarModal] = useState(false);
+  const [showRehabilitationModal, setShowRehabilitationModal] = useState(false);
+  const [rehabilitationCategoryAnswer, setRehabilitationCategoryAnswer] = useState<boolean | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -106,6 +109,10 @@ export default function StepProcess() {
         },
         'Reinicio (1º Habilitação)': {
           steps: ['foto', 'taxa', 'psicologo', 'medico', 'prova_teorica', 'curso_pratico', 'prova_pratica'],
+          fees: ['Emissão da CNH']
+        },
+        [REHABILITATION_SERVICE]: {
+          steps: [...REHABILITATION_STEP_TYPES],
           fees: ['Emissão da CNH']
         },
         'Alteração de Dados': {
@@ -372,6 +379,8 @@ export default function StepProcess() {
     const groupedTypes = ['prova_teorica', 'curso_pratico', 'prova_pratica'];
     
     setFormData(prev => {
+      // As cinco etapas são obrigatórias; não aplicar o agrupamento de cursos/provas.
+      if (prev.client_name === REHABILITATION_SERVICE) return prev;
       const hasServiceSelected = !!prev.client_name;
       const isGroupedStep = hasServiceSelected && step && groupedTypes.includes(step.type);
       const isCurrentlySelected = prev.selected_steps.includes(stepId);
@@ -598,6 +607,8 @@ export default function StepProcess() {
   };
 
   const handleCancel = () => {
+    setShowRehabilitationModal(false);
+    setRehabilitationCategoryAnswer(null);
     setEnableSecondCity(false);
     // Reset form data
     setFormData({
@@ -658,6 +669,13 @@ export default function StepProcess() {
 
   const handleSubmit = async () => {
     try {
+      if (formData.client_name === REHABILITATION_SERVICE &&
+          (rehabilitationCategoryAnswer === null ||
+           !REHABILITATION_STEP_TYPES.every(type =>
+             processSteps.some(step => step.type === type && formData.selected_steps.includes(step.id))))) {
+        await showAlert('Responda à pergunta sobre a categoria e mantenha todas as etapas obrigatórias de Reabilitação.', 'warning');
+        return;
+      }
       // Validate form data before sending
       if (!formData.city_id) {
         await showAlert('Por favor, selecione uma cidade.', 'warning');
@@ -754,6 +772,8 @@ export default function StepProcess() {
         setShowPrintModal(true);
         
         // Reset form data
+        setShowRehabilitationModal(false);
+        setRehabilitationCategoryAnswer(null);
         setEnableSecondCity(false);
         setFormData({
           city_id: '',
@@ -858,6 +878,30 @@ export default function StepProcess() {
     setFormData(prev => ({ ...prev, client_name: '', categoria_atual: '', show_toxicologico_message: false }));
   };
 
+  const handleRehabilitationAnswer = (hasHeavyCategory: boolean) => {
+    setRehabilitationCategoryAnswer(hasHeavyCategory);
+    setShowRehabilitationModal(false);
+    setFormData(prev => ({
+      ...prev,
+      show_toxicologico_message: hasHeavyCategory,
+      show_toxicologico_habilitacao: false
+    }));
+  };
+
+  const handleRehabilitationModalCancel = () => {
+    setShowRehabilitationModal(false);
+    setRehabilitationCategoryAnswer(null);
+    setFormData(prev => ({
+      ...prev,
+      client_name: '',
+      selected_steps: [],
+      selected_fees: [],
+      categoria_atual: '',
+      show_toxicologico_message: false,
+      show_toxicologico_habilitacao: false
+    }));
+  };
+
   const handleEarSelect = (comEar: boolean) => {
     setShowEarModal(false);
     setFormData(prev => {
@@ -952,6 +996,32 @@ export default function StepProcess() {
           onClick={handleCategoryModalCancel}
           className="mt-4 w-full py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 hover:text-gray-700 text-sm font-medium"
         >
+          Cancelar
+        </button>
+      </div>
+    </div>,
+    document.body
+  );
+
+  const rehabilitationModal = showRehabilitationModal && createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+      <div className="fixed inset-0 bg-black/50" />
+      <div role="dialog" aria-modal="true" aria-labelledby="rehabilitation-title"
+        className="relative bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 p-6 z-10 text-gray-900">
+        <h3 id="rehabilitation-title" className="text-base font-semibold text-center mb-2">Reabilitação</h3>
+        <p className="text-base font-bold text-center mb-5">O condutor possui categoria C, D ou E?</p>
+        <div className="grid grid-cols-2 gap-3">
+          <button type="button" autoFocus onClick={() => handleRehabilitationAnswer(true)}
+            className="py-4 rounded-lg border-2 border-gray-300 font-bold hover:border-blue-500 hover:bg-blue-50">
+            Sim
+          </button>
+          <button type="button" onClick={() => handleRehabilitationAnswer(false)}
+            className="py-4 rounded-lg border-2 border-gray-300 font-bold hover:border-blue-500 hover:bg-blue-50">
+            Não
+          </button>
+        </div>
+        <button type="button" onClick={handleRehabilitationModalCancel}
+          className="mt-4 w-full py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50">
           Cancelar
         </button>
       </div>
@@ -1054,6 +1124,8 @@ export default function StepProcess() {
                         value={formData.client_name}
                         onChange={(e) => {
                           const newService = e.target.value;
+                          setRehabilitationCategoryAnswer(null);
+                          setShowRehabilitationModal(newService === REHABILITATION_SERVICE);
                           if (newService) {
                             setEnableSecondCity(false);
                           }
@@ -1079,6 +1151,7 @@ export default function StepProcess() {
                         <option value="Transferência + Definitiva">Transferência + Definitiva</option>
                         <option value="Estrangeiro">Estrangeiro</option>
                         <option value="Reinicio (1º Habilitação)">Reinicio (1º Habilitação)</option>
+                        <option value="Reabilitação">Reabilitação</option>
                         <option value="Adição de Categoria A">Adição de Categoria A</option>
                         <option value="Adição de Categoria B">Adição de Categoria B</option>
                       </select>
@@ -1092,13 +1165,15 @@ export default function StepProcess() {
                     <h2 className="text-lg font-medium text-gray-900 mb-4">Selecione as Etapas Necessárias</h2>
                     <div className="space-y-3">
                       {[...processSteps].sort((a, b) => a.sort_order - b.sort_order).map(step => {
+                        if (!isServiceStepAllowed(formData.client_name, step.type)) return null;
                         const currentStepTypes = formData.selected_steps.map(id => processSteps.find(s => s.id === id)?.type);
                         const isConflictStep = ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'].includes(step.type);
                         const hasConflictSelected = ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'].some(type => currentStepTypes.includes(type));
                         const isProvaPCD = step.type === 'prova';
                         
                         // Para Adição de Categoria, ocultar Curso Teórico e Prova Teórica; para demais serviços ocultar todas as etapas de curso/prova exceto 1ª Habilitação
-                        const isNotPrimeiraHabilitacao = formData.client_name !== '' && !['1º Habilitação', 'Reinicio (1º Habilitação)'].includes(formData.client_name) && !isAdicaoCategoriaService;
+                        const isRehabilitation = formData.client_name === REHABILITATION_SERVICE;
+                        const isNotPrimeiraHabilitacao = formData.client_name !== '' && !['1º Habilitação', 'Reinicio (1º Habilitação)'].includes(formData.client_name) && !isAdicaoCategoriaService && !isRehabilitation;
                         const isCourseOrExamStep = ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'].includes(step.type);
                         const isTeorico = ['curso_teorico', 'prova_teorica'].includes(step.type);
 
@@ -1119,7 +1194,7 @@ export default function StepProcess() {
                               type="checkbox"
                               checked={formData.selected_steps.includes(step.id)}
                               onChange={() => !isDisabled && handleStepToggle(step.id)}
-                              disabled={isDisabled}
+                              disabled={isDisabled || isRehabilitation}
                               className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                             />
                             <span className="text-gray-900">
@@ -1413,6 +1488,9 @@ export default function StepProcess() {
                         onClick={() => {
                           if (currentStep === 1 && isEarModalService) {
                             setShowEarModal(true);
+                          } else if (currentStep === 1 && formData.client_name === REHABILITATION_SERVICE &&
+                              rehabilitationCategoryAnswer === null) {
+                            setShowRehabilitationModal(true);
                           } else {
                             setCurrentStep(prev => prev + 1);
                           }
@@ -1581,6 +1659,7 @@ export default function StepProcess() {
         )}
         {categoryModal}
         {earModal}
+        {rehabilitationModal}
       </Layout>
     );
   }
@@ -1685,6 +1764,7 @@ export default function StepProcess() {
       {/* Modal de seleção de categoria (Adição de Categoria A) */}
       {categoryModal}
       {earModal}
+      {rehabilitationModal}
 
       {DialogComponent}
     </Layout>

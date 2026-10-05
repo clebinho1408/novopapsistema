@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, lazy } from 'react';
 import type { ProcessStep, Professional, Fee, City } from '@/shared/types';
+import { isServiceStepAllowed } from '@/shared/rehabilitation';
 
 const TOXICOLOGICO_ATIVO = new Date() >= new Date('2026-06-01');
 
@@ -713,6 +714,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
             ${(() => {
               const avisoReinicio = Boolean(processData.aviso_reinicio && processData.client_name !== 'Reinicio (1º Habilitação)');
               const filteredSteps = (processData.all_steps || processData.selected_steps).filter(step => {
+                if (!isServiceStepAllowed(processData.client_name, step.type)) return false;
                 // Excluir prova (processada separadamente)
                 if (step.type === 'prova') return false;
                 // Quando aviso_reinicio está ativo, ocultar etapas de curso/prova
@@ -1217,6 +1219,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
     const isAdicaoCategoriaText = processData.client_name === 'Adição de Categoria A' || processData.client_name === 'Adição de Categoria B';
     const avisoReinicioEmail = Boolean(processData.aviso_reinicio && processData.client_name !== 'Reinicio (1º Habilitação)');
     const filteredSteps = (processData.all_steps || processData.selected_steps).filter((step: any) => {
+      if (!isServiceStepAllowed(processData.client_name, step.type)) return false;
       if (step.type === 'prova') return false;
       // Nunca mostrar curso_teorico para Adição de Categoria A/B
       if (step.type === 'curso_teorico' && isAdicaoCategoriaText) return false;
@@ -1524,6 +1527,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
               {(() => {
                 const avisoReinicioJSX = Boolean(processData.aviso_reinicio && processData.client_name !== 'Reinicio (1º Habilitação)');
                 const filteredSteps = (processData.all_steps || processData.selected_steps).filter(step => {
+                  if (!isServiceStepAllowed(processData.client_name, step.type)) return false;
                   if (step.type === 'prova') return false;
                   if (avisoReinicioJSX && ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'].includes(step.type)) return false;
                   return true;
