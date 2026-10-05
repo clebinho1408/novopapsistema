@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const ts = require('typescript');
+const notice = 'Atenção! Veículos para a prova prática devem atender a Portaria Normativa Detran nº 12/2026, Art. 22: máximo 8 anos (motos), 12 anos (carros), 20 anos (ônibus/caminhões). Requisito: sem débitos em aberto.';
 
 const required = ['foto', 'taxa', 'psicologo', 'medico', 'prova_pratica'];
 const types = [...required, 'curso_teorico', 'prova_teorica', 'curso_pratico', 'prova'];
@@ -253,5 +254,68 @@ async function run() {
   assert.equal(shared.isServiceStepAllowed('1º Habilitação', 'curso_teorico'), true);
   assert.equal(shared.isServiceStepAllowed('Reabilitação', 'curso_teorico'), false);
   console.log('PASS: print HTML, email text, preview and server email preserve five stages and toxicology answer');
+  assert.equal(shared.REHABILITATION_VEHICLE_NOTICE, notice);
+  const printData = {
+    client_name: 'Reabilitação', city: cities[0], all_steps: steps,
+    selected_steps: steps.filter(s => required.includes(s.type)),
+    selected_professionals: Object.fromEntries(professionals.map(p => [steps.find(s => s.type === p.type).id, p])),
+    selected_fees: [fees[0], fees.find(f => f.linked_professional_type === 'prova_pratica')],
+    total_amount: '110', show_toxicologico_message: true
+  };
+  const fixtures = [
+    { name: 'immediate print', data: printData, expected: true },
+    { name: 'saved process reprint', data: JSON.parse(JSON.stringify(printData)), expected: true },
+    { name: 'without all_steps', data: { ...printData, all_steps: undefined }, expected: true },
+    { name: 'different step order', data: { ...printData, all_steps: [...steps].reverse() }, expected: true },
+    { name: 'practical exam deselected', data: {
+      ...printData, selected_steps: printData.selected_steps.filter(s => s.type !== 'prova_pratica')
+    }, expected: false },
+    { name: 'practical block absent', data: {
+      ...printData, all_steps: steps.filter(s => s.type !== 'prova_pratica')
+    }, expected: false },
+    { name: 'reinicio hides practical block', data: { ...printData, aviso_reinicio: true }, expected: false },
+    ...['1º Habilitação', 'Reinicio (1º Habilitação)', 'Adição de Categoria A', 'Adição de Categoria B', 'Renovação', ''].map(service => ({
+      name: `other service: ${service}`, data: { ...printData, client_name: service }, expected: false
+    }))
+  ];
+  for (const { name, data, expected } of fixtures) {
+    const preview = print.render({ isOpen: true, onClose() {}, processData: data });
+    const html = print.context.output.generatePrintHTML();
+    const row = nodes(preview).find(node => node.props['data-rehabilitation-exam-row']);
+    assert.equal(Boolean(row), expected, `${name}: preview pair`);
+    assert.equal(text(preview).includes(notice), expected, `${name}: preview notice`);
+    assert.equal(html.includes(notice), expected, `${name}: print notice`);
+    assert.equal((html.match(/<aside class="rehabilitation-vehicle-notice">/g) || []).length,
+      expected ? 1 : 0, `${name}: print notice exactly once`);
+    if (expected) {
+      const children = row.props.children;
+      assert.equal(children.length, 2);
+      assert.ok(text(children[0]).includes('ETAPA_prova_pratica'));
+      assert.equal(children[1].type, 'aside');
+      assert.equal(text(children[1]), notice);
+      assert.equal(row.props.style.breakInside, 'avoid');
+      assert.match(html, /<div class="rehabilitation-exam-row">[\s\S]*?ETAPA_prova_pratica[\s\S]*?<aside class="rehabilitation-vehicle-notice">/);
+      assert.match(html, /\.rehabilitation-exam-row\s*\{[^}]*grid-column: 1 \/ -1;[^}]*break-inside: avoid;/);
+    }
+    assert.equal(print.context.output.generateEmailContent().includes(notice), false, `${name}: email unchanged`);
+    assert.equal(email.generateEmailHTML(data, null, '').includes(notice), false, `${name}: server email unchanged`);
+  }
+  if (process.argv.includes('--write-print-fixture')) {
+    // Generated test document only; never expose a fixture route or bypass auth in the application.
+    const data = {
+      ...printData,
+      all_steps: steps.map(s => ({ ...s, name: ({
+        foto: 'Foto', taxa: 'Taxa', psicologo: 'Exame Psicológico',
+        medico: 'Exame Médico', prova_pratica: 'Prova Prática'
+      })[s.type] || s.name })),
+      general_instructions: 'Apresente documento de identificação e siga as orientações da agência.'
+    };
+    print.render({ isOpen: true, onClose() {}, processData: data });
+    const html = print.context.output.generatePrintHTML();
+    fs.mkdirSync('/tmp/rehabilitation-print-check', { recursive: true });
+    fs.writeFileSync('/tmp/rehabilitation-print-check/index.html', html.replace('@media print {', '@media all {'));
+    fs.writeFileSync('/tmp/rehabilitation-print-check/screen.html', html);
+  }
+  console.log('PASS: exact vehicle notice adjacent to practical exam, immediate/reprint, deselected/absent exam, other services and unchanged emails');
 }
 run().catch(error => { console.error(error); process.exitCode = 1; });

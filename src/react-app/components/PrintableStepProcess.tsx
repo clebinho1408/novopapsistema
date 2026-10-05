@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef, lazy } from 'react';
 import type { ProcessStep, Professional, Fee, City } from '@/shared/types';
-import { isServiceStepAllowed } from '@/shared/rehabilitation';
+import {
+  REHABILITATION_SERVICE, REHABILITATION_VEHICLE_NOTICE,
+  isServiceStepAllowed, shouldShowRehabilitationVehicleNotice
+} from '@/shared/rehabilitation';
 
 const TOXICOLOGICO_ATIVO = new Date() >= new Date('2026-06-01');
 
@@ -319,6 +322,27 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
             display: flex;
             flex-direction: column;
         }
+        .rehabilitation-exam-row {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            gap: 8px;
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+        .rehabilitation-exam-row > * {
+            min-width: 0;
+        }
+        .rehabilitation-vehicle-notice {
+            border: 2px solid black;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            font-weight: bold;
+            line-height: 1.4;
+            overflow-wrap: break-word;
+        }
         .step-header {
             background-color: #f5f5f5;
             padding: 6px 8px;
@@ -618,6 +642,9 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                 gap: 5px;
                 margin-bottom: 5px;
             }
+            .rehabilitation-exam-row {
+                gap: 5px;
+            }
             .step-content {
                 padding: 5px;
             }
@@ -817,7 +844,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
               const cardClass = linkedFee && (professional || ['prova_teorica', 'prova_pratica', 'curso_pratico'].includes(step.type)) ? "step-card-with-fee" : "step-card";
               const contentClass = linkedFee && (professional || ['prova_teorica', 'prova_pratica', 'curso_pratico'].includes(step.type)) ? "step-content-with-fee" : "step-content";
               
-              return `
+              const card = `
                 <div class="${cardClass}">
                     <div class="step-header">
                         <div class="step-icon">${stepIcon}</div>
@@ -956,6 +983,9 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                     </div>
                 </div>
               `;
+              return shouldShowRehabilitationVehicleNotice(processData.client_name, step.type, Boolean(isSelected))
+                ? `<div class="rehabilitation-exam-row">${card}<aside class="rehabilitation-vehicle-notice">${REHABILITATION_VEHICLE_NOTICE}</aside></div>`
+                : card;
               }).join('');
             })()}
         </div>
@@ -1530,6 +1560,8 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                   if (!isServiceStepAllowed(processData.client_name, step.type)) return false;
                   if (step.type === 'prova') return false;
                   if (avisoReinicioJSX && ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'].includes(step.type)) return false;
+                  if (processData.client_name === REHABILITATION_SERVICE && step.type === 'prova_pratica' &&
+                      !processData.selected_steps.some(selected => selected.id === step.id)) return false;
                   return true;
                 });
                 let stepCounter = 0;
@@ -1556,7 +1588,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                   
                   const stepNumber = stepCounter;
                 
-                return (
+                const card = (
                   <div key={step.id} className={`border-2 border-black ${(() => {
                     // Buscar taxa vinculada a este tipo de profissional para ajustar altura
                     const linkedFee = step.type === 'curso_pratico'
@@ -1742,6 +1774,15 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                     </div>
                   </div>
                 );
+                return shouldShowRehabilitationVehicleNotice(processData.client_name, step.type, Boolean(isSelected)) ? (
+                  <div key={step.id} data-rehabilitation-exam-row
+                    className="col-span-2 grid grid-cols-2 gap-3" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                    {card}
+                    <aside className="min-w-0 border-2 border-black p-3 flex items-center text-sm font-bold leading-relaxed break-words">
+                      {REHABILITATION_VEHICLE_NOTICE}
+                    </aside>
+                  </div>
+                ) : card;
                 });
               })()}
             </div>
