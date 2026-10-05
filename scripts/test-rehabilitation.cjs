@@ -148,12 +148,17 @@ async function run() {
   app.context.test.setCurrentStep(2); tree = app.render();
   const checkboxes = nodes(tree).filter(node => node.type === 'input' && node.props.type === 'checkbox' && node.props.checked);
   assert.equal(checkboxes.length, 5);
-  assert.ok(checkboxes.every(node => node.props.disabled));
+  assert.ok(checkboxes.every(node => !node.props.disabled));
   app.context.test.setCurrentStep(1); tree = app.render();
   button(tree, 'Sim').props.onClick(); tree = app.render();
   assert.equal(app.context.test.formData.show_toxicologico_message, true);
   assert.equal(app.context.test.formData.show_toxicologico_habilitacao, false);
-  for (const step of steps) app.context.test.handleStepToggle(step.id);
+  for (const step of steps.filter(s => required.includes(s.type))) {
+    app.context.test.handleStepToggle(step.id); tree = app.render();
+    assert.deepEqual(selectedTypes(), required.filter(type => type !== step.type));
+    app.context.test.handleStepToggle(step.id); tree = app.render();
+    assert.deepEqual(selectedTypes(), required, 'Toggling must not add grouped courses/exams');
+  }
   tree = app.render();
   assert.deepEqual(selectedTypes(), required);
   assert.ok(!app.context.test.formData.selected_fees.includes(9), 'LADV must not be auto-added');
@@ -166,15 +171,19 @@ async function run() {
   assert.equal(app.context.test.formData.show_toxicologico_message, true);
   button(tree, 'Próximo').props.onClick(); tree = app.render();
   assert.equal(app.context.test.formData.show_toxicologico_message, true);
+  const practicalStep = steps.find(s => s.type === 'prova_pratica');
+  app.context.test.handleStepToggle(practicalStep.id); tree = app.render();
+  const customizedTypes = required.filter(type => type !== 'prova_pratica');
   await app.context.test.handleSubmit(); tree = app.render();
   assert.equal(saved.show_toxicologico_message, true);
-  assert.deepEqual(saved.selected_steps, steps.filter(s => required.includes(s.type)).map(s => s.id));
+  assert.deepEqual(saved.selected_steps, steps.filter(s => customizedTypes.includes(s.type)).map(s => s.id));
   assert.equal(app.context.test.currentPrintData.show_toxicologico_message, true);
-  assert.deepEqual(app.context.test.currentPrintData.selected_steps.map(s => s.type), required);
+  assert.deepEqual(app.context.test.currentPrintData.selected_steps.map(s => s.type), customizedTypes);
   assert.equal(app.context.test.rehabilitationCategoryAnswer, null);
   app.context.test.handleShowPrint({ id: 42, city_id: 1, client_name: 'Reabilitação', total_amount: '110' });
   await new Promise(resolve => setImmediate(resolve)); tree = app.render();
   assert.equal(app.context.test.currentPrintData.show_toxicologico_message, true);
+  assert.deepEqual(app.context.test.currentPrintData.selected_steps.map(s => s.type), customizedTypes);
   app.context.test.setShowForm(true); app.context.test.setCurrentStep(1); tree = app.render();
   select('Reabilitação'); button(tree, 'Sim').props.onClick(); tree = app.render();
   select('Renovação');
@@ -208,7 +217,7 @@ async function run() {
   }
   select('Adição de Categoria B');
   assert.deepEqual(selectedTypes(), ['foto', 'taxa', 'medico', 'prova_pratica', 'curso_pratico']);
-  console.log('PASS: selection, mandatory stages, Sim/Não, professional selection, reset, save/reprint mapping and other services');
+  console.log('PASS: automatic selection, editable stages without grouping, Sim/Não, professional selection, reset, customized save/reprint mapping and other services');
 
   source = fs.readFileSync('src/react-app/components/PrintableStepProcess.tsx', 'utf8')
     .replace('  // Quando autoPrint está ativo', '  globalThis.output = { generatePrintHTML, generateEmailContent };\n  // Quando autoPrint está ativo');

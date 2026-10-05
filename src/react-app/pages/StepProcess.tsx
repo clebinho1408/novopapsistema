@@ -379,10 +379,9 @@ export default function StepProcess() {
     const groupedTypes = ['prova_teorica', 'curso_pratico', 'prova_pratica'];
     
     setFormData(prev => {
-      // As cinco etapas são obrigatórias; não aplicar o agrupamento de cursos/provas.
-      if (prev.client_name === REHABILITATION_SERVICE) return prev;
       const hasServiceSelected = !!prev.client_name;
-      const isGroupedStep = hasServiceSelected && step && groupedTypes.includes(step.type);
+      const isGroupedStep = hasServiceSelected && prev.client_name !== REHABILITATION_SERVICE &&
+        step && groupedTypes.includes(step.type);
       const isCurrentlySelected = prev.selected_steps.includes(stepId);
       
       // Se está desmarcando a etapa
@@ -670,10 +669,8 @@ export default function StepProcess() {
   const handleSubmit = async () => {
     try {
       if (formData.client_name === REHABILITATION_SERVICE &&
-          (rehabilitationCategoryAnswer === null ||
-           !REHABILITATION_STEP_TYPES.every(type =>
-             processSteps.some(step => step.type === type && formData.selected_steps.includes(step.id))))) {
-        await showAlert('Responda à pergunta sobre a categoria e mantenha todas as etapas obrigatórias de Reabilitação.', 'warning');
+          rehabilitationCategoryAnswer === null) {
+        await showAlert('Responda à pergunta sobre a categoria do condutor para Reabilitação.', 'warning');
         return;
       }
       // Validate form data before sending
@@ -1194,7 +1191,7 @@ export default function StepProcess() {
                               type="checkbox"
                               checked={formData.selected_steps.includes(step.id)}
                               onChange={() => !isDisabled && handleStepToggle(step.id)}
-                              disabled={isDisabled || isRehabilitation}
+                              disabled={isDisabled}
                               className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                             />
                             <span className="text-gray-900">
