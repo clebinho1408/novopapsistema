@@ -6,6 +6,7 @@ import { FileText, MapPin, DollarSign, CheckCircle, Eye, AlertTriangle } from 'l
 import type { City, ProcessStep, Fee, Professional } from '@/shared/types';
 import { useDialog } from '@/react-app/components/Dialog';
 import { REHABILITATION_SERVICE, REHABILITATION_STEP_TYPES, isServiceStepAllowed } from '@/shared/rehabilitation';
+import { resolvePrintInstructions } from '@/shared/print-instructions';
 
 const TOXICOLOGICO_RELEASE_DATE = new Date('2026-06-01');
 const TOXICOLOGICO_ATIVO = new Date() >= TOXICOLOGICO_RELEASE_DATE;
@@ -754,14 +755,7 @@ export default function StepProcess() {
           show_toxicologico_habilitacao: formData.show_toxicologico_habilitacao,
           aviso_reinicio: formData.aviso_reinicio,
           categoria_atual: formData.categoria_atual || undefined,
-          general_instructions: (() => {
-            const is1aHab = ['1º Habilitação', 'Reinicio (1º Habilitação)'].includes(formData.client_name);
-            const hasProvaPratica = selectedSteps.some(s => s.type === 'prova_pratica');
-            const useFirstHab = is1aHab || (!formData.client_name && hasProvaPratica);
-            return useFirstHab
-              ? (instructions.instructions_primeira_habilitacao || '')
-              : (instructions.general_instructions || '');
-          })()
+          general_instructions: resolvePrintInstructions(formData.client_name, instructions)
         };
 
         // Show print modal immediately
@@ -821,15 +815,7 @@ export default function StepProcess() {
           show_toxicologico_habilitacao: data.show_toxicologico_habilitacao || false,
           categoria_atual: data.categoria_atual || undefined,
           aviso_reinicio: data.aviso_reinicio || false,
-          general_instructions: (() => {
-            const is1aHab = ['1º Habilitação', 'Reinicio (1º Habilitação)'].includes(process.client_name);
-            const steps = data.steps || [];
-            const hasProvaPratica = steps.some((s: any) => s.type === 'prova_pratica');
-            const useFirstHab = is1aHab || (!process.client_name && hasProvaPratica);
-            return useFirstHab
-              ? (instructions.instructions_primeira_habilitacao || '')
-              : (instructions.general_instructions || '');
-          })()
+          general_instructions: resolvePrintInstructions(process.client_name, instructions)
         };
         setCurrentPrintData(printData);
         setShowPrintModal(true);
@@ -845,12 +831,7 @@ export default function StepProcess() {
           selected_professionals: {},
           selected_fees: [],
           total_amount: process.total_amount || 0,
-          general_instructions: (() => {
-            const is1aHab = ['1º Habilitação', 'Reinicio (1º Habilitação)'].includes(process.client_name);
-            return is1aHab
-              ? (instructions.instructions_primeira_habilitacao || '')
-              : (instructions.general_instructions || '');
-          })()
+          general_instructions: resolvePrintInstructions(process.client_name, instructions)
         };
         setCurrentPrintData(printData);
         setShowPrintModal(true);
@@ -1713,15 +1694,15 @@ export default function StepProcess() {
                             </span>
                           </div>
                           {(process.medico_name || process.psicologo_name) && (
-                            <div className="mt-1 flex items-center space-x-4 text-sm text-gray-500">
-                              {process.medico_name && (
-                                <span className="flex items-center">
-                                  <span className="font-medium text-gray-600">Médico:</span>&nbsp;{process.medico_name}
+                            <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500">
+                              {process.psicologo_name && (
+                                <span>
+                                  <span className="font-medium text-gray-600">Psicólogo:</span>&nbsp;{process.psicologo_name}
                                 </span>
                               )}
-                              {process.psicologo_name && (
-                                <span className="flex items-center">
-                                  <span className="font-medium text-gray-600">Psicólogo:</span>&nbsp;{process.psicologo_name}
+                              {process.medico_name && (
+                                <span>
+                                  <span className="font-medium text-gray-600">Médico:</span>&nbsp;{process.medico_name}
                                 </span>
                               )}
                             </div>

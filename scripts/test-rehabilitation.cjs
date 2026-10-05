@@ -48,6 +48,12 @@ function load(source, mocks, globals = {}) {
   return { exports, context };
 }
 const shared = load(fs.readFileSync('src/shared/rehabilitation.ts', 'utf8'), {}).exports;
+const printInstructions = load(fs.readFileSync('src/shared/print-instructions.ts', 'utf8'), {}).exports;
+const instructionTemplates = {
+  general_instructions: '<p>INSTRUCAO_GERAL_TESTE</p>',
+  instructions_primeira_habilitacao: '<p>INSTRUCAO_HABILITACAO_TESTE</p>'
+};
+let listedProcesses = [];
 function renderer(source, extraMocks = {}, globals = {}) {
   const state = [], dependencies = [], refs = [];
   let cursor, refCursor, effectCursor, dirty = false, pending = [], tree;
@@ -76,6 +82,7 @@ function renderer(source, extraMocks = {}, globals = {}) {
     'react-dom': { createPortal: element => element },
     'lucide-react': new Proxy({}, { get: (_, name) => name }),
     '@/shared/rehabilitation': shared,
+    '@/shared/print-instructions': printInstructions,
     '@/react-app/components/Layout': { default: 'Layout' },
     '@/react-app/components/PrintableStepProcess': { default: 'PrintableStepProcess' },
     '@/react-app/components/Dialog': { useDialog: () => ({ showAlert: async () => {}, DialogComponent: null }) },
@@ -112,12 +119,59 @@ async function fetchMock(url, options = {}) {
   } else if (url.startsWith('/api/fees')) data = fees;
   else data = ({
     '/api/cities': cities, '/api/process-steps?active_only=true': steps,
-    '/api/professionals': professionals, '/api/instructions': {},
-    '/api/step-processes': []
+    '/api/professionals': professionals, '/api/instructions': instructionTemplates,
+    '/api/step-processes': listedProcesses
   })[url];
   return { ok: true, status: 200, json: async () => data };
 }
 async function run() {
+  const serverSource = fs.readFileSync('src/server/app.ts', 'utf8');
+  const routeStart = serverSource.indexOf('app.get("/api/step-processes",');
+  const routeEnd = serverSource.indexOf('app.post("/api/step-processes",', routeStart);
+  let listHandler;
+  load(serverSource.slice(routeStart, routeEnd), {}, {
+    app: { get(_path, _auth, handler) { listHandler = handler; } },
+    systemAuthMiddleware() {},
+    getUserWithAgency: c => c.user
+  });
+  for (const role of ['administrator', 'supervisor', 'attendant']) {
+    const calls = [];
+    const rows = [
+      { id: 11, client_name: 'LISTA_AMBOS', city_id: 1, city_name: 'Cidade de teste', total_amount: '100', created_at: '2026-01-01' },
+      { id: '12', client_name: 'LISTA_MEDICO', city_id: 1, city_name: 'Cidade de teste', total_amount: '100', created_at: '2026-01-01' },
+      { id: 13, client_name: 'LISTA_PSICOLOGO', city_id: 1, city_name: 'Cidade de teste', total_amount: '100', created_at: '2026-01-01' },
+      { id: 14, client_name: 'LISTA_SEM_CREDENCIADO', city_id: 1, city_name: 'Cidade de teste', total_amount: '100', created_at: '2026-01-01' }
+    ];
+    const result = await listHandler({
+      user: { id: 5, agency_id: 2, role },
+      env: { DB: { prepare(sql) {
+        return { bind(...params) {
+          calls.push({ sql, params });
+          return { async all() { return { results: sql.includes('FROM process_selected_steps') ? [
+            { process_id: '11', step_type: 'psicologo', professional_name: 'Psicóloga escolhida' },
+            { process_id: 11, step_type: 'medico', professional_name: 'Médico escolhido' },
+            { process_id: 12, step_type: 'medico', professional_name: 'Médico individual' },
+            { process_id: '13', step_type: 'psicologo', professional_name: 'Psicóloga individual' }
+          ] : rows }; } };
+        } };
+      } } },
+      json: data => data
+    });
+    assert.deepEqual(calls[0].params, role === 'attendant' ? [2, 5] : [2]);
+    assert.match(calls[0].sql, /sp.agency_id = \?/);
+    if (role === 'attendant') assert.match(calls[0].sql, /sp.user_id = \?/);
+    assert.match(calls[1].sql, /p.agency_id = \?/);
+    assert.equal(calls[1].params.at(-1), 2);
+    assert.equal(result[0].psicologo_name, 'Psicóloga escolhida');
+    assert.equal(result[0].medico_name, 'Médico escolhido');
+    assert.equal(result[1].medico_name, 'Médico individual');
+    assert.equal(result[1].psicologo_name, null);
+    assert.equal(result[2].psicologo_name, 'Psicóloga individual');
+    assert.equal(result[2].medico_name, null);
+    assert.equal(result[3].psicologo_name, null);
+    assert.equal(result[3].medico_name, null);
+    listedProcesses = result;
+  }
   let source = fs.readFileSync('src/react-app/pages/StepProcess.tsx', 'utf8');
   source = source.replace('  if (showForm) {', `  globalThis.test = {
     formData, rehabilitationCategoryAnswer, showRehabilitationModal, currentPrintData,
@@ -129,6 +183,17 @@ async function run() {
   let tree = app.render();
   await new Promise(resolve => setImmediate(resolve));
   tree = app.render();
+  for (const process of listedProcesses) {
+    const card = nodes(tree).find(node => node.type === 'div' &&
+      node.props.className === 'px-6 py-4' &&
+      text(node).includes(process.client_name));
+    assert.ok(card, `Missing listed process: ${process.client_name}`);
+    assert.equal(text(card).includes('Psicólogo:'), Boolean(process.psicologo_name));
+    assert.equal(text(card).includes('Médico:'), Boolean(process.medico_name));
+    if (process.psicologo_name) assert.ok(text(card).includes(process.psicologo_name));
+    if (process.medico_name) assert.ok(text(card).includes(process.medico_name));
+  }
+  console.log('PASS: chosen psychologist/doctor loaded and listed for all roles, both/individual/absent, mixed ID types and tenant filtering');
   app.context.test.setShowForm(true);
   app.context.test.setFormData(prev => ({ ...prev, city_id: '1' }));
   tree = app.render();
@@ -317,5 +382,39 @@ async function run() {
     fs.writeFileSync('/tmp/rehabilitation-print-check/screen.html', html);
   }
   console.log('PASS: exact vehicle notice adjacent to practical exam, immediate/reprint, deselected/absent exam, other services and unchanged emails');
+  const eligibleServices = ['1º Habilitação', 'Reinicio (1º Habilitação)', 'Reabilitação', 'Adição de Categoria A', 'Adição de Categoria B'];
+  for (const service of [...eligibleServices, 'Renovação', 'Transferência', 'Curso Teórico', '', undefined]) {
+    const eligible = eligibleServices.includes(service);
+    const expected = eligible ? instructionTemplates.instructions_primeira_habilitacao : instructionTemplates.general_instructions;
+    assert.equal(printInstructions.resolvePrintInstructions(service, instructionTemplates), expected);
+    assert.equal(printInstructions.resolvePrintInstructions(service, {}), '');
+    for (const practical of [true, false]) {
+      const data = { ...printData, client_name: service,
+        selected_steps: practical ? printData.selected_steps : printData.selected_steps.filter(s => s.type !== 'prova_pratica') };
+      const instance = renderer(source, {}, { fetch: async url => ({
+        json: async () => url === '/api/instructions' ? instructionTemplates : {}
+      }) });
+      instance.render({ isOpen: true, onClose() {}, processData: data });
+      await new Promise(resolve => setImmediate(resolve));
+      const preview = instance.render({ isOpen: true, onClose() {}, processData: data });
+      const html = instance.context.output.generatePrintHTML();
+      const previewInstructions = nodes(preview)
+        .map(node => node.props.dangerouslySetInnerHTML?.__html || '').join('');
+      for (const output of [previewInstructions, html]) {
+        assert.equal(output.includes('INSTRUCAO_HABILITACAO_TESTE'), eligible, `${service}, practical=${practical}`);
+        assert.equal(output.includes('INSTRUCAO_GERAL_TESTE'), !eligible, `${service}, practical=${practical}`);
+      }
+    }
+    if (service !== undefined) {
+      app.context.test.setFormData(prev => ({ ...prev, city_id: '1', client_name: service }));
+      tree = app.render();
+      await app.context.test.handleSubmit(); tree = app.render();
+      assert.equal(app.context.test.currentPrintData.general_instructions, expected, `${service}: immediate mapping`);
+      app.context.test.handleShowPrint({ id: 42, city_id: 1, client_name: service });
+      await new Promise(resolve => setImmediate(resolve)); tree = app.render();
+      assert.equal(app.context.test.currentPrintData.general_instructions, expected, `${service}: reprint mapping`);
+    }
+  }
+  console.log('PASS: special instructions exclusively for five services, with/without practical exam, preview, print, immediate/reprint mappings and empty settings');
 }
 run().catch(error => { console.error(error); process.exitCode = 1; });

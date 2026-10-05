@@ -4,6 +4,7 @@ import {
   REHABILITATION_SERVICE, REHABILITATION_VEHICLE_NOTICE,
   isServiceStepAllowed, shouldShowRehabilitationVehicleNotice
 } from '@/shared/rehabilitation';
+import { resolvePrintInstructions } from '@/shared/print-instructions';
 
 const TOXICOLOGICO_ATIVO = new Date() >= new Date('2026-06-01');
 
@@ -86,12 +87,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
     try {
       const response = await fetch('/api/instructions', { credentials: 'include' });
       const data = await response.json();
-      const is1aHab = ['1º Habilitação', 'Reinicio (1º Habilitação)'].includes(processData.client_name || '');
-      const hasProvaPratica = processData.selected_steps.some(s => s.type === 'prova_pratica');
-      const useFirstHab = is1aHab || (!processData.client_name && hasProvaPratica);
-      const resolved = useFirstHab
-        ? (data.instructions_primeira_habilitacao || '')
-        : (data.general_instructions || '');
+      const resolved = resolvePrintInstructions(processData.client_name, data);
       setGeneralInstructions(resolved);
     } catch (error) {
       console.error('Error fetching instructions:', error);

@@ -485,7 +485,7 @@ function InstructionsConfiguration() {
               Instruções — Outros Serviços
             </h3>
             <p className="text-xs text-gray-500 mb-3">
-              Exibidas quando qualquer serviço (exceto 1º Habilitação) for selecionado, ou quando nenhum serviço estiver selecionado e a etapa Prova Prática não estiver marcada.
+              Exibidas na impressão dos demais serviços ou quando nenhum serviço estiver selecionado.
             </p>
             <RichTextEditor
               value={generalInstructions}
@@ -499,7 +499,7 @@ function InstructionsConfiguration() {
               Instruções — 1º Habilitação / Prova Prática
             </h3>
             <p className="text-xs text-gray-500 mb-3">
-              Exibidas quando o serviço 1º Habilitação for selecionado, ou quando nenhum serviço estiver selecionado e a etapa Prova Prática estiver marcada.
+              Exibidas na impressão somente para: 1º Habilitação, Reinicio (1º Habilitação), Reabilitação, Adição de Categoria A e Adição de Categoria B.
             </p>
             <RichTextEditor
               value={instructionsPrimeiraHabilitacao}

@@ -1023,21 +1023,23 @@ app.get("/api/step-processes", systemAuthMiddleware, async (c) => {
            FROM process_selected_steps pss
            JOIN process_steps ps ON pss.step_id = ps.id
            JOIN professionals p ON pss.professional_id = p.id
-           WHERE pss.process_id IN (${placeholders}) AND ps.type IN ('psicologo', 'medico')`
-        ).bind(...processIds).all();
+           WHERE pss.process_id IN (${placeholders}) AND ps.type IN ('psicologo', 'medico')
+             AND p.agency_id = ?`
+        ).bind(...processIds, user.agency_id).all();
 
-        const profMap = new Map<number, { psicologo_name: string | null; medico_name: string | null }>();
+        const profMap = new Map<string, { psicologo_name: string | null; medico_name: string | null }>();
         for (const row of (allProfRows || []) as any[]) {
-          if (!profMap.has(row.process_id)) {
-            profMap.set(row.process_id, { psicologo_name: null, medico_name: null });
+          const processId = String(row.process_id);
+          if (!profMap.has(processId)) {
+            profMap.set(processId, { psicologo_name: null, medico_name: null });
           }
-          const entry = profMap.get(row.process_id)!;
+          const entry = profMap.get(processId)!;
           if (row.step_type === 'psicologo') entry.psicologo_name = row.professional_name;
           if (row.step_type === 'medico') entry.medico_name = row.professional_name;
         }
 
         for (const process of results) {
-          const prof = profMap.get(process.id);
+          const prof = profMap.get(String(process.id));
           process.psicologo_name = prof?.psicologo_name || null;
           process.medico_name = prof?.medico_name || null;
         }
