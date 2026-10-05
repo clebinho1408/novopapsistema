@@ -1001,61 +1001,36 @@ app.get("/api/step-processes", systemAuthMiddleware, async (c) => {
     const user = getUserWithAgency(c);
     if (!user) return c.json({ error: "User not found" }, 404);
 
-    const query = (user.role === 'administrator' || user.role === 'supervisor')
-      ? "SELECT sp.*, c.name as city_name, u.name as user_name FROM step_processes sp JOIN cities c ON sp.city_id = c.id JOIN system_users u ON sp.user_id = u.id WHERE sp.agency_id = ? ORDER BY sp.created_at DESC"
-      : "SELECT sp.*, c.name as city_name FROM step_processes sp JOIN cities c ON sp.city_id = c.id WHERE sp.agency_id = ? AND sp.user_id = ? ORDER BY sp.created_at DESC";
-
-    let results: any[];
-    if (user.role === 'administrator' || user.role === 'supervisor') {
-      const res = await c.env.DB.prepare(query).bind(user.agency_id).all();
-      results = res.results || [];
-    } else {
-      const res = await c.env.DB.prepare(query).bind(user.agency_id, user.id).all();
-      results = res.results || [];
-    }
-
-    try {
-      if (results.length > 0) {
-        const processIds = results.map((p: any) => p.id);
-        const placeholders = processIds.map(() => '?').join(',');
-        const { results: allProfRows } = await c.env.DB.prepare(
-          `SELECT pss.process_id, p.name as professional_name, ps.type as step_type
-           FROM process_selected_steps pss
-           JOIN process_steps ps ON pss.step_id = ps.id
-           JOIN professionals p ON pss.professional_id = p.id
-           WHERE pss.process_id IN (${placeholders}) AND ps.type IN ('psicologo', 'medico')
-             AND p.agency_id = ?`
-        ).bind(...processIds, user.agency_id).all();
-
-        const profMap = new Map<string, { psicologo_name: string | null; medico_name: string | null }>();
-        for (const row of (allProfRows || []) as any[]) {
-          const processId = String(row.process_id);
-          if (!profMap.has(processId)) {
-            profMap.set(processId, { psicologo_name: null, medico_name: null });
-          }
-          const entry = profMap.get(processId)!;
-          if (row.step_type === 'psicologo') entry.psicologo_name = row.professional_name;
-          if (row.step_type === 'medico') entry.medico_name = row.professional_name;
-        }
-
-        for (const process of results) {
-          const prof = profMap.get(String(process.id));
-          process.psicologo_name = prof?.psicologo_name || null;
-          process.medico_name = prof?.medico_name || null;
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching professionals for processes:', error);
-      for (const process of results) {
-        process.psicologo_name = null;
-        process.medico_name = null;
-      }
-    }
-
-    return c.json(results);
+    const canSeeAgencyProcesses = user.role === 'administrator' || user.role === 'supervisor';
+    // Join the names in one query: an IN list of every process exceeds D1's
+    // bound-parameter limit on large histories and used to silently hide names.
+    const query = `
+      SELECT sp.*, c.name AS city_name${canSeeAgencyProcesses ? ', u.name AS user_name' : ''},
+             chosen.psicologo_name, chosen.medico_name
+      FROM step_processes sp
+      JOIN cities c ON sp.city_id = c.id
+      ${canSeeAgencyProcesses ? 'JOIN system_users u ON sp.user_id = u.id' : ''}
+      LEFT JOIN (
+        SELECT pss.process_id,
+               MAX(CASE WHEN ps.type = 'psicologo' THEN p.name END) AS psicologo_name,
+               MAX(CASE WHEN ps.type = 'medico' THEN p.name END) AS medico_name
+        FROM process_selected_steps pss
+        JOIN step_processes owner ON owner.id = pss.process_id
+        JOIN process_steps ps ON ps.id = pss.step_id
+        JOIN professionals p ON p.id = pss.professional_id AND p.agency_id = owner.agency_id
+        WHERE owner.agency_id = ? AND ps.type IN ('psicologo', 'medico')
+        GROUP BY pss.process_id
+      ) chosen ON chosen.process_id = sp.id
+      WHERE sp.agency_id = ? ${canSeeAgencyProcesses ? '' : 'AND sp.user_id = ?'}
+      ORDER BY sp.created_at DESC`;
+    const params = canSeeAgencyProcesses
+      ? [user.agency_id, user.agency_id]
+      : [user.agency_id, user.agency_id, user.id];
+    const { results } = await c.env.DB.prepare(query).bind(...params).all();
+    return c.json(results || []);
   } catch (error) {
     console.error('Error fetching step processes:', error);
-    return c.json([], 200);
+    return c.json({ error: "Não foi possível carregar os processos e seus credenciados." }, 500);
   }
 });
 

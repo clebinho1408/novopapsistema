@@ -3,6 +3,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
+const { execFileSync } = require('node:child_process');
 const ts = require('typescript');
 const notice = 'Atenção! Veículos para a prova prática devem atender a Portaria Normativa Detran nº 12/2026, Art. 22: máximo 8 anos (motos), 12 anos (carros), 20 anos (ônibus/caminhões). Requisito: sem débitos em aberto.';
 
@@ -147,21 +148,24 @@ async function run() {
       env: { DB: { prepare(sql) {
         return { bind(...params) {
           calls.push({ sql, params });
-          return { async all() { return { results: sql.includes('FROM process_selected_steps') ? [
-            { process_id: '11', step_type: 'psicologo', professional_name: 'Psicóloga escolhida' },
-            { process_id: 11, step_type: 'medico', professional_name: 'Médico escolhido' },
-            { process_id: 12, step_type: 'medico', professional_name: 'Médico individual' },
-            { process_id: '13', step_type: 'psicologo', professional_name: 'Psicóloga individual' }
-          ] : rows }; } };
+          return { async all() {
+            return { results: JSON.parse(execFileSync('python3', ['scripts/step-process-list-fixture.py'], {
+              input: JSON.stringify({ sql, params, rows }), encoding: 'utf8'
+            })) };
+          } };
         } };
       } } },
       json: data => data
     });
-    assert.deepEqual(calls[0].params, role === 'attendant' ? [2, 5] : [2]);
+    assert.equal(calls.length, 1, 'Names must be included in the main list query');
+    assert.deepEqual(calls[0].params, role === 'attendant' ? [2, 2, 5] : [2, 2]);
     assert.match(calls[0].sql, /sp.agency_id = \?/);
     if (role === 'attendant') assert.match(calls[0].sql, /sp.user_id = \?/);
-    assert.match(calls[1].sql, /p.agency_id = \?/);
-    assert.equal(calls[1].params.at(-1), 2);
+    assert.match(calls[0].sql, /p.agency_id = owner.agency_id/);
+    assert.equal(result.length, role === 'attendant' ? 254 : 255);
+    assert.equal(result.some(row => row.client_name === 'OUTRA_AGENCIA'), false);
+    assert.equal(result.some(row => row.client_name === 'OUTRO_USUARIO'), role !== 'attendant');
+    assert.equal(result.find(row => row.id === 1249).medico_name, 'Médico escolhido');
     assert.equal(result[0].psicologo_name, 'Psicóloga escolhida');
     assert.equal(result[0].medico_name, 'Médico escolhido');
     assert.equal(result[1].medico_name, 'Médico individual');
@@ -170,7 +174,7 @@ async function run() {
     assert.equal(result[2].medico_name, null);
     assert.equal(result[3].psicologo_name, null);
     assert.equal(result[3].medico_name, null);
-    listedProcesses = result;
+    listedProcesses = result.filter(row => row.id < 15);
   }
   let source = fs.readFileSync('src/react-app/pages/StepProcess.tsx', 'utf8');
   source = source.replace('  if (showForm) {', `  globalThis.test = {
@@ -193,7 +197,7 @@ async function run() {
     if (process.psicologo_name) assert.ok(text(card).includes(process.psicologo_name));
     if (process.medico_name) assert.ok(text(card).includes(process.medico_name));
   }
-  console.log('PASS: chosen psychologist/doctor loaded and listed for all roles, both/individual/absent, mixed ID types and tenant filtering');
+  console.log('PASS: real SQLite list query and UI for all roles, both/individual/absent, 250+ processes, tenant/user isolation and missing/foreign professional links');
   app.context.test.setShowForm(true);
   app.context.test.setFormData(prev => ({ ...prev, city_id: '1' }));
   tree = app.render();
