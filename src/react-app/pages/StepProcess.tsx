@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { FileText, MapPin, DollarSign, CheckCircle, Eye, AlertTriangle } from 'lucide-react';
 import type { City, ProcessStep, Fee, Professional } from '@/shared/types';
 import { useDialog } from '@/react-app/components/Dialog';
-import { REHABILITATION_SERVICE, REHABILITATION_STEP_TYPES, isServiceStepAllowed } from '@/shared/rehabilitation';
+import { REHABILITATION_SERVICE, REHABILITATION_STEP_TYPES, isServiceStepAllowed, orderServiceSteps } from '@/shared/rehabilitation';
 import { resolvePrintInstructions } from '@/shared/print-instructions';
 
 const TOXICOLOGICO_RELEASE_DATE = new Date('2026-06-01');
@@ -241,13 +241,14 @@ export default function StepProcess() {
 
   // Auto-selecionar/desselecionar Toxicológico (1ª Habilitação) quando prova teórica for selecionada
   // NÃO ativa se show_toxicologico_message já estiver true (exclusão mútua)
-  // NÃO ativa para Adição de Categoria A ou B
+  // NÃO ativa para Adição de Categoria A/B ou Reabilitação (que usa a pergunta Sim/Não)
   useEffect(() => {
     if (processSteps.length === 0) return;
     const provaTeoricoStep = processSteps.find(s => s.type === 'prova_teorica');
     const hasProvaTeorica = provaTeoricoStep ? formData.selected_steps.includes(provaTeoricoStep.id) : false;
     const isAdicaoCategoria = formData.client_name === 'Adição de Categoria A' || formData.client_name === 'Adição de Categoria B';
-    const shouldShow = hasProvaTeorica && !formData.show_toxicologico_message && !isAdicaoCategoria;
+    const shouldShow = hasProvaTeorica && !formData.show_toxicologico_message && !isAdicaoCategoria &&
+      formData.client_name !== REHABILITATION_SERVICE;
     setFormData(prev => {
       if (prev.show_toxicologico_habilitacao === shouldShow) return prev;
       return { ...prev, show_toxicologico_habilitacao: shouldShow };
@@ -1142,7 +1143,7 @@ export default function StepProcess() {
                   <div>
                     <h2 className="text-lg font-medium text-gray-900 mb-4">Selecione as Etapas Necessárias</h2>
                     <div className="space-y-3">
-                      {[...processSteps].sort((a, b) => a.sort_order - b.sort_order).map(step => {
+                      {orderServiceSteps(formData.client_name, [...processSteps].sort((a, b) => a.sort_order - b.sort_order)).map(step => {
                         if (!isServiceStepAllowed(formData.client_name, step.type)) return null;
                         const currentStepTypes = formData.selected_steps.map(id => processSteps.find(s => s.id === id)?.type);
                         const isConflictStep = ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'].includes(step.type);
@@ -1187,8 +1188,8 @@ export default function StepProcess() {
                         );
                       })}
 
-                      {/* Toxicológico (1ª Habilitação) — visível a partir de 01/06/2026, nunca para Adição de Categoria */}
-                      {TOXICOLOGICO_ATIVO && !(formData.client_name === 'Adição de Categoria A' || formData.client_name === 'Adição de Categoria B') && (() => {
+                      {/* Toxicológico (1ª Habilitação) — nunca para Adição de Categoria ou Reabilitação */}
+                      {TOXICOLOGICO_ATIVO && formData.client_name !== REHABILITATION_SERVICE && !(formData.client_name === 'Adição de Categoria A' || formData.client_name === 'Adição de Categoria B') && (() => {
                         const provaTeoricoStep = processSteps.find(s => s.type === 'prova_teorica');
                         return provaTeoricoStep && formData.selected_steps.includes(provaTeoricoStep.id);
                       })() && (
@@ -1391,7 +1392,8 @@ export default function StepProcess() {
                       <div>
                         <h3 className="font-medium text-gray-900 mb-2">Etapas Selecionadas</h3>
                         <div className="space-y-3">
-                          {formData.selected_steps.map(stepId => {
+                          {orderServiceSteps(formData.client_name, formData.selected_steps.map(id => processSteps.find(step => step.id === id)).filter((step): step is ProcessStep => Boolean(step))).map(orderedStep => {
+                            const stepId = orderedStep.id;
                             const step = processSteps.find(s => s.id === stepId);
                             const professionalId = formData.selected_professionals[stepId];
                             const professional = professionals.find(p => p.id === professionalId);

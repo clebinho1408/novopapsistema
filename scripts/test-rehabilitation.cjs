@@ -7,9 +7,10 @@ const { execFileSync } = require('node:child_process');
 const ts = require('typescript');
 const notice = 'Atenção! Veículos para a prova prática devem atender a Portaria Normativa Detran nº 12/2026, Art. 22: máximo 8 anos (motos), 12 anos (carros), 20 anos (ônibus/caminhões). Requisito: sem débitos em aberto.';
 
-const required = ['foto', 'taxa', 'psicologo', 'medico', 'prova_pratica'];
-const types = [...required, 'curso_teorico', 'prova_teorica', 'curso_pratico', 'prova'];
-const steps = types.map((type, i) => ({ id: i + 1, type, name: `ETAPA_${type}`, sort_order: i }));
+const required = ['foto', 'taxa', 'psicologo', 'medico', 'prova_teorica', 'prova_pratica'];
+const types = [...required, 'curso_teorico', 'curso_pratico', 'prova'];
+// Deliberately conflicting configuration: Reabilitação must use its own sequence.
+const steps = types.map((type, i) => ({ id: i + 1, type, name: `ETAPA_${type}`, sort_order: types.length - i }));
 const fees = [
   { id: 1, name: 'Emissão da CNH', amount: '100' },
   { id: 2, name: 'Transferência', amount: '50' },
@@ -217,8 +218,14 @@ async function run() {
   assert.deepEqual(selectedTypes(), required);
   app.context.test.setCurrentStep(2); tree = app.render();
   const checkboxes = nodes(tree).filter(node => node.type === 'input' && node.props.type === 'checkbox' && node.props.checked);
-  assert.equal(checkboxes.length, 5);
+  assert.equal(checkboxes.length, 6);
   assert.ok(checkboxes.every(node => !node.props.disabled));
+  const formStepNames = nodes(tree).filter(node => node.type === 'label' &&
+    nodes(node).some(child => child.type === 'input' && child.props.type === 'checkbox'))
+    .map(text).filter(label => label.includes('ETAPA_'));
+  assert.deepEqual(formStepNames.map(label => required.find(type => label.includes(`ETAPA_${type}`))), required,
+    'Form must place theory after doctor even when configured sort_order is reversed');
+  assert.equal(text(tree).includes('Toxicológico (1º Habilitação)'), false);
   app.context.test.setCurrentStep(1); tree = app.render();
   button(tree, 'Sim').props.onClick(); tree = app.render();
   assert.equal(app.context.test.formData.show_toxicologico_message, true);
@@ -229,12 +236,18 @@ async function run() {
     app.context.test.handleStepToggle(step.id); tree = app.render();
     assert.deepEqual(selectedTypes(), required, 'Toggling must not add grouped courses/exams');
   }
+  app.context.test.setCurrentStep(4); tree = app.render();
+  const summaryTitles = nodes(tree).filter(node => node.type === 'h4' && text(node).startsWith('ETAPA_')).map(text);
+  assert.deepEqual(summaryTitles, required.map(type => `ETAPA_${type}`),
+    'Summary must retain canonical order after toggling stages');
+  app.context.test.setCurrentStep(1); tree = app.render();
   tree = app.render();
   assert.deepEqual(selectedTypes(), required);
   assert.ok(!app.context.test.formData.selected_fees.includes(9), 'LADV must not be auto-added');
-  for (const excluded of ['prova_teorica', 'curso_pratico', 'prova']) {
+  for (const excluded of ['curso_pratico', 'prova']) {
     assert.ok(!app.context.test.formData.selected_fees.includes(fees.find(f => f.linked_professional_type === excluded).id));
   }
+  assert.ok(app.context.test.formData.selected_fees.includes(fees.find(f => f.linked_professional_type === 'prova_teorica').id));
   const medicalStep = steps.find(s => s.type === 'medico');
   app.context.test.handleProfessionalSelectChange(medicalStep.id, '2'); tree = app.render();
   app.context.test.confirmProfessionalSelection(); tree = app.render();
@@ -261,10 +274,12 @@ async function run() {
   assert.deepEqual(selectedTypes(), ['foto', 'taxa', 'medico']);
   select('Reabilitação'); button(tree, 'Não').props.onClick(); tree = app.render();
   assert.equal(app.context.test.formData.show_toxicologico_message, false);
+  assert.equal(app.context.test.formData.show_toxicologico_habilitacao, false, 'Theory must not override the rehabilitation Sim/Não rule');
   assert.deepEqual(selectedTypes(), required);
   app.context.test.setFormData(prev => ({ ...prev, city_id: '1' })); tree = app.render();
   await app.context.test.handleSubmit(); tree = app.render();
   assert.equal(saved.show_toxicologico_message, false);
+  assert.equal(saved.show_toxicologico_habilitacao, false);
   app.context.test.handleShowPrint({ id: 42, city_id: 1, client_name: 'Reabilitação' });
   await new Promise(resolve => setImmediate(resolve)); tree = app.render();
   assert.equal(app.context.test.currentPrintData.show_toxicologico_message, false);
@@ -282,7 +297,7 @@ async function run() {
   app.context.test.setShowForm(true); tree = app.render();
   for (const service of ['1º Habilitação', 'Reinicio (1º Habilitação)']) {
     select(service);
-    assert.deepEqual(selectedTypes(), ['foto', 'taxa', 'psicologo', 'medico', 'prova_pratica', 'prova_teorica', 'curso_pratico']);
+    assert.deepEqual(selectedTypes(), ['foto', 'taxa', 'psicologo', 'medico', 'prova_teorica', 'prova_pratica', 'curso_pratico']);
     assert.ok(app.context.test.formData.selected_fees.includes(9));
   }
   select('Adição de Categoria B');
@@ -322,20 +337,34 @@ async function run() {
   }
   assert.equal(shared.isServiceStepAllowed('1º Habilitação', 'curso_teorico'), true);
   assert.equal(shared.isServiceStepAllowed('Reabilitação', 'curso_teorico'), false);
-  console.log('PASS: print HTML, email text, preview and server email preserve five stages and toxicology answer');
+  const reversed = [...steps].reverse();
+  assert.deepEqual(Array.from(shared.orderServiceSteps('Reabilitação', reversed), step => step.type).slice(0, 6), required);
+  assert.deepEqual(reversed.map(step => step.type), [...steps].reverse().map(step => step.type), 'Ordering must not mutate input');
+  for (const service of ['1º Habilitação', 'Reinicio (1º Habilitação)', 'Renovação', 'Adição de Categoria A', 'Adição de Categoria B', '']) {
+    assert.equal(shared.orderServiceSteps(service, reversed), reversed, `${service}: preserve existing order`);
+  }
+  console.log('PASS: print HTML, email text, preview and server email preserve six stages and toxicology answer; ordering remains service-specific');
   assert.equal(shared.REHABILITATION_VEHICLE_NOTICE, notice);
   const printData = {
     client_name: 'Reabilitação', city: cities[0], all_steps: steps,
     selected_steps: steps.filter(s => required.includes(s.type)),
     selected_professionals: Object.fromEntries(professionals.map(p => [steps.find(s => s.type === p.type).id, p])),
-    selected_fees: [fees[0], fees.find(f => f.linked_professional_type === 'prova_pratica')],
-    total_amount: '110', show_toxicologico_message: true
+    selected_fees: [fees[0], fees.find(f => f.linked_professional_type === 'prova_teorica'),
+      fees.find(f => f.linked_professional_type === 'prova_pratica')],
+    total_amount: '120', show_toxicologico_message: true
   };
   const fixtures = [
     { name: 'immediate print', data: printData, expected: true },
     { name: 'saved process reprint', data: JSON.parse(JSON.stringify(printData)), expected: true },
     { name: 'without all_steps', data: { ...printData, all_steps: undefined }, expected: true },
     { name: 'different step order', data: { ...printData, all_steps: [...steps].reverse() }, expected: true },
+    { name: 'theory deselected / legacy saved process', data: {
+      ...printData, selected_steps: printData.selected_steps.filter(s => s.type !== 'prova_teorica')
+    }, expected: true },
+    { name: 'legacy process without all_steps', data: {
+      ...printData, all_steps: undefined,
+      selected_steps: printData.selected_steps.filter(s => s.type !== 'prova_teorica').reverse()
+    }, expected: true },
     { name: 'practical exam deselected', data: {
       ...printData, selected_steps: printData.selected_steps.filter(s => s.type !== 'prova_pratica')
     }, expected: false },
@@ -350,21 +379,35 @@ async function run() {
   for (const { name, data, expected } of fixtures) {
     const preview = print.render({ isOpen: true, onClose() {}, processData: data });
     const html = print.context.output.generatePrintHTML();
-    const row = nodes(preview).find(node => node.props['data-rehabilitation-exam-row']);
-    assert.equal(Boolean(row), expected, `${name}: preview pair`);
+    const noticeNode = nodes(preview).find(node => node.props['data-rehabilitation-vehicle-notice']);
+    assert.equal(Boolean(noticeNode), expected, `${name}: preview full-width notice`);
     assert.equal(text(preview).includes(notice), expected, `${name}: preview notice`);
     assert.equal(html.includes(notice), expected, `${name}: print notice`);
     assert.equal((html.match(/<aside class="rehabilitation-vehicle-notice">/g) || []).length,
       expected ? 1 : 0, `${name}: print notice exactly once`);
     if (expected) {
-      const children = row.props.children;
-      assert.equal(children.length, 2);
-      assert.ok(text(children[0]).includes('ETAPA_prova_pratica'));
-      assert.equal(children[1].type, 'aside');
-      assert.equal(text(children[1]), notice);
-      assert.equal(row.props.style.breakInside, 'avoid');
-      assert.match(html, /<div class="rehabilitation-exam-row">[\s\S]*?ETAPA_prova_pratica[\s\S]*?<aside class="rehabilitation-vehicle-notice">/);
-      assert.match(html, /\.rehabilitation-exam-row\s*\{[^}]*grid-column: 1 \/ -1;[^}]*break-inside: avoid;/);
+      assert.equal(noticeNode.type, 'aside');
+      assert.equal(text(noticeNode), notice);
+      assert.ok(noticeNode.props.className.includes('w-full'));
+      assert.equal(noticeNode.props.style.breakInside, 'avoid');
+      const parent = nodes(preview).find(node => Array.isArray(node.props.children) && node.props.children.includes(noticeNode));
+      const siblings = parent.props.children;
+      assert.ok(siblings[siblings.indexOf(noticeNode) - 1].props.className.includes('grid-cols-2'),
+        `${name}: notice must be a full-width sibling below the steps grid`);
+      assert.ok(html.indexOf('<aside class="rehabilitation-vehicle-notice">') > html.indexOf('ETAPA_prova_pratica'));
+      assert.match(html, /\.rehabilitation-vehicle-notice\s*\{[^}]*width: 100%;[^}]*break-inside: avoid;/);
+      assert.ok(!html.includes('rehabilitation-exam-row'), 'No side-by-side practical/notice wrapper');
+    }
+    if (data.client_name === 'Reabilitação') {
+      const hasTheory = data.selected_steps.some(s => s.type === 'prova_teorica') && !data.aviso_reinicio;
+      for (const [format, output] of [['print', html], ['preview', text(preview)]]) {
+        assert.equal(output.includes('ETAPA_prova_teorica'), hasTheory, `${name}: ${format} theory visibility`);
+        const order = required.filter(type => type !== 'prova_teorica' || hasTheory)
+          .filter(type => type !== 'prova_pratica' || expected);
+        const positions = order.map(type => output.indexOf(`ETAPA_${type}`));
+        assert.ok(positions.every((position, i) => position >= 0 && (i === 0 || position > positions[i - 1])),
+          `${name}: ${format} medical/theory/practical sequence`);
+      }
     }
     assert.equal(print.context.output.generateEmailContent().includes(notice), false, `${name}: email unchanged`);
     assert.equal(email.generateEmailHTML(data, null, '').includes(notice), false, `${name}: server email unchanged`);
@@ -375,17 +418,24 @@ async function run() {
       ...printData,
       all_steps: steps.map(s => ({ ...s, name: ({
         foto: 'Foto', taxa: 'Taxa', psicologo: 'Exame Psicológico',
-        medico: 'Exame Médico', prova_pratica: 'Prova Prática'
+        medico: 'Exame Médico', prova_teorica: 'Prova Teórica', prova_pratica: 'Prova Prática'
       })[s.type] || s.name })),
       general_instructions: 'Apresente documento de identificação e siga as orientações da agência.'
     };
-    print.render({ isOpen: true, onClose() {}, processData: data });
-    const html = print.context.output.generatePrintHTML();
+    const fixturePrint = renderer(source, {}, { fetch: async url => ({ json: async () =>
+      url === '/api/instructions'
+        ? { instructions_primeira_habilitacao: '<p>Apresente documento de identificação e siga as orientações da agência. Compareça aos exames com antecedência e confira os comprovantes das taxas antes de realizar as provas.</p>' }
+        : url === '/api/auth/me' ? { name: 'Atendente de teste' } : {}
+    }) });
+    fixturePrint.render({ isOpen: true, onClose() {}, processData: data });
+    await new Promise(resolve => setImmediate(resolve));
+    fixturePrint.render({ isOpen: true, onClose() {}, processData: data });
+    const html = fixturePrint.context.output.generatePrintHTML();
     fs.mkdirSync('/tmp/rehabilitation-print-check', { recursive: true });
     fs.writeFileSync('/tmp/rehabilitation-print-check/index.html', html.replace('@media print {', '@media all {'));
     fs.writeFileSync('/tmp/rehabilitation-print-check/screen.html', html);
   }
-  console.log('PASS: exact vehicle notice adjacent to practical exam, immediate/reprint, deselected/absent exam, other services and unchanged emails');
+  console.log('PASS: full-width vehicle notice below exams, medical/theory/practical order, immediate/reprint, legacy processes, deselected/absent exams, other services and unchanged emails');
   const eligibleServices = ['1º Habilitação', 'Reinicio (1º Habilitação)', 'Reabilitação', 'Adição de Categoria A', 'Adição de Categoria B'];
   for (const service of [...eligibleServices, 'Renovação', 'Transferência', 'Curso Teórico', '', undefined]) {
     const eligible = eligibleServices.includes(service);

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, lazy } from 'react';
 import type { ProcessStep, Professional, Fee, City } from '@/shared/types';
 import {
   REHABILITATION_SERVICE, REHABILITATION_VEHICLE_NOTICE,
-  isServiceStepAllowed, shouldShowRehabilitationVehicleNotice
+  isServiceStepAllowed, shouldShowRehabilitationVehicleNotice, orderServiceSteps
 } from '@/shared/rehabilitation';
 import { resolvePrintInstructions } from '@/shared/print-instructions';
 
@@ -35,6 +35,10 @@ interface PrintableStepProcessProps {
 
 export default function PrintableStepProcess({ isOpen, onClose, autoPrint, processData }: PrintableStepProcessProps) {
   const isAdicaoCategoria = processData.client_name === 'Adição de Categoria A' || processData.client_name === 'Adição de Categoria B';
+  const showVehicleNotice = !processData.aviso_reinicio &&
+    (processData.all_steps || processData.selected_steps).some(step =>
+      shouldShowRehabilitationVehicleNotice(processData.client_name, step.type,
+        processData.selected_steps.some(selected => selected.id === step.id)));
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [generalInstructions, setGeneralInstructions] = useState<string>('');
   const [emailModal, setEmailModal] = useState({ isOpen: false, email: '' });
@@ -318,20 +322,14 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
             display: flex;
             flex-direction: column;
         }
-        .rehabilitation-exam-row {
-            grid-column: 1 / -1;
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-            gap: 8px;
-            break-inside: avoid;
-            page-break-inside: avoid;
-        }
-        .rehabilitation-exam-row > * {
-            min-width: 0;
-        }
         .rehabilitation-vehicle-notice {
+            width: 100%;
+            box-sizing: border-box;
             border: 2px solid black;
             padding: 12px;
+            margin-bottom: 8px;
+            break-inside: avoid;
+            page-break-inside: avoid;
             display: flex;
             align-items: center;
             font-size: 14px;
@@ -638,9 +636,6 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                 gap: 5px;
                 margin-bottom: 5px;
             }
-            .rehabilitation-exam-row {
-                gap: 5px;
-            }
             .step-content {
                 padding: 5px;
             }
@@ -736,7 +731,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
         <div class="steps-grid">
             ${(() => {
               const avisoReinicio = Boolean(processData.aviso_reinicio && processData.client_name !== 'Reinicio (1º Habilitação)');
-              const filteredSteps = (processData.all_steps || processData.selected_steps).filter(step => {
+              const filteredSteps = orderServiceSteps(processData.client_name, processData.all_steps || processData.selected_steps).filter(step => {
                 if (!isServiceStepAllowed(processData.client_name, step.type)) return false;
                 // Excluir prova (processada separadamente)
                 if (step.type === 'prova') return false;
@@ -979,12 +974,12 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                     </div>
                 </div>
               `;
-              return shouldShowRehabilitationVehicleNotice(processData.client_name, step.type, Boolean(isSelected))
-                ? `<div class="rehabilitation-exam-row">${card}<aside class="rehabilitation-vehicle-notice">${REHABILITATION_VEHICLE_NOTICE}</aside></div>`
-                : card;
+              return card;
               }).join('');
             })()}
         </div>
+
+        ${showVehicleNotice ? `<aside class="rehabilitation-vehicle-notice">${REHABILITATION_VEHICLE_NOTICE}</aside>` : ''}
 
         ${processData.aviso_reinicio && processData.client_name !== 'Reinicio (1º Habilitação)' ? `
         <div style="width: 100%; margin-top: 8px; border: 3px solid black; border-radius: 6px; background-color: #fef3c7; padding: 12px 16px; box-sizing: border-box;">
@@ -1552,11 +1547,11 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
             <div className="grid grid-cols-2 gap-3 mb-4">
               {(() => {
                 const avisoReinicioJSX = Boolean(processData.aviso_reinicio && processData.client_name !== 'Reinicio (1º Habilitação)');
-                const filteredSteps = (processData.all_steps || processData.selected_steps).filter(step => {
+                const filteredSteps = orderServiceSteps(processData.client_name, processData.all_steps || processData.selected_steps).filter(step => {
                   if (!isServiceStepAllowed(processData.client_name, step.type)) return false;
                   if (step.type === 'prova') return false;
                   if (avisoReinicioJSX && ['curso_teorico', 'prova_teorica', 'curso_pratico', 'prova_pratica'].includes(step.type)) return false;
-                  if (processData.client_name === REHABILITATION_SERVICE && step.type === 'prova_pratica' &&
+                  if (processData.client_name === REHABILITATION_SERVICE && ['prova_teorica', 'prova_pratica'].includes(step.type) &&
                       !processData.selected_steps.some(selected => selected.id === step.id)) return false;
                   return true;
                 });
@@ -1770,18 +1765,18 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                     </div>
                   </div>
                 );
-                return shouldShowRehabilitationVehicleNotice(processData.client_name, step.type, Boolean(isSelected)) ? (
-                  <div key={step.id} data-rehabilitation-exam-row
-                    className="col-span-2 grid grid-cols-2 gap-3" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
-                    {card}
-                    <aside className="min-w-0 border-2 border-black p-3 flex items-center text-sm font-bold leading-relaxed break-words">
-                      {REHABILITATION_VEHICLE_NOTICE}
-                    </aside>
-                  </div>
-                ) : card;
+                return card;
                 });
               })()}
             </div>
+
+            {showVehicleNotice && (
+              <aside data-rehabilitation-vehicle-notice
+                className="w-full min-w-0 box-border border-2 border-black p-3 mb-4 text-sm font-bold leading-relaxed break-words"
+                style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                {REHABILITATION_VEHICLE_NOTICE}
+              </aside>
+            )}
 
             {/* Aviso Reinício de 1ª Habilitação */}
             {processData.aviso_reinicio && processData.client_name !== 'Reinicio (1º Habilitação)' && (
