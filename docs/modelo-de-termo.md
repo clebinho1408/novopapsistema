@@ -23,9 +23,19 @@ nome, tamanho e ativação por agência. Nenhum arquivo é enviado nos emails.
 Sem bucket configurado o upload falha explicitamente. Não há fallback para
 arquivos locais ou base64 no banco.
 
-## Cloudflare
+## Cloudflare Pages (site publicado) e Worker separado
 
-O SDK automático da Replit não autentica um Worker externo. O Worker usa a API
+O site `papsistema.pages.dev` é o projeto **Cloudflare Pages `papsistema`**.
+Sua API entra por `functions/api/[[path]].ts`, que usa o mesmo app Hono do
+projeto. O Pages tem seu próprio build/publicação e configuração de bindings.
+
+Existe também um **Worker `papsistema`** separado, configurado em
+`wrangler.json`. Publicar ou conferir apenas esse Worker não significa atualizar
+o site Pages. Antes de uma alteração de produção, conferir o projeto Pages e o
+banco realmente vinculado a ele pela API Cloudflare.
+
+O SDK automático da Replit não autentica o runtime externo do Pages ou Worker.
+O adaptador de arquivos externo usa a API
 Google Cloud Storage do mesmo bucket de App Storage, com:
 
 - `TERM_STORAGE_BUCKET`: identificador/nome do bucket.
