@@ -17,5 +17,7 @@ assert.equal(pages.assets, undefined, 'A configuração de assets do Worker deve
 const worker = JSON.parse(fs.readFileSync('wrangler.worker.json', 'utf8'));
 assert.equal(worker.main, 'src/worker-cf.ts');
 assert.deepEqual(pages.d1_databases, worker.d1_databases, 'Conferir os vínculos do D1 ao alterar os ambientes');
+assert.deepEqual(pages.r2_buckets, [{ binding: 'TERM_PDFS', bucket_name: 'termos-pap' }]);
+assert.deepEqual(pages.r2_buckets, worker.r2_buckets, 'Conferir os vínculos privados do R2');
 assert.ok(fs.existsSync('functions/api/[[path]].ts'), 'Entrada da API Pages ausente');
-console.log('PASS: lockfile público/HTTPS, configuração Pages, API e Worker separados com D1 preservado');
+console.log('PASS: lockfile público/HTTPS, Pages e Worker separados, D1 preservado e vínculo R2 privado');

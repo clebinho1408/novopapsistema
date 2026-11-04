@@ -4,6 +4,12 @@
   "main": "src/worker-cf.ts",
   "compatibility_date": "2025-06-17",
   "compatibility_flags": ["nodejs_compat"],
+  "r2_buckets": [
+    {
+      "binding": "TERM_PDFS",
+      "bucket_name": "termos-pap"
+    }
+  ],
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS"

@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import { PDFDocument } from 'pdf-lib';
 import { TERM_TEMPLATE_MAX_BYTES, type TermTemplateSettings } from '../shared/term-template';
-import { getTermStorage, type TermStorageEnv } from './term-storage';
+import { getTermStorage, TermStorageNotConfiguredError, type TermStorageEnv } from './term-storage';
 
 interface TermRecord {
   agency_id: number;
@@ -115,8 +115,11 @@ termTemplateRoutes.post('/', async c => {
     const row = await c.env.DB.prepare('SELECT * FROM agency_term_templates WHERE agency_id = ?')
       .bind(user.agency_id).first<TermRecord>();
     return c.json(settings(row));
-  } catch {
-    return c.json({ error: 'Não foi possível salvar o termo. Verifique a configuração do App Storage. O modelo anterior foi mantido.' }, 503);
+  } catch (error) {
+    const message = error instanceof TermStorageNotConfiguredError
+      ? error.message
+      : 'Não foi possível salvar o termo. Verifique o armazenamento de arquivos. O modelo anterior foi mantido.';
+    return c.json({ error: message }, 503);
   }
 });
 

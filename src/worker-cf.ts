@@ -4,12 +4,11 @@
  * - Tudo mais → assets estáticos (com fallback SPA para index.html)
  */
 import { app } from './server/app';
+import type { TermStorageEnv } from './server/term-storage';
 
-interface Env {
+interface Env extends TermStorageEnv {
   DB: D1Database;
   ASSETS: Fetcher;
-  TERM_STORAGE_BUCKET?: string;
-  TERM_STORAGE_SERVICE_ACCOUNT?: string;
 }
 
 export default {

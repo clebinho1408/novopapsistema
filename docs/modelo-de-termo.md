@@ -1,6 +1,6 @@
 # Modelo de Termo — configuração de armazenamento
 
-O PDF fica privado no App Storage. O banco guarda somente o caminho do objeto,
+O PDF fica privado no R2 para o site Cloudflare e no App Storage para Node na Replit. O banco guarda somente o caminho do objeto,
 nome, tamanho e ativação por agência. Nenhum arquivo é enviado nos emails.
 
 ## Banco
@@ -8,8 +8,8 @@ nome, tamanho e ativação por agência. Nenhum arquivo é enviado nos emails.
 - Node/PostgreSQL: aplicar `migrations/postgresql-term-template.sql` (a tabela
   também está declarada no schema Drizzle).
 - Cloudflare/D1: aplicar `migrations/25.sql` pelo procedimento habitual do projeto.
-- A alteração foi aplicada somente ao banco de desenvolvimento. Não executar a
-  migração em produção nem publicar sem autorização do responsável.
+- A tabela também foi criada no D1 de produção com autorização restrita à criação
+  da tabela. Não executar outras migrações nem publicar sem autorização do responsável.
 
 ## Node na Replit
 
@@ -44,28 +44,34 @@ Pacotes instalados na Replit podem introduzir URLs de registry interno no
 lockfile. Essas URLs não são acessíveis no Cloudflare; o lockfile de publicação
 deve usar URLs públicas HTTPS, preservando versões e hashes de integridade.
 
+O responsável autorizou o uso de **R2 privado** para os PDFs no Cloudflare.
 O SDK automático da Replit não autentica o runtime externo do Pages ou Worker.
-O adaptador de arquivos externo usa a API
-Google Cloud Storage do mesmo bucket de App Storage, com:
+Esses ambientes usam o binding nativo `TERM_PDFS`, apontado ao bucket
+`termos-pap` nos dois arquivos Wrangler.
 
-- `TERM_STORAGE_BUCKET`: identificador/nome do bucket.
-- `TERM_STORAGE_SERVICE_ACCOUNT`: secret contendo o JSON de uma conta de serviço
-  com acesso de leitura, criação e exclusão de objetos **somente nesse bucket**.
+1. No painel Cloudflare, ative **R2 Object Storage**. A ativação pode exigir
+   configuração de cobrança e deve ser concluída pelo responsável.
+2. Crie um bucket chamado **termos-pap** (ou confirme se já existe).
+3. Mantenha **Public Development URL / r2.dev** desativada. Não adicione domínio
+   público nem política de acesso público. Não é necessário configurar CORS:
+   o navegador acessa a API autenticada da agência, nunca o bucket diretamente.
+4. Sincronize o código com o GitHub e publique uma nova versão no **Pages**.
+   O Wrangler aplicará o binding. Alterar só o painel sem atualizar o código
+   antigo não troca o adaptador de armazenamento.
+5. Verifique o binding `TERM_PDFS` em produção e faça upload de um PDF de uma
+   página pela conta administradora.
 
-O acesso dessa conta ao bucket precisa ser confirmado antes da ativação. Não
-assumir que um token da Cloudflare dá acesso ao App Storage. Se não houver como
-conceder esse acesso ao bucket gerenciado, decidir uma arquitetura compatível
-com o responsável antes de publicar; não criar um bucket de outro provedor ou
-salvar os arquivos no banco como alternativa silenciosa.
-
-Use os mecanismos seguros de secrets de cada ambiente para configurar a
-credencial; nunca inclua seu conteúdo em código, logs, arquivos versionados ou
-chat. Secrets da Replit não são automaticamente transferidos ao Cloudflare.
+Não são necessárias chaves S3 nem `TERM_STORAGE_SERVICE_ACCOUNT` no Cloudflare.
+O D1 continua guardando somente metadados; nenhuma migração adicional é necessária.
+Não copiar arquivos entre os buckets da Replit e Cloudflare automaticamente.
+Uma publicação sem o bucket criado e o R2 ativo não está pronta para uso.
 
 ## Verificação
 
 - `npx tsx scripts/test-term-template.ts`: validação real de PDF, SQLite real,
   middleware de sessão, permissões, isolamento, troca segura e falhas de storage.
+  Inclui o adaptador R2 executado no runtime local Cloudflare/Miniflare: upload,
+  leitura, metadados PDF, persistência, substituição e limpeza após falha no banco.
 - `node scripts/test-term-browser.mjs`: componentes com APIs de teste isoladas,
   renderização real por PDF.js e impressão Chromium com uma/duas páginas A4,
   seis serviços, casos negativos, falha/repetição e visualização móvel.
