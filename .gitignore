@@ -4,6 +4,8 @@ node_modules/
 
 # Build outputs
 dist/
+public/pdf-assets/
+/generated-artifacts/
 .wrangler/
 
 # Environment variables (NUNCA commitar!)

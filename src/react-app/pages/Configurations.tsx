@@ -5,9 +5,10 @@ import type { ProcessStep, Fee, ProfessionalType } from '@/shared/types';
 import { PROFESSIONAL_TYPE_LABELS } from '@/shared/types';
 import RichTextEditor from '@/react-app/components/RichTextEditor';
 import UserManagement from '@/react-app/components/UserManagement';
+import TermTemplateConfiguration from '@/react-app/components/TermTemplateConfiguration';
 import { useDialog } from '@/react-app/components/Dialog';
 
-type TabType = 'steps' | 'fees' | 'users' | 'instructions' | 'agency' | 'processes';
+type TabType = 'steps' | 'fees' | 'users' | 'instructions' | 'term' | 'agency' | 'processes';
 
 export default function Configurations() {
   const [activeTab, setActiveTab] = useState<TabType>('steps');
@@ -46,6 +47,7 @@ export default function Configurations() {
     { id: 'steps', name: 'Etapas', icon: List },
     { id: 'fees', name: 'Taxas', icon: DollarSign },
     { id: 'instructions', name: 'Instruções', icon: FileText },
+    { id: 'term', name: 'Modelo de Termo', icon: FileText },
     { id: 'users', name: 'Usuários', icon: Users },
     { id: 'agency', name: 'Dados da Agência', icon: Building2 },
     { id: 'processes', name: 'Processos', icon: Trash2 },
@@ -89,6 +91,7 @@ export default function Configurations() {
           {activeTab === 'steps' && <StepsConfiguration steps={processSteps} onUpdate={fetchProcessSteps} />}
           {activeTab === 'fees' && <FeesConfiguration fees={fees} onUpdate={fetchFees} />}
           {activeTab === 'instructions' && <InstructionsConfiguration />}
+          {activeTab === 'term' && <TermTemplateConfiguration />}
           {activeTab === 'users' && <UserManagement />}
           {activeTab === 'agency' && <AgencyDataConfiguration />}
           {activeTab === 'processes' && <ProcessesManagement />}

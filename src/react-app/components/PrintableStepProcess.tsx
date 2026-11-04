@@ -5,6 +5,7 @@ import {
   isServiceStepAllowed, shouldShowRehabilitationVehicleNotice, orderServiceSteps
 } from '@/shared/rehabilitation';
 import { resolvePrintInstructions } from '@/shared/print-instructions';
+import { prepareTermTemplate, termPrintPage, TERM_PRINT_CSS } from '@/react-app/lib/term-template';
 
 const TOXICOLOGICO_ATIVO = new Date() >= new Date('2026-06-01');
 
@@ -44,33 +45,46 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
   const [emailModal, setEmailModal] = useState({ isOpen: false, email: '' });
   const [currentUserName, setCurrentUserName] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
+  const [termImage, setTermImage] = useState<string | null>(null);
+  const [termError, setTermError] = useState('');
+  const loadGeneration = useRef(0);
   const autoPrintFiredRef = useRef(false);
 
   useEffect(() => {
     if (isOpen) {
+      autoPrintFiredRef.current = false;
       loadAllData();
     }
-  }, [isOpen]);
+    return () => { loadGeneration.current++; };
+  }, [isOpen, processData.client_name]);
 
   // Auto-print: dispara impressão assim que os dados carregam
   useEffect(() => {
-    if (!isOpen || !autoPrint || isLoading || autoPrintFiredRef.current) return;
+    if (!isOpen || !autoPrint || isLoading || termError || autoPrintFiredRef.current) return;
     autoPrintFiredRef.current = true;
     handlePrint();
-  }, [isLoading, isOpen, autoPrint]);
+  }, [isLoading, isOpen, autoPrint, termError]);
 
   const loadAllData = async () => {
+    const generation = ++loadGeneration.current;
     setIsLoading(true);
+    setTermError('');
+    setTermImage(null);
     try {
       await Promise.all([
         checkAgencyLogo(),
         fetchInstructions(),
-        fetchCurrentUser()
+        fetchCurrentUser(),
+        prepareTermTemplate(processData.client_name).then(image => {
+          if (generation === loadGeneration.current) setTermImage(image);
+        }).catch(() => {
+          if (generation === loadGeneration.current) setTermError('Não foi possível preparar o termo. A impressão foi interrompida para evitar um documento incompleto. Confira o modelo e o armazenamento em Configurações ou tente novamente.');
+        }),
       ]);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
-      setIsLoading(false);
+      if (generation === loadGeneration.current) setIsLoading(false);
     }
   };
 
@@ -111,19 +125,23 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
   if (!isOpen) return null;
 
   const handlePrint = () => {
+    if (isLoading || termError) return;
     // Create a new window with only the print content
     const printContent = generatePrintHTML();
     const printWindow = window.open('', '_blank', 'width=800,height=600');
     
     if (printWindow) {
-      printWindow.document.write(printContent);
-      printWindow.document.close();
-      
-      // Close the modal immediately after opening the print window
-      onClose();
-      
       // Wait for content to load and font adjustment to complete, then print
-      printWindow.onload = () => {
+      printWindow.onload = async () => {
+        try {
+          const term = printWindow.document.querySelector<HTMLImageElement>('.term-print-page img');
+          if (term) await term.decode();
+        } catch {
+          printWindow.close();
+          autoPrintFiredRef.current = false;
+          setTermError('Falha ao preparar a segunda página. Tente novamente.');
+          return;
+        }
         let checkAttempts = 0;
         const maxCheckAttempts = 100; // 5 seconds max
         
@@ -136,6 +154,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
             setTimeout(() => {
               printWindow.print();
               printWindow.close();
+              onClose();
             }, 100);
           } else if (checkAttempts < maxCheckAttempts) {
             // Still adjusting - check again
@@ -146,11 +165,17 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
             setTimeout(() => {
               printWindow.print();
               printWindow.close();
+              onClose();
             }, 100);
           }
         };
         checkAdjustmentComplete();
       };
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+    } else {
+      setTermError('O navegador bloqueou a janela de impressão. Permita pop-ups e tente novamente.');
+      autoPrintFiredRef.current = false;
     }
   };
 
@@ -1103,6 +1128,8 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
         ` : ''}
 
     </div>
+    ${termPrintPage(termImage)}
+    <style>${TERM_PRINT_CSS}</style>
     <script>
         // Auto-adjust font size to fit content in one page
         window.addEventListener('load', function() {
@@ -1475,7 +1502,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
   };
 
   // Quando autoPrint está ativo, mostra apenas loading enquanto prepara — o useEffect dispara handlePrint() ao terminar
-  if (autoPrint) {
+  if (autoPrint && !termError) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
         <div className="bg-white rounded-lg shadow-xl p-8 flex flex-col items-center space-y-4">
@@ -1509,7 +1536,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
             </button>
             <button
               onClick={handlePrint}
-              disabled={isLoading}
+              disabled={isLoading || !!termError}
               className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Printer className="w-4 h-4" />
@@ -1523,6 +1550,11 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
             </button>
           </div>
         </div>
+        {termError && <div role="alert" className="m-4 p-4 rounded-lg bg-red-50 text-red-800">
+          <p>{termError}</p>
+          <button onClick={() => { autoPrintFiredRef.current = false; void loadAllData(); }} disabled={isLoading}
+            className="mt-2 underline font-medium">Tentar novamente</button>
+        </div>}
 
           {/* Preview Content */}
         <div className="p-8">
@@ -1927,6 +1959,12 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
       </div>
 
       {/* Email Modal */}
+      {termImage && <section className="mx-6 mb-6 p-4 border-t-4 border-dashed border-gray-300 bg-gray-100" aria-label="Página 2 — Modelo de Termo">
+        <h3 className="text-sm font-semibold text-gray-700 mb-3">Página 2 — Modelo de Termo</h3>
+        <div className="bg-white mx-auto max-w-[794px] aspect-[210/297] flex items-center justify-center shadow">
+          <img src={termImage} alt="Conteúdo integral do modelo de termo" className="w-full h-full object-contain" />
+        </div>
+      </section>}
       {emailModal.isOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md">

@@ -85,6 +85,9 @@ function renderer(source, extraMocks = {}, globals = {}) {
     'lucide-react': new Proxy({}, { get: (_, name) => name }),
     '@/shared/rehabilitation': shared,
     '@/shared/print-instructions': printInstructions,
+    '@/react-app/lib/term-template': {
+      prepareTermTemplate: async () => null, termPrintPage: () => '', TERM_PRINT_CSS: ''
+    },
     '@/react-app/components/Layout': { default: 'Layout' },
     '@/react-app/components/PrintableStepProcess': { default: 'PrintableStepProcess' },
     '@/react-app/components/Dialog': { useDialog: () => ({ showAlert: async () => {}, DialogComponent: null }) },

@@ -8,6 +8,8 @@ import { app } from './server/app';
 interface Env {
   DB: D1Database;
   ASSETS: Fetcher;
+  TERM_STORAGE_BUCKET?: string;
+  TERM_STORAGE_SERVICE_ACCOUNT?: string;
 }
 
 export default {

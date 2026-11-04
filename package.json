@@ -7,6 +7,8 @@
     "@hono/node-server": "^1.19.5",
     "@hono/zod-validator": "^0.5.0",
     "@neondatabase/serverless": "^1.1.0",
+    "@playwright/test": "^1.64.1",
+    "@replit/object-storage": "^1.0.0",
     "@types/bcryptjs": "^3.0.0",
     "@types/pg": "^8.15.5",
     "bcryptjs": "^3.0.2",
@@ -16,6 +18,8 @@
     "hono": "4.7.7",
     "lucide-react": "^0.510.0",
     "mime": "^4.1.0",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^4.10.38",
     "postgres": "^3.4.7",
     "quill": "^2.0.3",
     "react": "19.0.0",
@@ -47,6 +51,9 @@
     "wrangler": "^4.33.0"
   },
   "scripts": {
+    "prebuild": "node scripts/prepare-pdf-assets.cjs",
+    "predev": "node scripts/prepare-pdf-assets.cjs",
+    "precf-build": "node scripts/prepare-pdf-assets.cjs",
     "build": "tsc -b && vite build",
     "dev": "concurrently \"vite\" \"tsx watch src/server/node-entry.ts\"",
     "dev:vite": "vite",

@@ -156,6 +156,15 @@ export const processSelectedFees = pgTable('process_selected_fees', {
 });
 
 // Agency instructions
+export const agencyTermTemplates = pgTable('agency_term_templates', {
+  agencyId: integer('agency_id').primaryKey().references(() => agencies.id),
+  enabled: boolean('enabled').notNull().default(false),
+  objectKey: text('object_key').notNull(),
+  filename: text('filename').notNull(),
+  size: integer('size').notNull(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
 export const agencyInstructions = pgTable('agency_instructions', {
   id: serial('id').primaryKey(),
   agencyId: integer('agency_id').notNull().references(() => agencies.id),

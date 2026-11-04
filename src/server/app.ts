@@ -3,6 +3,7 @@ import { cors } from "hono/cors";
 import { getCookie, setCookie } from "hono/cookie";
 import { zValidator } from "@hono/zod-validator";
 import bcrypt from "bcryptjs";
+import { termTemplateRoutes } from './term-template';
 import { isServiceStepAllowed } from "../shared/rehabilitation";
 import {
   CreateCityRequestSchema,
@@ -53,6 +54,10 @@ function getUserWithAgency(c: any) {
   const user = c.get("user") as any;
   return user || null;
 }
+
+app.use('/api/term-template', systemAuthMiddleware);
+app.use('/api/term-template/*', systemAuthMiddleware);
+app.route('/api/term-template', termTemplateRoutes);
 
 // Public endpoints (no auth required)
 app.get('/api/public/agencies', async (c) => {

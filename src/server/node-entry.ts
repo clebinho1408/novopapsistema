@@ -1,8 +1,10 @@
 import { serve } from '@hono/node-server';
 import { app } from './app';
 import { d1Adapter } from './d1-adapter';
+import { createNodeTermStorage } from './term-storage-node';
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT) : (process.env.NODE_ENV === 'production' ? 5000 : 3000);
+const termFiles = createNodeTermStorage();
 
 console.log(`🚀 Starting Hono Node.js server on port ${PORT}...`);
 console.log(`📦 Environment: ${process.env.NODE_ENV || 'development'}`);
@@ -14,7 +16,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 serve({
-  fetch: (request: Request) => app.fetch(request, { DB: d1Adapter } as any),
+  fetch: (request: Request) => app.fetch(request, { DB: d1Adapter, TERM_FILES: termFiles } as any),
   port: PORT,
 });
 
