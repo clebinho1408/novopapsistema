@@ -53,7 +53,8 @@
   "scripts": {
     "prebuild": "node scripts/prepare-pdf-assets.cjs",
     "predev": "node scripts/prepare-pdf-assets.cjs",
-    "precf-build": "node scripts/prepare-pdf-assets.cjs",
+    "precf-build": "node scripts/check-cloudflare-config.cjs && node scripts/prepare-pdf-assets.cjs",
+    "check:cloudflare": "node scripts/check-cloudflare-config.cjs",
     "build": "tsc -b && vite build",
     "dev": "concurrently \"vite\" \"tsx watch src/server/node-entry.ts\"",
     "dev:vite": "vite",
@@ -67,6 +68,6 @@
     "db:studio": "drizzle-kit studio",
     "build:vercel": "vite build && npx esbuild api/_index.ts --bundle --platform=node --target=node18 --format=esm --external:pg-native --outfile=api/index.mjs && npx esbuild api/_health.ts --bundle --platform=node --target=node18 --format=esm --external:pg-native --outfile=api/health.mjs && npx esbuild api/_debug.ts --bundle --platform=node --target=node18 --format=esm --external:pg-native --outfile=api/debug.mjs",
     "cf-build": "vite build",
-    "deploy:cf": "npm run build && npx wrangler deploy"
+    "deploy:cf": "npm run build && npx wrangler deploy --config wrangler.worker.json"
   }
 }

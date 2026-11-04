@@ -30,9 +30,19 @@ Sua API entra por `functions/api/[[path]].ts`, que usa o mesmo app Hono do
 projeto. O Pages tem seu próprio build/publicação e configuração de bindings.
 
 Existe também um **Worker `papsistema`** separado, configurado em
-`wrangler.json`. Publicar ou conferir apenas esse Worker não significa atualizar
+`wrangler.worker.json`. Publicar ou conferir apenas esse Worker não significa atualizar
 o site Pages. Antes de uma alteração de produção, conferir o projeto Pages e o
 banco realmente vinculado a ele pela API Cloudflare.
+
+O arquivo `wrangler.json` da raiz é para **Pages**, com
+`pages_build_output_dir: "./dist"`. O comando de build no painel Pages deve ser
+`npm run cf-build`, com diretório de saída `dist`. O repositório usa
+`package-lock.json` e npm; não requer pnpm.
+
+Antes de enviar alterações para publicação, execute `npm run check:cloudflare`.
+Pacotes instalados na Replit podem introduzir URLs de registry interno no
+lockfile. Essas URLs não são acessíveis no Cloudflare; o lockfile de publicação
+deve usar URLs públicas HTTPS, preservando versões e hashes de integridade.
 
 O SDK automático da Replit não autentica o runtime externo do Pages ou Worker.
 O adaptador de arquivos externo usa a API
