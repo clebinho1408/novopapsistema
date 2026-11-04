@@ -6,6 +6,7 @@ import {
 } from '@/shared/rehabilitation';
 import { resolvePrintInstructions } from '@/shared/print-instructions';
 import { prepareTermTemplate, termPrintPage, TERM_PRINT_CSS } from '@/react-app/lib/term-template';
+import { preparePrintWindow, printQrCode } from '@/react-app/lib/print-window';
 
 const TOXICOLOGICO_ATIVO = new Date() >= new Date('2026-06-01');
 
@@ -47,12 +48,14 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
   const [isLoading, setIsLoading] = useState(true);
   const [termImage, setTermImage] = useState<string | null>(null);
   const [termError, setTermError] = useState('');
+  const [manualPrintRequired, setManualPrintRequired] = useState(false);
   const loadGeneration = useRef(0);
   const autoPrintFiredRef = useRef(false);
 
   useEffect(() => {
     if (isOpen) {
       autoPrintFiredRef.current = false;
+      setManualPrintRequired(false);
       loadAllData();
     }
     return () => { loadGeneration.current++; };
@@ -60,10 +63,10 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
 
   // Auto-print: dispara impressão assim que os dados carregam
   useEffect(() => {
-    if (!isOpen || !autoPrint || isLoading || termError || autoPrintFiredRef.current) return;
+    if (!isOpen || !autoPrint || isLoading || termError || manualPrintRequired || autoPrintFiredRef.current) return;
     autoPrintFiredRef.current = true;
     handlePrint();
-  }, [isLoading, isOpen, autoPrint, termError]);
+  }, [isLoading, isOpen, autoPrint, termError, manualPrintRequired]);
 
   const loadAllData = async () => {
     const generation = ++loadGeneration.current;
@@ -124,58 +127,29 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
 
   if (!isOpen) return null;
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
     if (isLoading || termError) return;
     // Create a new window with only the print content
     const printContent = generatePrintHTML();
     const printWindow = window.open('', '_blank', 'width=800,height=600');
     
     if (printWindow) {
-      // Wait for content to load and font adjustment to complete, then print
-      printWindow.onload = async () => {
-        try {
-          const term = printWindow.document.querySelector<HTMLImageElement>('.term-print-page img');
-          if (term) await term.decode();
-        } catch {
-          printWindow.close();
-          autoPrintFiredRef.current = false;
-          setTermError('Falha ao preparar a segunda página. Tente novamente.');
-          return;
-        }
-        let checkAttempts = 0;
-        const maxCheckAttempts = 100; // 5 seconds max
-        
-        const checkAdjustmentComplete = () => {
-          const container = printWindow.document.querySelector('.container');
-          const adjustedStatus = container?.getAttribute('data-adjusted');
-          
-          if (adjustedStatus === 'true' || adjustedStatus === 'failed') {
-            // Print regardless of fit status
-            setTimeout(() => {
-              printWindow.print();
-              printWindow.close();
-              onClose();
-            }, 100);
-          } else if (checkAttempts < maxCheckAttempts) {
-            // Still adjusting - check again
-            checkAttempts++;
-            setTimeout(checkAdjustmentComplete, 50);
-          } else {
-            // Timeout - print anyway
-            setTimeout(() => {
-              printWindow.print();
-              printWindow.close();
-              onClose();
-            }, 100);
-          }
-        };
-        checkAdjustmentComplete();
-      };
-      printWindow.document.write(printContent);
-      printWindow.document.close();
+      try {
+        await preparePrintWindow(printWindow, printContent);
+        printWindow.focus();
+        // Give the popup a paint before opening the native print dialog.
+        printWindow.setTimeout(() => {
+          if (!printWindow.closed) printWindow.print();
+        }, 100);
+        onClose();
+      } catch {
+        autoPrintFiredRef.current = false;
+        setTermError('Não foi possível preparar todas as páginas e imagens. Feche a janela de impressão e tente novamente.');
+      }
     } else {
-      setTermError('O navegador bloqueou a janela de impressão. Permita pop-ups e tente novamente.');
-      autoPrintFiredRef.current = false;
+      // A real click on the enabled Imprimir button restores user activation.
+      // Do not disable it as if the PDF itself had failed.
+      setManualPrintRequired(true);
     }
   };
 
@@ -730,6 +704,13 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
     </style>
 </head>
 <body>
+    <aside id="print-controls" style="padding:12px;background:#f1f5f9;border-bottom:1px solid #cbd5e1;font:14px Arial,sans-serif;color:#111827;">
+      <button id="print-now" type="button" disabled style="padding:8px 16px;cursor:pointer;">Imprimir agora</button>
+      <button type="button" onclick="window.close()" style="padding:8px 16px;margin-left:8px;cursor:pointer;">Fechar</button>
+      <p id="print-status" role="status" style="margin:8px 0 0;">Preparando todas as páginas para impressão…</p>
+      ${termImage ? '<p style="margin:8px 0 0;font-weight:bold;">Documento com 2 páginas. Se sua impressora permitir, selecione “Imprimir dos dois lados / frente e verso” no diálogo de impressão.</p>' : ''}
+    </aside>
+    <style>@media print { #print-controls { display: none !important; } }</style>
     <div class="container">
         <!-- Header -->
         <div class="header">
@@ -955,11 +936,11 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                                 <div style="display: flex; gap: 14px; margin-top: 8px; justify-content: center; align-items: center;">
                                   <div style="display: flex; align-items: center; gap: 5px;">
                                     <span style="font-size: 10px; font-weight: bold; color: black; line-height: 1.3; text-align: center;">Consultar<br/>Instrutor</span>
-                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=https%3A%2F%2Fwww.detran.sc.gov.br%2Finstrutores-credenciados%2F" alt="QR Consultar Instrutor" style="width: 60px; height: 60px; display: block;" />
+                                    <img src="${printQrCode('https://www.detran.sc.gov.br/instrutores-credenciados/')}" alt="QR Consultar Instrutor" style="width: 60px; height: 60px; display: block;" />
                                   </div>
                                   <div style="display: flex; align-items: center; gap: 5px;">
                                     <span style="font-size: 10px; font-weight: bold; color: black; line-height: 1.3; text-align: center;">Consultar<br/>Autoescola</span>
-                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=https%3A%2F%2Fwww.detran.sc.gov.br%2Fcentro-de-formacao-de-condutores%2F" alt="QR Consultar Autoescola" style="width: 60px; height: 60px; display: block;" />
+                                    <img src="${printQrCode('https://www.detran.sc.gov.br/centro-de-formacao-de-condutores/')}" alt="QR Consultar Autoescola" style="width: 60px; height: 60px; display: block;" />
                                   </div>
                                 </div>
                                 ` : ''}
@@ -1086,7 +1067,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                           <div><strong>2º Passo:</strong> Enviar uma mensagem WhatsApp para</div>
                           <div style="display: flex; align-items: center; gap: 10px; margin-top: 6px;">
                               <strong style="font-size: 13px;">(47) 99227-4189</strong>
-                              <img src="https://api.qrserver.com/v1/create-qr-code/?size=72x72&data=https://wa.me/5547992274189" alt="QR WhatsApp" style="width: 72px; height: 72px; display: block;" />
+                              <img src="${printQrCode('https://wa.me/5547992274189')}" alt="QR WhatsApp" style="width: 72px; height: 72px; display: block;" />
                           </div>
                       </div>
                       <!-- Coluna direita: aviso -->
@@ -1132,7 +1113,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
     <style>${TERM_PRINT_CSS}</style>
     <script>
         // Auto-adjust font size to fit content in one page
-        window.addEventListener('load', function() {
+        window.addEventListener('DOMContentLoaded', function() {
             const container = document.querySelector('.container');
             const instructions = document.querySelector('.instructions-content');
             
@@ -1169,8 +1150,9 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                     });
                     attempts++;
                     
-                    // Use requestAnimationFrame to ensure DOM has updated
-                    requestAnimationFrame(adjustFontSize);
+                    // Reading layout applies the size immediately, including
+                    // in background popups where animation frames are throttled.
+                    adjustFontSize();
                 } else {
                     // Check if we succeeded or exhausted attempts
                     if (currentHeight <= maxHeight) {
@@ -1179,10 +1161,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                     } else if (fontSize <= 5) {
                         // Try one last time with tighter line-height
                         instructions.style.setProperty('line-height', '1.0', 'important');
-                        requestAnimationFrame(() => {
-                            // Mark as complete regardless of fit
-                            container.setAttribute('data-adjusted', 'true');
-                        });
+                        container.setAttribute('data-adjusted', 'true');
                     } else {
                         // Mark as complete regardless of fit
                         container.setAttribute('data-adjusted', 'true');
@@ -1194,7 +1173,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
         });
 
         // Ocultar ponto e vírgula apenas na impressão
-        window.addEventListener('load', function() {
+        window.addEventListener('DOMContentLoaded', function() {
             const container = document.querySelector('.container');
             if (container) {
                 const walker = document.createTreeWalker(
@@ -1502,7 +1481,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
   };
 
   // Quando autoPrint está ativo, mostra apenas loading enquanto prepara — o useEffect dispara handlePrint() ao terminar
-  if (autoPrint && !termError) {
+  if (autoPrint && !termError && !manualPrintRequired) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
         <div className="bg-white rounded-lg shadow-xl p-8 flex flex-col items-center space-y-4">
@@ -1550,6 +1529,9 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
             </button>
           </div>
         </div>
+        {manualPrintRequired && <p role="status" className="m-4 p-4 rounded-lg bg-amber-50 text-amber-900">
+          O navegador bloqueou a abertura automática. Clique em Imprimir para abrir a janela.
+        </p>}
         {termError && <div role="alert" className="m-4 p-4 rounded-lg bg-red-50 text-red-800">
           <p>{termError}</p>
           <button onClick={() => { autoPrintFiredRef.current = false; void loadAllData(); }} disabled={isLoading}
@@ -1752,11 +1734,11 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                             <div className="flex gap-3 mt-2 justify-center items-center">
                               <div className="flex items-center gap-1">
                                 <span className="text-[10px] font-bold text-black leading-tight text-center">Consultar<br/>Instrutor</span>
-                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=https%3A%2F%2Fwww.detran.sc.gov.br%2Finstrutores-credenciados%2F" alt="QR Consultar Instrutor" style={{ width: 60, height: 60, display: 'block' }} />
+                                <img src={printQrCode('https://www.detran.sc.gov.br/instrutores-credenciados/')} alt="QR Consultar Instrutor" style={{ width: 60, height: 60, display: 'block' }} />
                               </div>
                               <div className="flex items-center gap-1">
                                 <span className="text-[10px] font-bold text-black leading-tight text-center">Consultar<br/>Autoescola</span>
-                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=https%3A%2F%2Fwww.detran.sc.gov.br%2Fcentro-de-formacao-de-condutores%2F" alt="QR Consultar Autoescola" style={{ width: 60, height: 60, display: 'block' }} />
+                                <img src={printQrCode('https://www.detran.sc.gov.br/centro-de-formacao-de-condutores/')} alt="QR Consultar Autoescola" style={{ width: 60, height: 60, display: 'block' }} />
                               </div>
                             </div>
                           )}

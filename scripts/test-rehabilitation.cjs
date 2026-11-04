@@ -51,6 +51,9 @@ function load(source, mocks, globals = {}) {
 }
 const shared = load(fs.readFileSync('src/shared/rehabilitation.ts', 'utf8'), {}).exports;
 const printInstructions = load(fs.readFileSync('src/shared/print-instructions.ts', 'utf8'), {}).exports;
+const printWindowHelpers = load(fs.readFileSync('src/react-app/lib/print-window.ts', 'utf8'), {
+  'qrcode-generator': { default: require('qrcode-generator') }
+}).exports;
 const instructionTemplates = {
   general_instructions: '<p>INSTRUCAO_GERAL_TESTE</p>',
   instructions_primeira_habilitacao: '<p>INSTRUCAO_HABILITACAO_TESTE</p>'
@@ -85,6 +88,7 @@ function renderer(source, extraMocks = {}, globals = {}) {
     'lucide-react': new Proxy({}, { get: (_, name) => name }),
     '@/shared/rehabilitation': shared,
     '@/shared/print-instructions': printInstructions,
+    '@/react-app/lib/print-window': printWindowHelpers,
     '@/react-app/lib/term-template': {
       prepareTermTemplate: async () => null, termPrintPage: () => '', TERM_PRINT_CSS: ''
     },

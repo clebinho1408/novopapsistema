@@ -68,6 +68,24 @@ Uma publicação sem o bucket criado e o R2 ativo não está pronta para uso.
 
 ## Verificação
 
+### Preparação da impressão
+
+A janela não depende do evento `window.load` nem de serviços externos de QR Code.
+Os QR Codes são gerados localmente. Aguarda-se a decodificação das imagens antes
+de chamar a impressão; falhas interrompem a operação sem imprimir um termo
+incompleto. A janela permanece aberta, com **Imprimir agora** para repetir a ação
+caso o navegador não abra o diálogo automaticamente.
+
+O termo é preparado a 200 dpi, em JPEG de alta qualidade. Somente a imagem da
+versão imutável atual é reaproveitada em memória na mesma aba; as configurações
+autenticadas são consultadas em cada impressão. Desativar o termo ou trocar o
+PDF invalida o reaproveitamento. Não se guarda o PDF no armazenamento local do
+navegador.
+
+Com duas páginas aparece um lembrete de frente e verso, invisível no papel.
+Páginas web não conseguem selecionar duplex no driver da impressora; essa
+seleção continua sendo feita pelo usuário no diálogo nativo.
+
 - `npx tsx scripts/test-term-template.ts`: validação real de PDF, SQLite real,
   middleware de sessão, permissões, isolamento, troca segura e falhas de storage.
   Inclui o adaptador R2 executado no runtime local Cloudflare/Miniflare: upload,

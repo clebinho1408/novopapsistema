@@ -18,7 +18,7 @@ sheet.drawText('Inicio: texto de teste para verificar proporcao e legibilidade.'
 sheet.drawText('FIM DO TERMO - NAO CORTAR', { x: 40, y: 40, size: 16, font });
 const bytes = Buffer.from(await pdf.save());
 let enabled = true, fileError = false, settingsError = false;
-let settingsRequests = 0;
+let settingsRequests = 0, fileRequests = 0;
 await context.route('**/api/**', async route => {
   const url = new URL(route.request().url());
   if (url.pathname === '/api/term-template') {
@@ -28,6 +28,7 @@ await context.route('**/api/**', async route => {
       file_url: '/api/term-template/file?version=fixture', updated_at: '2026-11-04' } });
   }
   if (url.pathname === '/api/term-template/file') {
+    fileRequests++;
     return fileError ? route.fulfill({ status: 503 }) : route.fulfill({ body: bytes, contentType: 'application/pdf' });
   }
   if (url.pathname === '/api/instructions') return route.fulfill({ json: {
@@ -68,15 +69,35 @@ try {
   await page.getByRole('img', { name: 'Conteúdo integral do modelo de termo' }).waitFor();
   await page.getByRole('button', { name: 'Imprimir', exact: true }).waitFor();
   assert.equal(await page.getByRole('button', { name: 'Imprimir', exact: true }).isEnabled(), true);
-  // Suppress only native dialogs/closing in the test browser so we can inspect
-  // the actual generated popup and render it through Chromium's print engine.
-  await context.addInitScript(() => { window.print = () => {}; window.close = () => {}; });
+  // Count the real automatic print trigger, but suppress the native dialog.
+  // Do not stub close(): a premature popup close must fail this regression.
+  await context.addInitScript(() => {
+    window.__printCalls = 0;
+    window.print = () => { window.__printCalls++; };
+  });
+  const requestsBeforeCache = fileRequests;
+  const settingsBeforeCache = settingsRequests;
+  await page.evaluate(async () => {
+    const { prepareTermTemplate } = await import('/src/react-app/lib/term-template.ts');
+    await prepareTermTemplate('Reabilitação');
+  });
+  assert.equal(fileRequests, requestsBeforeCache, 'Same immutable PDF version must reuse the prepared image');
+  assert.equal(settingsRequests, settingsBeforeCache + 1, 'Settings must still be authenticated and rechecked');
   const popupPromise = page.waitForEvent('popup');
   await page.getByRole('button', { name: 'Imprimir', exact: true }).click();
   const popup = await popupPromise;
   await popup.locator('.term-print-page img').waitFor();
+  await popup.waitForFunction(() => window.__printCalls === 1, { timeout: 5000 });
+  assert.equal(popup.isClosed(), false, 'Do not close the popup before the native print dialog opens');
+  assert.equal(await popup.getByRole('button', { name: 'Imprimir agora', exact: true }).isEnabled(), true);
+  await popup.getByRole('button', { name: 'Imprimir agora', exact: true }).click();
+  assert.equal(await popup.evaluate(() => window.__printCalls), 2);
+  await popup.getByText(/selecione “Imprimir dos dois lados/).waitFor();
+  assert.equal(await popup.locator('img[src*="qrserver"]').count(), 0);
+  await popup.screenshot({ path: 'generated-artifacts/term-tests/print-controls.png', fullPage: true });
   await popup.waitForFunction(() => document.querySelector('.container')?.getAttribute('data-adjusted'));
   await popup.emulateMedia({ media: 'print' });
+  assert.equal(await popup.locator('#print-controls').isVisible(), false, 'Controls and duplex reminder must not be printed');
   const composed = await popup.pdf({ format: 'A4', printBackground: true, preferCSSPageSize: true });
   const composedPdf = await PDFDocument.load(composed);
   assert.equal(composedPdf.getPageCount(), 2, 'Print must produce exactly two real A4 pages');
@@ -87,7 +108,7 @@ try {
   await writeFile('generated-artifacts/term-tests/two-pages.pdf', composed);
   await popup.screenshot({ path: 'generated-artifacts/term-tests/print.png', fullPage: true });
   await popup.close();
-  console.log('PASS: actual PDF.js render, image decoding, popup composition, two real A4 pages');
+  console.log('PASS: automatic print called, popup stays open, manual retry, local QR codes, versioned render cache, duplex reminder hidden on paper, two real A4 pages');
 
   for (const service of ['1º Habilitação', 'Renovação + PCD', 'Reinicio (1º Habilitação)', 'Adição de Categoria A', 'Adição de Categoria B']) {
     await mount(service);
@@ -108,6 +129,8 @@ try {
   const disabledPopupPromise = page.waitForEvent('popup');
   await page.getByRole('button', { name: 'Imprimir', exact: true }).click();
   const disabledPopup = await disabledPopupPromise;
+  await disabledPopup.waitForFunction(() => window.__printCalls === 1);
+  assert.equal(await disabledPopup.getByText(/Documento com 2 páginas/).count(), 0);
   await disabledPopup.waitForFunction(() => document.querySelector('.container')?.getAttribute('data-adjusted'));
   const singlePage = await disabledPopup.pdf({ format: 'A4', preferCSSPageSize: true });
   assert.equal((await PDFDocument.load(singlePage)).getPageCount(), 1);
@@ -126,6 +149,31 @@ try {
   await page.getByRole('alert').waitFor();
   assert.equal(await page.getByRole('button', { name: 'Imprimir', exact: true }).isDisabled(), true);
   settingsError = false;
+  // Successful auto-print (the list's actual mode), not only its error branch.
+  const autoPopupPromise = page.waitForEvent('popup');
+  await mount('Reabilitação', false, true);
+  const autoPopup = await autoPopupPromise;
+  await autoPopup.waitForFunction(() => window.__printCalls === 1);
+  assert.equal(autoPopup.isClosed(), false);
+  assert.equal(await autoPopup.locator('.term-print-page img').count(), 1);
+  await autoPopup.close();
+  await context.addInitScript(() => {
+    const open = window.open.bind(window);
+    let blocked = false;
+    window.open = (...args) => {
+      if (!blocked) { blocked = true; return null; }
+      return open(...args);
+    };
+  });
+  await mount('Reabilitação', false, true);
+  await page.getByText('O navegador bloqueou a abertura automática.', { exact: false }).waitFor();
+  assert.equal(await page.getByRole('button', { name: 'Imprimir', exact: true }).isEnabled(), true);
+  const recoveredPopupPromise = page.waitForEvent('popup');
+  await page.getByRole('button', { name: 'Imprimir', exact: true }).click();
+  const recoveredPopup = await recoveredPopupPromise;
+  await recoveredPopup.waitForFunction(() => window.__printCalls === 1);
+  await recoveredPopup.close();
+  console.log('PASS: blocked automatic popup recovers through an enabled manual print button');
   console.log('PASS: six exact services, excluded services, disabled without blank page, failure/retry, auto-print failure protection');
 
   await mount('', true);
