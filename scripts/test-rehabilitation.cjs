@@ -225,8 +225,22 @@ async function run() {
   assert.deepEqual(selectedTypes(), required);
   app.context.test.setCurrentStep(2); tree = app.render();
   const checkboxes = nodes(tree).filter(node => node.type === 'input' && node.props.type === 'checkbox' && node.props.checked);
-  assert.equal(checkboxes.length, 6);
-  assert.ok(checkboxes.every(node => !node.props.disabled));
+  assert.equal(checkboxes.length, 7);
+  assert.equal(checkboxes.filter(node => !node.props.disabled).length, 6);
+  function termCheckbox() {
+    const label = nodes(tree).find(node => node.type === 'label' && text(node) === 'Termo');
+    assert.ok(label, 'Termo must be visible in the step selector');
+    const input = nodes(label).find(node => node.type === 'input');
+    assert.equal(input.props.disabled, true, 'Termo must always be read-only');
+    return input;
+  }
+  assert.equal(termCheckbox().props.checked, true);
+  const practical = steps.find(step => step.type === 'prova_pratica');
+  app.context.test.handleStepToggle(practical.id); tree = app.render();
+  assert.equal(termCheckbox().props.checked, false, 'Unchecking practical exam must uncheck Termo');
+  app.context.test.handleStepToggle(practical.id); tree = app.render();
+  assert.equal(termCheckbox().props.checked, true, 'Checking practical exam must check Termo');
+  assert.equal(app.context.test.formData.selected_steps.length, 6, 'Derived Termo must not create a fake process-step ID');
   const formStepNames = nodes(tree).filter(node => node.type === 'label' &&
     nodes(node).some(child => child.type === 'input' && child.props.type === 'checkbox'))
     .map(text).filter(label => label.includes('ETAPA_'));

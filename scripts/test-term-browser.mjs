@@ -39,9 +39,9 @@ await context.route('**/api/**', async route => {
   return route.fulfill({ json: {} });
 });
 
-async function mount(service, configuration = false, autoPrint = false) {
+async function mount(service, configuration = false, autoPrint = false, practicalExam = true) {
   await page.goto(`${origin}/login`);
-  await page.evaluate(async ({ service, configuration, autoPrint }) => {
+  await page.evaluate(async ({ service, configuration, autoPrint, practicalExam }) => {
     const { default: React } = await import('/node_modules/.vite/deps/react.js');
     const { default: ReactDOM } = await import('/node_modules/.vite/deps/react-dom_client.js');
     const { default: Component } = await import(configuration
@@ -57,10 +57,10 @@ async function mount(service, configuration = false, autoPrint = false) {
     ReactDOM.createRoot(target).render(React.createElement(Component, configuration ? {} : {
       isOpen: true, autoPrint, onClose() {},
       processData: { client_name: service, city: { name: 'Cidade de Teste' },
-        selected_steps: steps, all_steps: steps, selected_professionals: {},
+        selected_steps: practicalExam ? steps : steps.filter(step => step.type !== 'prova_pratica'), all_steps: steps, selected_professionals: {},
         selected_fees: [], total_amount: '0.00' },
     }));
-  }, { service, configuration, autoPrint });
+  }, { service, configuration, autoPrint, practicalExam });
 }
 
 try {
@@ -121,6 +121,20 @@ try {
     assert.equal(await page.getByRole('img', { name: 'Conteúdo integral do modelo de termo' }).count(), 0);
     assert.equal(settingsRequests, before, 'Unrelated services must not depend on term storage');
   }
+  const beforeWithoutExam = settingsRequests;
+  await mount('Reabilitação', false, false, false);
+  await page.waitForFunction(() => [...document.querySelectorAll('button')].some(button => button.textContent.trim() === 'Imprimir' && !button.disabled));
+  assert.equal(settingsRequests, beforeWithoutExam, 'Without Prova Prática, Termo must be unselected and must not load');
+  assert.equal(await page.getByRole('img', { name: 'Conteúdo integral do modelo de termo' }).count(), 0);
+  const noExamPopupPromise = page.waitForEvent('popup');
+  await page.getByRole('button', { name: 'Imprimir', exact: true }).click();
+  const noExamPopup = await noExamPopupPromise;
+  await noExamPopup.waitForFunction(() => window.__printCalls === 1);
+  assert.equal(await noExamPopup.locator('.term-print-page').count(), 0);
+  const noExamPdf = await noExamPopup.pdf({ format: 'A4', preferCSSPageSize: true });
+  assert.equal((await PDFDocument.load(noExamPdf)).getPageCount(), 1);
+  await noExamPopup.close();
+  console.log('PASS: without practical exam, no term request, no term page, exactly one printed page');
   enabled = false;
   await mount('Reabilitação');
   await page.waitForFunction(() => [...document.querySelectorAll('button')].some(button => button.textContent.trim() === 'Imprimir' && !button.disabled));

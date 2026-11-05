@@ -36,6 +36,9 @@ interface PrintableStepProcessProps {
 }
 
 export default function PrintableStepProcess({ isOpen, onClose, autoPrint, processData }: PrintableStepProcessProps) {
+  // Termo is a derived, read-only selection: it follows the saved practical exam,
+  // including processes reopened from the list, without introducing a fake DB step.
+  const termSelected = processData.selected_steps.some(step => step.type === 'prova_pratica');
   const isAdicaoCategoria = processData.client_name === 'Adição de Categoria A' || processData.client_name === 'Adição de Categoria B';
   const showVehicleNotice = !processData.aviso_reinicio &&
     (processData.all_steps || processData.selected_steps).some(step =>
@@ -59,7 +62,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
       loadAllData();
     }
     return () => { loadGeneration.current++; };
-  }, [isOpen, processData.client_name]);
+  }, [isOpen, processData.client_name, termSelected]);
 
   // Auto-print: dispara impressão assim que os dados carregam
   useEffect(() => {
@@ -78,7 +81,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
         checkAgencyLogo(),
         fetchInstructions(),
         fetchCurrentUser(),
-        prepareTermTemplate(processData.client_name).then(image => {
+        (termSelected ? prepareTermTemplate(processData.client_name) : Promise.resolve(null)).then(image => {
           if (generation === loadGeneration.current) setTermImage(image);
         }).catch(() => {
           if (generation === loadGeneration.current) setTermError('Não foi possível preparar o termo. A impressão foi interrompida para evitar um documento incompleto. Confira o modelo e o armazenamento em Configurações ou tente novamente.');

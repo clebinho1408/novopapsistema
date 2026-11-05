@@ -70,6 +70,13 @@ Uma publicação sem o bucket criado e o R2 ativo não está pronta para uso.
 
 ### Preparação da impressão
 
+Na seleção de etapas, **Termo** é um checkbox sempre desabilitado que acompanha
+automaticamente **Prova Prática**. Sem Prova Prática selecionada, não se consulta
+nem imprime o modelo. Isso também vale ao reimprimir processos salvos. Com a etapa
+selecionada, continuam valendo a ativação em Configurações e os seis serviços
+permitidos. O checkbox é derivado das etapas reais, sem criar uma etapa fictícia
+no banco ou exigir migração.
+
 A janela não depende do evento `window.load` nem de serviços externos de QR Code.
 Os QR Codes são gerados localmente. Aguarda-se a decodificação das imagens antes
 de chamar a impressão; falhas interrompem a operação sem imprimir um termo

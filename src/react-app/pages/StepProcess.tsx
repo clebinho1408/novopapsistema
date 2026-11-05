@@ -1188,6 +1188,20 @@ export default function StepProcess() {
                         );
                       })}
 
+                      <label className="flex items-center space-x-3">
+                        <input
+                          type="checkbox"
+                          checked={processSteps.some(step => step.type === 'prova_pratica' && formData.selected_steps.includes(step.id))}
+                          disabled
+                          aria-describedby="term-step-description"
+                          className="h-4 w-4 text-blue-600 border-gray-300 rounded cursor-not-allowed"
+                        />
+                        <span className="text-gray-900">Termo</span>
+                      </label>
+                      <p id="term-step-description" className="text-sm text-gray-500">
+                        Selecionado automaticamente com Prova Prática. O modelo será impresso na segunda página quando estiver ativo e disponível para o serviço.
+                      </p>
+
                       {/* Toxicológico (1ª Habilitação) — nunca para Adição de Categoria ou Reabilitação */}
                       {TOXICOLOGICO_ATIVO && formData.client_name !== REHABILITATION_SERVICE && !(formData.client_name === 'Adição de Categoria A' || formData.client_name === 'Adição de Categoria B') && (() => {
                         const provaTeoricoStep = processSteps.find(s => s.type === 'prova_teorica');
