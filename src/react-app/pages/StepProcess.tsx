@@ -1,6 +1,6 @@
 import Layout from '@/react-app/components/Layout';
 import PrintableStepProcess from '@/react-app/components/PrintableStepProcess';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { FileText, MapPin, DollarSign, CheckCircle, Eye, AlertTriangle } from 'lucide-react';
 import type { City, ProcessStep, Fee, Professional } from '@/shared/types';
@@ -58,10 +58,29 @@ export default function StepProcess() {
   const [showRehabilitationModal, setShowRehabilitationModal] = useState(false);
   const [rehabilitationCategoryAnswer, setRehabilitationCategoryAnswer] = useState<boolean | null>(null);
 
+  const [nowTick, setNowTick] = useState(() => Date.now());
+
+  const isProfessionalAvailable = useCallback(
+    (p: Professional) => !p.hidden_until || new Date(p.hidden_until).getTime() <= nowTick,
+    [nowTick]
+  );
+
   useEffect(() => {
     fetchData();
     fetchProcesses();
   }, []);
+
+  useEffect(() => {
+    if (!showForm) return;
+    const interval = setInterval(() => {
+      setNowTick(Date.now());
+      fetch('/api/professionals', { credentials: 'include' })
+        .then(res => res.ok ? res.json() : null)
+        .then(data => { if (data) setProfessionals(data); })
+        .catch(() => {});
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [showForm]);
 
   // Scroll automático para o botão Salvar e Imprimir ao entrar no passo 4 (Resumo)
   useEffect(() => {
@@ -268,7 +287,9 @@ export default function StepProcess() {
         if (prev.city_id) {
           const fotoStep = processSteps.find(step => step.type === 'foto');
           if (fotoStep && prev.selected_steps.includes(fotoStep.id)) {
-            const fotoProf = professionals.find(p => p.type === 'foto' && p.city_id.toString() === prev.city_id);
+            const fotoProf = professionals.find(
+              p => isProfessionalAvailable(p) && p.type === 'foto' && p.city_id.toString() === prev.city_id
+            );
             const currentProfId = prev.selected_professionals[fotoStep.id];
             
             if (fotoProf && currentProfId !== fotoProf.id) {
@@ -276,7 +297,7 @@ export default function StepProcess() {
               changed = true;
             } else if (!fotoProf && currentProfId) {
               const currentProf = professionals.find(p => p.id === currentProfId);
-              if (currentProf && currentProf.city_id.toString() !== prev.city_id) {
+              if (!currentProf || !isProfessionalAvailable(currentProf) || currentProf.city_id.toString() !== prev.city_id) {
                 delete newSelectedProfessionals[fotoStep.id];
                 changed = true;
               }
@@ -327,7 +348,16 @@ export default function StepProcess() {
         }
         return prev;
       });
-    }, [formData.city_id, formData.second_city_id, formData.selected_steps, professionals, processSteps, fees]);
+    }, [formData.city_id, formData.second_city_id, formData.selected_steps, professionals, processSteps, fees, isProfessionalAvailable]);
+
+  const openNewProcessForm = () => {
+    setNowTick(Date.now());
+    fetch('/api/professionals', { credentials: 'include' })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => { if (data) setProfessionals(data); })
+      .catch(() => {});
+    setShowForm(true);
+  };
 
   const fetchData = async () => {
     try {
@@ -904,18 +934,20 @@ export default function StepProcess() {
       console.log('No cityId provided, returning empty array');
       return [];
     }
+
+    const availableProfessionals = professionals.filter(isProfessionalAvailable);
     
     // Filtrar por cidade apenas para médicos e psicólogos
     if (stepType === 'medico' || stepType === 'psicologo') {
       const cityIds = [cityId];
       if (secondCityId) cityIds.push(secondCityId);
-      const filtered = professionals.filter(p => p.type === stepType && cityIds.includes(p.city_id.toString()));
+      const filtered = availableProfessionals.filter(p => p.type === stepType && cityIds.includes(p.city_id.toString()));
       console.log(`Filtered ${stepType} professionals for cities ${cityIds.join(',')}:`, filtered);
       return filtered;
     }
     
     // Para foto, prova e outros tipos, mostrar todos da agência (permitir escolha entre cidades)
-    const filtered = professionals.filter(p => p.type === stepType);
+    const filtered = availableProfessionals.filter(p => p.type === stepType);
     console.log(`Filtered ${stepType} professionals (all cities):`, filtered);
     return filtered;
   };
@@ -1665,7 +1697,7 @@ export default function StepProcess() {
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-semibold text-gray-900">Passo a Passo</h1>
             <button
-              onClick={() => setShowForm(true)}
+              onClick={openNewProcessForm}
               className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 flex items-center space-x-2"
             >
               <FileText className="w-4 h-4" />
@@ -1680,7 +1712,7 @@ export default function StepProcess() {
                 <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-500 mb-4">Nenhum processo criado ainda</p>
                 <button
-                  onClick={() => setShowForm(true)}
+                  onClick={openNewProcessForm}
                   className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
                 >
                   Criar Primeiro Processo

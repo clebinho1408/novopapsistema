@@ -100,7 +100,8 @@ CREATE TABLE professionals (
   attendance_type VARCHAR(50) DEFAULT 'AGENDAMENTO' CHECK (attendance_type IN ('AGENDAMENTO', 'POR ORDEM DE CHEGADA')),
   working_days TEXT,
   working_hours TEXT,
-  email VARCHAR(255)
+  email VARCHAR(255),
+  hidden_until TIMESTAMPTZ
 );
 
 -- Process steps configuration

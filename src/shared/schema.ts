@@ -77,6 +77,7 @@ export const professionals = pgTable('professionals', {
   workingDays: text('working_days'),
   workingHours: text('working_hours'),
   email: text('email'),
+  hiddenUntil: timestamp('hidden_until'),
 }, (table) => ({
   agencyIdx: index('idx_professionals_agency_id').on(table.agencyId),
   cityIdx: index('idx_professionals_city_id').on(table.cityId),

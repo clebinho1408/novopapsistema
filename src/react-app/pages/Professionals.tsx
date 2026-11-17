@@ -1,6 +1,6 @@
 import Layout from '@/react-app/components/Layout';
 import { useState, useEffect } from 'react';
-import { Users, Plus, Edit, Trash2, Search, Phone, MapPin, Clock, CalendarClock, X, Trash } from 'lucide-react';
+import { Users, Plus, Edit, Trash2, Search, Phone, MapPin, Clock, CalendarClock, X, Trash, EyeOff, Eye } from 'lucide-react';
 import type { Professional, City, ProfessionalType, AttendanceType } from '@/shared/types';
 import { PROFESSIONAL_TYPE_LABELS } from '@/shared/types';
 import { useDialog } from '@/react-app/components/Dialog';
@@ -71,6 +71,13 @@ export default function Professionals() {
     change_observations: false,
   });
   const [isScheduleLoading, setIsScheduleLoading] = useState(false);
+
+  // Temporary hide modal state
+  const [isHideModalOpen, setIsHideModalOpen] = useState(false);
+  const [hidingProfessional, setHidingProfessional] = useState<Professional | null>(null);
+  const [hideDurationValue, setHideDurationValue] = useState('1');
+  const [hideDurationUnit, setHideDurationUnit] = useState<'hours' | 'days'>('hours');
+  const [isHideLoading, setIsHideLoading] = useState(false);
 
   useEffect(() => {
     fetchProfessionals();
@@ -253,6 +260,92 @@ export default function Professionals() {
     } catch { return dateStr; }
   };
 
+  const isProfessionalHidden = (professional: Professional) =>
+    Boolean(professional.hidden_until && new Date(professional.hidden_until).getTime() > Date.now());
+
+  const formatRemainingTime = (dateStr: string) => {
+    const diffMs = new Date(dateStr).getTime() - Date.now();
+    if (diffMs <= 0) return 'expirado';
+    const totalMinutes = Math.ceil(diffMs / 60000);
+    if (totalMinutes < 60) return `${totalMinutes} min`;
+    const totalHours = Math.floor(totalMinutes / 60);
+    const remMinutes = totalMinutes % 60;
+    if (totalHours < 24) return remMinutes > 0 ? `${totalHours}h ${remMinutes}min` : `${totalHours}h`;
+    const days = Math.floor(totalHours / 24);
+    const remHours = totalHours % 24;
+    return remHours > 0 ? `${days}d ${remHours}h` : `${days} ${days === 1 ? 'dia' : 'dias'}`;
+  };
+
+  const openHideModal = (professional: Professional) => {
+    setHidingProfessional(professional);
+    setHideDurationValue('1');
+    setHideDurationUnit('hours');
+    setIsHideModalOpen(true);
+  };
+
+  const handleHideSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!hidingProfessional) return;
+    const numericValue = parseInt(hideDurationValue, 10);
+    if (!Number.isFinite(numericValue) || numericValue <= 0) {
+      await showAlert('Informe uma quantidade válida maior que zero.', 'warning');
+      return;
+    }
+
+    setIsHideLoading(true);
+    try {
+      const response = await fetch(`/api/professionals/${hidingProfessional.id}/hide`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          duration_value: numericValue,
+          duration_unit: hideDurationUnit,
+        }),
+      });
+      if (response.ok) {
+        const updated = await response.json();
+        setHidingProfessional(prev => (prev ? { ...prev, ...updated } : null));
+        await fetchProfessionals();
+        setIsHideModalOpen(false);
+        await showAlert(
+          `Credenciado ocultado no Passo a Passo por ${numericValue} ${hideDurationUnit === 'days' ? (numericValue === 1 ? 'dia' : 'dias') : (numericValue === 1 ? 'hora' : 'horas')}.`,
+          'success'
+        );
+      } else {
+        const err = await response.json().catch(() => ({}));
+        await showAlert(err.error || 'Erro ao configurar período.', 'error');
+      }
+    } catch {
+      await showAlert('Erro de conexão.', 'error');
+    } finally {
+      setIsHideLoading(false);
+    }
+  };
+
+  const handleCancelHide = async () => {
+    if (!hidingProfessional) return;
+    setIsHideLoading(true);
+    try {
+      const response = await fetch(`/api/professionals/${hidingProfessional.id}/hide`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (response.ok) {
+        await fetchProfessionals();
+        setIsHideModalOpen(false);
+        await showAlert('Ocultação cancelada! O credenciado já aparece novamente no Passo a Passo.', 'success');
+      } else {
+        const err = await response.json().catch(() => ({}));
+        await showAlert(err.error || 'Erro ao cancelar período.', 'error');
+      }
+    } catch {
+      await showAlert('Erro de conexão.', 'error');
+    } finally {
+      setIsHideLoading(false);
+    }
+  };
+
   const filteredProfessionals = professionals.filter(p => {
     return p.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
       (typeFilter === 'all' || p.type === typeFilter) &&
@@ -320,9 +413,17 @@ export default function Professionals() {
                             </div>
                             <div>
                               <h3 className="font-medium text-gray-900">{professional.name}</h3>
-                              <span className="inline-flex px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">
-                                {PROFESSIONAL_TYPE_LABELS[professional.type as ProfessionalType]}
-                              </span>
+                              <div className="flex flex-wrap items-center gap-2 mt-0.5">
+                                <span className="inline-flex px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">
+                                  {PROFESSIONAL_TYPE_LABELS[professional.type as ProfessionalType]}
+                                </span>
+                                {isProfessionalHidden(professional) && (
+                                  <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-amber-100 text-amber-800 rounded-full">
+                                    <EyeOff className="w-3 h-3" />
+                                    Oculto no Passo a Passo até {formatScheduledAt(professional.hidden_until)}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
@@ -368,6 +469,18 @@ export default function Professionals() {
                         </div>
                         {(userRole === 'administrator' || userRole === 'supervisor') && (
                           <div className="flex space-x-1 ml-4">
+                            <button
+                              title={isProfessionalHidden(professional) ? 'Oculto no Passo a Passo — gerenciar ou cancelar' : 'Ocultar temporariamente no Passo a Passo'}
+                              aria-label={isProfessionalHidden(professional) ? 'Gerenciar ocultação no Passo a Passo' : 'Ocultar temporariamente no Passo a Passo'}
+                              onClick={() => openHideModal(professional)}
+                              className={`p-2 rounded-lg transition-colors ${
+                                isProfessionalHidden(professional)
+                                  ? 'text-amber-600 bg-amber-50 hover:bg-amber-100'
+                                  : 'text-gray-400 hover:text-amber-600'
+                              }`}
+                            >
+                              <EyeOff className="w-4 h-4" />
+                            </button>
                             <button
                               title="Agendar alteração"
                               onClick={() => openScheduleModal(professional)}
@@ -686,6 +799,152 @@ export default function Professionals() {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Temporary Hide Modal */}
+      {isHideModalOpen && hidingProfessional && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg w-full max-w-md mx-4 overflow-hidden shadow-xl">
+            <div className="flex items-center justify-between px-6 py-4 border-b">
+              <div className="flex items-center space-x-2">
+                <EyeOff className="w-5 h-5 text-amber-600" />
+                <h2 className="text-lg font-semibold text-gray-900">Ocultar no Passo a Passo</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsHideModalOpen(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="px-6 py-4 space-y-4">
+              <p className="text-sm text-gray-600">
+                Credenciado: <strong>{hidingProfessional.name}</strong>
+              </p>
+
+              {isProfessionalHidden(hidingProfessional) && hidingProfessional.hidden_until && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-2">
+                  <div className="text-sm text-amber-900">
+                    <p className="font-medium">Oculto atualmente no Passo a Passo</p>
+                    <p className="text-xs text-amber-800 mt-0.5">
+                      Retorno automático em <strong>{formatScheduledAt(hidingProfessional.hidden_until)}</strong> ({formatRemainingTime(hidingProfessional.hidden_until)} restantes)
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCancelHide}
+                    disabled={isHideLoading}
+                    className="w-full py-2 px-3 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center justify-center space-x-2"
+                  >
+                    <Eye className="w-4 h-4" />
+                    <span>{isHideLoading ? 'Cancelando...' : 'Cancelar Período e Mostrar Agora'}</span>
+                  </button>
+                </div>
+              )}
+
+              <form onSubmit={handleHideSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Unidade de tempo
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setHideDurationUnit('hours')}
+                      className={`py-2 px-3 rounded-lg border text-sm font-medium transition-colors ${
+                        hideDurationUnit === 'hours'
+                          ? 'bg-amber-600 text-white border-amber-600'
+                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      Horas
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setHideDurationUnit('days')}
+                      className={`py-2 px-3 rounded-lg border text-sm font-medium transition-colors ${
+                        hideDurationUnit === 'days'
+                          ? 'bg-amber-600 text-white border-amber-600'
+                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      Dias
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Quantidade de {hideDurationUnit === 'days' ? 'dias' : 'horas'} *
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={hideDurationValue}
+                    onChange={(e) => setHideDurationValue(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    required
+                  />
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {(hideDurationUnit === 'hours' ? [1, 2, 4, 8, 12, 24] : [1, 2, 3, 7, 15, 30]).map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => setHideDurationValue(preset.toString())}
+                        className={`px-2.5 py-1 text-xs rounded-md border transition-colors ${
+                          hideDurationValue === preset.toString()
+                            ? 'bg-amber-100 border-amber-400 text-amber-800 font-medium'
+                            : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                        }`}
+                      >
+                        {preset} {hideDurationUnit === 'days' ? (preset === 1 ? 'dia' : 'dias') : 'h'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {parseInt(hideDurationValue, 10) > 0 && (
+                  <div className="text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded-lg p-3">
+                    Voltará a aparecer automaticamente em:{' '}
+                    <strong>
+                      {formatScheduledAt(
+                        new Date(
+                          Date.now() +
+                            parseInt(hideDurationValue, 10) *
+                              (hideDurationUnit === 'days' ? 24 : 1) *
+                              60 *
+                              60 *
+                              1000
+                        ).toISOString()
+                      )}
+                    </strong>
+                  </div>
+                )}
+
+                <div className="flex justify-end space-x-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsHideModalOpen(false)}
+                    className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    Fechar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isHideLoading}
+                    className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50 flex items-center space-x-2"
+                  >
+                    <EyeOff className="w-4 h-4" />
+                    <span>{isHideLoading ? 'Salvando...' : isProfessionalHidden(hidingProfessional) ? 'Atualizar Período' : 'Ocultar Credenciado'}</span>
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>

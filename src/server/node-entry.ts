@@ -1,23 +1,51 @@
-import { serve } from '@hono/node-server';
+import http from 'node:http';
+import { getRequestListener, serve } from '@hono/node-server';
 import { app } from './app';
 import { d1Adapter } from './d1-adapter';
 import { createNodeTermStorage } from './term-storage-node';
 
-const PORT = process.env.PORT ? parseInt(process.env.PORT) : (process.env.NODE_ENV === 'production' ? 5000 : 3000);
+// AI Studio container sets PORT=8080 for nginx; app must bind to port 3000 on 0.0.0.0
+const PORT = process.env.APP_PORT ? parseInt(process.env.APP_PORT, 10) : 3000;
+const HOST = '0.0.0.0';
 const termFiles = createNodeTermStorage();
 
-console.log(`🚀 Starting Hono Node.js server on port ${PORT}...`);
+const bindings = { DB: d1Adapter, TERM_FILES: termFiles };
+
+console.log(`🚀 Starting PAP - Sistema server on http://${HOST}:${PORT}...`);
 console.log(`📦 Environment: ${process.env.NODE_ENV || 'development'}`);
 
 if (process.env.NODE_ENV === 'production') {
   const { serveStatic } = await import('@hono/node-server/serve-static');
   app.use('/*', serveStatic({ root: './dist' }));
   app.get('*', serveStatic({ path: './dist/index.html' }));
+
+  serve({
+    fetch: (request: Request) => app.fetch(request, bindings as never),
+    port: PORT,
+    hostname: HOST,
+  });
+
+  console.log(`✅ Production server running at http://${HOST}:${PORT}`);
+} else {
+  const { createServer: createViteServer } = await import('vite');
+  const vite = await createViteServer({
+    server: { middlewareMode: true, hmr: false },
+    appType: 'spa',
+  });
+
+  const honoListener = getRequestListener((request: Request) =>
+    app.fetch(request, bindings as never)
+  );
+
+  const server = http.createServer((req, res) => {
+    const url = req.url || '/';
+    if (url.startsWith('/api/') || url === '/api' || url === '/health') {
+      return honoListener(req, res);
+    }
+    return vite.middlewares(req, res);
+  });
+
+  server.listen(PORT, HOST, () => {
+    console.log(`✅ Dev server running at http://${HOST}:${PORT}`);
+  });
 }
-
-serve({
-  fetch: (request: Request) => app.fetch(request, { DB: d1Adapter, TERM_FILES: termFiles } as any),
-  port: PORT,
-});
-
-console.log(`✅ Server running at http://localhost:${PORT}`);

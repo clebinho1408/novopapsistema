@@ -13,7 +13,7 @@ const app = new Hono<{ Bindings: Env }>();
 
 app.use("*", cors({
   origin: (origin) => {
-    if (!origin) return 'http://localhost:5000';
+    if (!origin) return 'http://localhost:3000';
     if (origin.includes('localhost')) return origin;
     if (origin.includes('.workers.dev')) return origin;
     if (origin.includes('.pages.dev')) return origin;
@@ -22,6 +22,13 @@ app.use("*", cors({
   },
   credentials: true,
 }));
+
+app.get('/health', (c) => c.json({ status: 'ok' }));
+app.get('/api/health', (c) => c.json({ status: 'ok' }));
+
+function isHttpsRequest(c: any): boolean {
+  return c.req.header('x-forwarded-proto') === 'https' || c.req.url.startsWith('https://');
+}
 
 // Generate session token
 function generateSessionToken() {
@@ -177,7 +184,7 @@ app.post('/api/auth/register', async (c) => {
       httpOnly: true,
       path: "/",
       sameSite: "lax",
-      secure: process.env.NODE_ENV === 'production',
+      secure: isHttpsRequest(c),
       maxAge: 30 * 24 * 60 * 60, // 30 days
     });
 
@@ -234,7 +241,7 @@ app.post('/api/auth/login', async (c) => {
       httpOnly: true,
       path: '/',
       sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
+      secure: isHttpsRequest(c),
       maxAge: 30 * 24 * 60 * 60,
     });
 
@@ -258,7 +265,7 @@ app.post('/api/auth/logout', async (c) => {
     httpOnly: true,
     path: '/',
     sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
+    secure: isHttpsRequest(c),
     maxAge: 0,
   });
 
@@ -546,9 +553,27 @@ app.delete("/api/cities/:id", systemAuthMiddleware, async (c) => {
 });
 
 // Professionals endpoints
+let hiddenUntilColumnEnsured = false;
+async function ensureHiddenUntilColumn(db: { prepare: (sql: string) => { run: () => Promise<unknown> } }) {
+  if (hiddenUntilColumnEnsured) return;
+  try {
+    await db.prepare("ALTER TABLE professionals ADD COLUMN IF NOT EXISTS hidden_until TIMESTAMPTZ").run();
+    hiddenUntilColumnEnsured = true;
+  } catch {
+    try {
+      await db.prepare("ALTER TABLE professionals ADD COLUMN hidden_until DATETIME").run();
+      hiddenUntilColumnEnsured = true;
+    } catch {
+      hiddenUntilColumnEnsured = true;
+    }
+  }
+}
+
 app.get("/api/professionals", systemAuthMiddleware, async (c) => {
   const user = getUserWithAgency(c);
   if (!user) return c.json({ error: "User not found" }, 404);
+
+  await ensureHiddenUntilColumn(c.env.DB);
 
   // Auto-apply any scheduled changes that are due
   try {
@@ -594,6 +619,15 @@ app.get("/api/professionals", systemAuthMiddleware, async (c) => {
     // Silently continue if table doesn't exist yet
   }
 
+  // Auto-clear expired temporary hide periods
+  try {
+    await c.env.DB.prepare(
+      "UPDATE professionals SET hidden_until = NULL, updated_at = CURRENT_TIMESTAMP WHERE agency_id = ? AND hidden_until IS NOT NULL AND hidden_until <= ?"
+    ).bind(user.agency_id, new Date().toISOString()).run();
+  } catch {
+    // Silently continue if hidden_until column doesn't exist yet
+  }
+
   const { results } = await c.env.DB.prepare(`
     SELECT p.*, c.name as city_name 
     FROM professionals p 
@@ -602,7 +636,13 @@ app.get("/api/professionals", systemAuthMiddleware, async (c) => {
     ORDER BY p.name
   `).bind(user.agency_id).all();
 
-  return c.json(results || []);
+  const availableOnly = c.req.query('available_only') === 'true';
+  const nowMs = Date.now();
+  const filtered = availableOnly
+    ? (results || []).filter((p: any) => !p.hidden_until || new Date(p.hidden_until).getTime() <= nowMs)
+    : (results || []);
+
+  return c.json(filtered);
 });
 
 app.post("/api/professionals", systemAuthMiddleware, async (c) => {
@@ -725,6 +765,77 @@ app.delete("/api/professionals/:id", systemAuthMiddleware, async (c) => {
   ).bind(professionalId, user.agency_id).run();
 
   return c.json({ success: true });
+});
+
+// Temporarily hide / unhide professional from Passo a Passo
+app.patch("/api/professionals/:id/hide", systemAuthMiddleware, async (c) => {
+  const user = getUserWithAgency(c);
+  if (!user) return c.json({ error: "User not found" }, 404);
+  if (user.role !== 'administrator' && user.role !== 'supervisor') return c.json({ error: "Acesso negado" }, 403);
+
+  const professionalId = parseInt(c.req.param("id"), 10);
+  if (isNaN(professionalId)) {
+    return c.json({ error: "ID do credenciado inválido" }, 400);
+  }
+
+  try {
+    await ensureHiddenUntilColumn(c.env.DB);
+    const body = await c.req.json();
+    let hiddenUntil: string | null = null;
+
+    if (!body.cancel) {
+      const durationValue = Number(body.duration_value);
+      const durationUnit = body.duration_unit;
+      if (!Number.isFinite(durationValue) || durationValue <= 0) {
+        return c.json({ error: "Informe uma quantidade de tempo válida maior que zero" }, 400);
+      }
+      if (durationUnit !== 'hours' && durationUnit !== 'days') {
+        return c.json({ error: "Unidade inválida. Use horas ou dias" }, 400);
+      }
+      const ms = durationValue * (durationUnit === 'days' ? 24 : 1) * 60 * 60 * 1000;
+      hiddenUntil = new Date(Date.now() + ms).toISOString();
+    }
+
+    const result = await c.env.DB.prepare(
+      "UPDATE professionals SET hidden_until = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND agency_id = ? RETURNING *"
+    ).bind(hiddenUntil, professionalId, user.agency_id).first();
+
+    if (!result) {
+      return c.json({ error: "Credenciado não encontrado" }, 404);
+    }
+
+    return c.json(result);
+  } catch (error) {
+    console.error('Error updating professional visibility:', error);
+    return c.json({ error: "Erro ao configurar período de ocultação" }, 500);
+  }
+});
+
+app.delete("/api/professionals/:id/hide", systemAuthMiddleware, async (c) => {
+  const user = getUserWithAgency(c);
+  if (!user) return c.json({ error: "User not found" }, 404);
+  if (user.role !== 'administrator' && user.role !== 'supervisor') return c.json({ error: "Acesso negado" }, 403);
+
+  const professionalId = parseInt(c.req.param("id"), 10);
+  if (isNaN(professionalId)) {
+    return c.json({ error: "ID do credenciado inválido" }, 400);
+  }
+
+  try {
+    await ensureHiddenUntilColumn(c.env.DB);
+    const result = await c.env.DB.prepare(
+      "UPDATE professionals SET hidden_until = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND agency_id = ? RETURNING *"
+    ).bind(professionalId, user.agency_id).first();
+
+    if (!result) {
+      return c.json({ error: "Credenciado não encontrado" }, 404);
+    }
+
+    return c.json(result);
+  } catch (error) {
+    console.error('Error canceling professional hide period:', error);
+    return c.json({ error: "Erro ao cancelar período de ocultação" }, 500);
+  }
 });
 
 // Scheduled changes endpoints

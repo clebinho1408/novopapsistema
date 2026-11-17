@@ -66,7 +66,8 @@ CREATE TABLE IF NOT EXISTS professionals (
   attendance_type TEXT DEFAULT 'AGENDAMENTO',
   working_days TEXT,
   working_hours TEXT,
-  email TEXT
+  email TEXT,
+  hidden_until DATETIME
 );
 
 CREATE TABLE IF NOT EXISTS process_steps (

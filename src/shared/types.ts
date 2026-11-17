@@ -66,6 +66,7 @@ export const ProfessionalSchema = z.object({
   working_days: z.string().optional(),
   working_hours: z.string().optional(),
   city_name: z.string().optional(), // For joined queries
+  hidden_until: z.string().nullable().optional(),
   is_active: z.boolean(),
   created_at: z.string(),
   updated_at: z.string(),
