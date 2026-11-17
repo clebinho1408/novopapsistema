@@ -4,8 +4,21 @@ import { app } from './app';
 import { d1Adapter } from './d1-adapter';
 import { createNodeTermStorage } from './term-storage-node';
 
-// AI Studio container sets PORT=8080 for nginx; app must bind to port 3000 on 0.0.0.0
-const PORT = process.env.APP_PORT ? parseInt(process.env.APP_PORT, 10) : 3000;
+// AI Studio container sets CONTROL_PLANE_PORT/DEFAULT_APP_PORT and reserves PORT=8080 for nginx (app must bind 3000).
+// External hosts like Shard Cloud expect production web apps to listen on 0.0.0.0:80 (or process.env.PORT).
+const isAiStudioContainer = Boolean(
+  process.env.CONTROL_PLANE_PORT || process.env.DEFAULT_APP_PORT
+);
+
+const PORT = process.env.APP_PORT
+  ? parseInt(process.env.APP_PORT, 10)
+  : isAiStudioContainer
+    ? parseInt(process.env.DEFAULT_APP_PORT || '3000', 10)
+    : process.env.PORT
+      ? parseInt(process.env.PORT, 10)
+      : process.env.NODE_ENV === 'development'
+        ? 3000
+        : 80;
 const HOST = '0.0.0.0';
 const termFiles = createNodeTermStorage();
 
@@ -19,13 +32,16 @@ if (process.env.NODE_ENV === 'production') {
   app.use('/*', serveStatic({ root: './dist' }));
   app.get('*', serveStatic({ path: './dist/index.html' }));
 
-  serve({
-    fetch: (request: Request) => app.fetch(request, bindings as never),
-    port: PORT,
-    hostname: HOST,
-  });
-
-  console.log(`✅ Production server running at http://${HOST}:${PORT}`);
+  serve(
+    {
+      fetch: (request: Request) => app.fetch(request, bindings as never),
+      port: PORT,
+      hostname: HOST,
+    },
+    (info) => {
+      console.log(`✅ Production server running at http://${HOST}:${info.port}`);
+    }
+  );
 } else {
   const { createServer: createViteServer } = await import('vite');
   const vite = await createViteServer({
