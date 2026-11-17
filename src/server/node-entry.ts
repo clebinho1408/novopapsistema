@@ -10,13 +10,15 @@ const isAiStudioContainer = Boolean(
   process.env.CONTROL_PLANE_PORT || process.env.DEFAULT_APP_PORT
 );
 
+const isDev = process.env.NODE_ENV === 'development';
+
 const PORT = process.env.APP_PORT
   ? parseInt(process.env.APP_PORT, 10)
   : isAiStudioContainer
     ? parseInt(process.env.DEFAULT_APP_PORT || '3000', 10)
     : process.env.PORT
       ? parseInt(process.env.PORT, 10)
-      : process.env.NODE_ENV === 'development'
+      : isDev
         ? 3000
         : 80;
 const HOST = '0.0.0.0';
@@ -25,9 +27,9 @@ const termFiles = createNodeTermStorage();
 const bindings = { DB: d1Adapter, TERM_FILES: termFiles };
 
 console.log(`🚀 Starting PAP - Sistema server on http://${HOST}:${PORT}...`);
-console.log(`📦 Environment: ${process.env.NODE_ENV || 'development'}`);
+console.log(`📦 Environment: ${process.env.NODE_ENV || 'production'}`);
 
-if (process.env.NODE_ENV === 'production') {
+if (!isDev) {
   const { serveStatic } = await import('@hono/node-server/serve-static');
   app.use('/*', serveStatic({ root: './dist' }));
   app.get('*', serveStatic({ path: './dist/index.html' }));

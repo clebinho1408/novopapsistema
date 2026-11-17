@@ -1112,8 +1112,25 @@ async function sendEmailWithHTML(to: string, subject: string, htmlContent: strin
 }
 
 // Step processes endpoints
+type StepProcessBoolCol = 'show_toxicologico_message' | 'show_toxicologico_habilitacao' | 'aviso_reinicio';
+const stepProcessBoolColTypes: Record<StepProcessBoolCol, 'boolean' | 'integer'> = {
+  show_toxicologico_message: 'boolean',
+  show_toxicologico_habilitacao: 'boolean',
+  aviso_reinicio: 'boolean',
+};
+
+function toStepProcessFlag(col: StepProcessBoolCol, value: unknown): boolean | number {
+  const flag = Boolean(value);
+  return stepProcessBoolColTypes[col] === 'integer' ? (flag ? 1 : 0) : flag;
+}
+
 let stepProcessesColumnsEnsured = false;
-async function ensureStepProcessesColumns(db: { prepare: (sql: string) => { run: () => Promise<unknown> } }) {
+async function ensureStepProcessesColumns(db: {
+  prepare: (sql: string) => {
+    run: () => Promise<unknown>;
+    all: () => Promise<{ results: Record<string, unknown>[] }>;
+  };
+}) {
   if (stepProcessesColumnsEnsured) return;
   const cols = [
     { name: 'show_toxicologico_message', pg: 'BOOLEAN DEFAULT FALSE', sqlite: 'BOOLEAN DEFAULT 0' },
@@ -1132,6 +1149,32 @@ async function ensureStepProcessesColumns(db: { prepare: (sql: string) => { run:
       }
     }
   }
+
+  try {
+    const { results } = await db.prepare(
+      "SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'step_processes' AND column_name IN ('show_toxicologico_message', 'show_toxicologico_habilitacao', 'aviso_reinicio')"
+    ).all();
+    for (const row of results || []) {
+      const colName = String(row.column_name || '') as StepProcessBoolCol;
+      const dataType = String(row.data_type || '').toLowerCase();
+      if (!colName || !(colName in stepProcessBoolColTypes)) continue;
+      if (dataType.includes('int')) {
+        try {
+          await db.prepare(`ALTER TABLE step_processes ALTER COLUMN ${colName} DROP DEFAULT`).run();
+          await db.prepare(`ALTER TABLE step_processes ALTER COLUMN ${colName} TYPE BOOLEAN USING (COALESCE(${colName}, 0) <> 0)`).run();
+          await db.prepare(`ALTER TABLE step_processes ALTER COLUMN ${colName} SET DEFAULT FALSE`).run();
+          stepProcessBoolColTypes[colName] = 'boolean';
+        } catch {
+          stepProcessBoolColTypes[colName] = 'integer';
+        }
+      } else if (dataType === 'boolean') {
+        stepProcessBoolColTypes[colName] = 'boolean';
+      }
+    }
+  } catch {
+    // SQLite / D1 / in-memory does not expose information_schema
+  }
+
   stepProcessesColumnsEnsured = true;
 }
 
@@ -1217,10 +1260,55 @@ app.post("/api/step-processes", systemAuthMiddleware, async (c) => {
       totalAmount = Number(fees?.[0]?.total) || 0;
     }
 
-    // Create step process
-    const result = await c.env.DB.prepare(
-      "INSERT INTO step_processes (agency_id, user_id, city_id, client_name, total_amount, show_toxicologico_message, show_toxicologico_habilitacao, categoria_atual, aviso_reinicio, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *"
-    ).bind(user.agency_id, user.id, cityId, body.client_name || null, totalAmount, body.show_toxicologico_message || false, body.show_toxicologico_habilitacao || false, body.categoria_atual || null, body.aviso_reinicio || false, 'completed').first() as any;
+    // Create step process (supports both boolean and legacy integer flag columns in Postgres/SQLite)
+    const insertProcessSql =
+      "INSERT INTO step_processes (agency_id, user_id, city_id, client_name, total_amount, show_toxicologico_message, show_toxicologico_habilitacao, categoria_atual, aviso_reinicio, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *";
+    const runInsertProcess = () =>
+      c.env.DB.prepare(insertProcessSql).bind(
+        user.agency_id,
+        user.id,
+        cityId,
+        body.client_name || null,
+        totalAmount,
+        toStepProcessFlag('show_toxicologico_message', body.show_toxicologico_message),
+        toStepProcessFlag('show_toxicologico_habilitacao', body.show_toxicologico_habilitacao),
+        body.categoria_atual || null,
+        toStepProcessFlag('aviso_reinicio', body.aviso_reinicio),
+        'completed'
+      ).first();
+
+    let result: any;
+    let lastInsertErr: unknown = null;
+    for (let attempt = 0; attempt < 4; attempt++) {
+      try {
+        result = await runInsertProcess();
+        lastInsertErr = null;
+        break;
+      } catch (insertError) {
+        lastInsertErr = insertError;
+        const msg = insertError instanceof Error ? insertError.message : String(insertError);
+        const targetType: 'integer' | 'boolean' | null = msg.includes('is of type integer')
+          ? 'integer'
+          : msg.includes('is of type boolean')
+            ? 'boolean'
+            : null;
+        if (!targetType) throw insertError;
+        const boolCols: StepProcessBoolCol[] = [
+          'show_toxicologico_message',
+          'show_toxicologico_habilitacao',
+          'aviso_reinicio',
+        ];
+        let matched = false;
+        for (const col of boolCols) {
+          if (msg.includes(`"${col}"`) && stepProcessBoolColTypes[col] !== targetType) {
+            stepProcessBoolColTypes[col] = targetType;
+            matched = true;
+          }
+        }
+        if (!matched) throw insertError;
+      }
+    }
+    if (lastInsertErr) throw lastInsertErr;
 
     if (!result) {
       return c.json({ error: "Failed to create process" }, 500);
@@ -1424,10 +1512,10 @@ app.get("/api/step-processes/:id", systemAuthMiddleware, async (c) => {
     steps,
     professionals,
     fees,
-    show_toxicologico_message: process.show_toxicologico_message || false,
-    show_toxicologico_habilitacao: process.show_toxicologico_habilitacao || false,
+    show_toxicologico_message: Boolean(process.show_toxicologico_message),
+    show_toxicologico_habilitacao: Boolean(process.show_toxicologico_habilitacao),
     categoria_atual: (process as any).categoria_atual || null,
-    aviso_reinicio: (process as any).aviso_reinicio || false
+    aviso_reinicio: Boolean((process as any).aviso_reinicio)
   });
 });
 

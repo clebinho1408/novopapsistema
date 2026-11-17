@@ -1038,6 +1038,10 @@ class InMemoryD1PreparedStatement implements D1PreparedStatement {
       return { rows, changes: 0 };
     }
 
+    if (s.startsWith('SELECT column_name, data_type FROM information_schema.columns')) {
+      return { rows: [], changes: 0 };
+    }
+
     if (s.startsWith('ALTER TABLE step_processes ADD COLUMN')) {
       return { rows: [], changes: 0 };
     }
