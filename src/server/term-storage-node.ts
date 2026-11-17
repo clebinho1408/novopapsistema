@@ -1,21 +1,56 @@
+import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
+import path from 'node:path';
 import type { TermFileStorage } from './term-storage';
 
-// In-memory store fallback when Replit Object Storage is not configured
-const memoryFiles = new Map<string, Uint8Array>();
+export function resolveTermFilePath(baseDir: string, key: string): string {
+  const normalizedKey = key.replace(/^\/+/, '');
+  if (!normalizedKey || normalizedKey.includes('\0')) {
+    throw new Error('Chave do arquivo do termo inválida.');
+  }
+  const resolvedBase = path.resolve(baseDir);
+  const resolvedTarget = path.resolve(resolvedBase, normalizedKey);
+  if (
+    resolvedTarget !== resolvedBase &&
+    !resolvedTarget.startsWith(resolvedBase + path.sep)
+  ) {
+    throw new Error('Caminho do arquivo do termo inválido.');
+  }
+  return resolvedTarget;
+}
 
-export function createNodeTermStorage(): TermFileStorage {
+export function createNodeTermStorage(customBaseDir?: string): TermFileStorage {
   if (!process.env.TERM_STORAGE_BUCKET && !process.env.REPLIT_DEPLOYMENT) {
+    const baseDir = path.resolve(
+      customBaseDir || process.env.TERM_STORAGE_DIR || path.join(process.cwd(), 'data', 'term-files')
+    );
+
     return {
       async put(key, bytes) {
-        memoryFiles.set(key, new Uint8Array(bytes));
+        const target = resolveTermFilePath(baseDir, key);
+        await mkdir(path.dirname(target), { recursive: true });
+        await writeFile(target, bytes);
       },
       async get(key) {
-        const file = memoryFiles.get(key);
-        if (!file) throw new Error('PDF do termo não encontrado.');
-        return file;
+        const target = resolveTermFilePath(baseDir, key);
+        try {
+          const data = await readFile(target);
+          return new Uint8Array(data);
+        } catch (error) {
+          if ((error as NodeJS.ErrnoException)?.code === 'ENOENT') {
+            throw new Error('PDF do termo não encontrado.');
+          }
+          throw error;
+        }
       },
       async delete(key) {
-        memoryFiles.delete(key);
+        const target = resolveTermFilePath(baseDir, key);
+        try {
+          await unlink(target);
+        } catch (error) {
+          if ((error as NodeJS.ErrnoException)?.code !== 'ENOENT') {
+            throw error;
+          }
+        }
       },
     };
   }

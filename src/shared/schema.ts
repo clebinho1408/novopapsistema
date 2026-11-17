@@ -163,6 +163,7 @@ export const agencyTermTemplates = pgTable('agency_term_templates', {
   objectKey: text('object_key').notNull(),
   filename: text('filename').notNull(),
   size: integer('size').notNull(),
+  fileData: text('file_data'),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 

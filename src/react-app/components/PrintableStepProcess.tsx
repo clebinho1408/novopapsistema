@@ -5,6 +5,7 @@ import {
   isServiceStepAllowed, shouldShowRehabilitationVehicleNotice, orderServiceSteps
 } from '@/shared/rehabilitation';
 import { resolvePrintInstructions } from '@/shared/print-instructions';
+import { formatWorkingSchedule } from '@/shared/working-hours';
 import { prepareTermTemplate, termPrintPage, TERM_PRINT_CSS } from '@/react-app/lib/term-template';
 import { preparePrintWindow, printQrCode } from '@/react-app/lib/print-window';
 
@@ -51,6 +52,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
   const [isLoading, setIsLoading] = useState(true);
   const [termImage, setTermImage] = useState<string | null>(null);
   const [termError, setTermError] = useState('');
+  const [skipTerm, setSkipTerm] = useState(false);
   const [manualPrintRequired, setManualPrintRequired] = useState(false);
   const loadGeneration = useRef(0);
   const autoPrintFiredRef = useRef(false);
@@ -59,6 +61,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
     if (isOpen) {
       autoPrintFiredRef.current = false;
       setManualPrintRequired(false);
+      setSkipTerm(false);
       loadAllData();
     }
     return () => { loadGeneration.current++; };
@@ -66,16 +69,17 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
 
   // Auto-print: dispara impressão assim que os dados carregam
   useEffect(() => {
-    if (!isOpen || !autoPrint || isLoading || termError || manualPrintRequired || autoPrintFiredRef.current) return;
+    if (!isOpen || !autoPrint || isLoading || (termError && !skipTerm) || manualPrintRequired || autoPrintFiredRef.current) return;
     autoPrintFiredRef.current = true;
     handlePrint();
-  }, [isLoading, isOpen, autoPrint, termError, manualPrintRequired]);
+  }, [isLoading, isOpen, autoPrint, termError, skipTerm, manualPrintRequired]);
 
   const loadAllData = async () => {
     const generation = ++loadGeneration.current;
     setIsLoading(true);
     setTermError('');
     setTermImage(null);
+    setSkipTerm(false);
     try {
       await Promise.all([
         checkAgencyLogo(),
@@ -83,8 +87,15 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
         fetchCurrentUser(),
         (termSelected ? prepareTermTemplate(processData.client_name) : Promise.resolve(null)).then(image => {
           if (generation === loadGeneration.current) setTermImage(image);
-        }).catch(() => {
-          if (generation === loadGeneration.current) setTermError('Não foi possível preparar o termo. A impressão foi interrompida para evitar um documento incompleto. Confira o modelo e o armazenamento em Configurações ou tente novamente.');
+        }).catch((err: unknown) => {
+          if (generation === loadGeneration.current) {
+            const detail = err instanceof Error && err.message ? err.message : '';
+            setTermError(
+              detail
+                ? `${detail} A impressão do termo foi interrompida para evitar um documento incompleto.`
+                : 'Não foi possível preparar o termo. A impressão foi interrompida para evitar um documento incompleto. Confira o modelo e o armazenamento em Configurações ou tente novamente.'
+            );
+          }
         }),
       ]);
     } catch (error) {
@@ -131,7 +142,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
   if (!isOpen) return null;
 
   const handlePrint = async () => {
-    if (isLoading || termError) return;
+    if (isLoading || (termError && !skipTerm)) return;
     // Create a new window with only the print content
     const printContent = generatePrintHTML();
     const printWindow = window.open('', '_blank', 'width=800,height=600');
@@ -871,54 +882,18 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                                 <div class="professional-info" style="margin-top: 2px;"><strong>Email:</strong> ${professional.email}</div>
                             ` : ''}
                             ${(() => {
+                              const schedule = formatWorkingSchedule(professional.working_days, professional.working_hours);
                               let workingInfo = '';
-                              const DAY_ORDER = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
-                              const DAY_ABBR: Record<string,string> = { monday:'Seg', tuesday:'Ter', wednesday:'Qua', thursday:'Qui', friday:'Sex', saturday:'Sáb', sunday:'Dom' };
-                              const DAY_FULL: Record<string,string> = { monday:'Segunda', tuesday:'Terça', wednesday:'Quarta', thursday:'Quinta', friday:'Sexta', saturday:'Sábado', sunday:'Domingo' };
-                              if (professional.working_hours) {
-                                try {
-                                  const hoursObj = JSON.parse(professional.working_hours);
-                                  if (typeof hoursObj === 'object' && !Array.isArray(hoursObj)) {
-                                    const selectedDays = professional.working_days
-                                      ? JSON.parse(professional.working_days).filter((d: string) => hoursObj[d])
-                                      : DAY_ORDER.filter(d => hoursObj[d]);
-                                    // Check if all selected days have identical hours
-                                    const allSame = selectedDays.length > 0 && selectedDays.every((d: string) =>
-                                      hoursObj[d].start === hoursObj[selectedDays[0]].start &&
-                                      hoursObj[d].end === hoursObj[selectedDays[0]].end
-                                    );
-                                    if (allSame && selectedDays.length > 1) {
-                                      const first = DAY_FULL[selectedDays[0]] || selectedDays[0];
-                                      const last = DAY_FULL[selectedDays[selectedDays.length - 1]] || selectedDays[selectedDays.length - 1];
-                                      const t = hoursObj[selectedDays[0]];
-                                      workingInfo += `<div class="professional-info" style="margin-top: 4px; font-size: 11.5px; font-weight: 600; line-height: 1.5;">(${first} a ${last}: ${t.start} - ${t.end})</div>`;
-                                    } else if (allSame && selectedDays.length === 1) {
-                                      const d = selectedDays[0];
-                                      const t = hoursObj[d];
-                                      workingInfo += `<div class="professional-info" style="margin-top: 4px; font-size: 11px; line-height: 1.5;">(${DAY_FULL[d] || DAY_ABBR[d] || d}: ${t.start} - ${t.end})</div>`;
-                                    } else {
-                                      const items = selectedDays.map((d: string) => `(${DAY_ABBR[d] || d}: ${hoursObj[d].start} - ${hoursObj[d].end})`);
-                                      const lines: string[] = [];
-                                      for (let i = 0; i < items.length; i += 3) lines.push(items.slice(i, i + 3).join(' - '));
-                                      workingInfo += `<div class="professional-info" style="margin-top: 4px; font-size: 11px; line-height: 1.5;">${lines.join('<br/>')}</div>`;
-                                    }
-                                  } else {
-                                    throw new Error('not object');
-                                  }
-                                } catch {
-                                  if (professional.working_days) {
-                                    try {
-                                      const days = JSON.parse(professional.working_days).map((d: string) => DAY_ABBR[d] || d).join(', ');
-                                      workingInfo += `<div class="professional-info" style="margin-top: 4px; font-size: 11px;"><strong>Dias:</strong> ${days}</div>`;
-                                    } catch { workingInfo += `<div class="professional-info" style="margin-top: 4px; font-size: 11px;"><strong>Dias:</strong> ${professional.working_days}</div>`; }
-                                  }
-                                  workingInfo += `<div class="professional-info" style="margin-top: 1px; font-size: 11px;"><strong>Horário:</strong> ${professional.working_hours}</div>`;
+                              if (schedule.summaryLines.length > 0) {
+                                const fontSize = schedule.summaryLines.length === 1 && schedule.summaryLines[0].includes(' a ') ? '11.5px; font-weight: 600' : '11px';
+                                workingInfo += `<div class="professional-info" style="margin-top: 4px; font-size: ${fontSize}; line-height: 1.5;">${schedule.summaryLines.join('<br/>')}</div>`;
+                              } else {
+                                if (schedule.daysText) {
+                                  workingInfo += `<div class="professional-info" style="margin-top: 4px; font-size: 11px;"><strong>Dias:</strong> ${schedule.daysText}</div>`;
                                 }
-                              } else if (professional.working_days) {
-                                try {
-                                  const days = JSON.parse(professional.working_days).map((d: string) => DAY_ABBR[d] || d).join(', ');
-                                  workingInfo += `<div class="professional-info" style="margin-top: 4px; font-size: 11px;"><strong>Dias:</strong> ${days}</div>`;
-                                } catch { workingInfo += `<div class="professional-info" style="margin-top: 4px; font-size: 11px;"><strong>Dias:</strong> ${professional.working_days}</div>`; }
+                                if (schedule.rawHoursText) {
+                                  workingInfo += `<div class="professional-info" style="margin-top: 1px; font-size: 11px;"><strong>Horário:</strong> ${schedule.rawHoursText}</div>`;
+                                }
                               }
                               return workingInfo;
                             })()}
@@ -1112,7 +1087,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
         ` : ''}
 
     </div>
-    ${termPrintPage(termImage)}
+    ${termPrintPage(skipTerm ? null : termImage)}
     <style>${TERM_PRINT_CSS}</style>
     <script>
         // Auto-adjust font size to fit content in one page
@@ -1321,27 +1296,18 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
           content += `EMAIL: ${professional.email}\n`;
         }
         
-        if (professional.working_days) {
-          try {
-            const days = JSON.parse(professional.working_days);
-            const dayLabels: Record<string, string> = {
-              'monday': 'Seg',
-              'tuesday': 'Ter', 
-              'wednesday': 'Qua',
-              'thursday': 'Qui',
-              'friday': 'Sex',
-              'saturday': 'Sáb',
-              'sunday': 'Dom'
-            };
-            const daysList = days.map((day: string) => dayLabels[day] || day).join(', ');
-            content += `DIAS: ${daysList}\n`;
-          } catch {
-            content += `DIAS: ${professional.working_days}\n`;
+        {
+          const schedule = formatWorkingSchedule(professional.working_days, professional.working_hours);
+          if (schedule.summaryLines.length > 0) {
+            content += `HORÁRIO: ${schedule.summaryLines.join(' | ')}\n`;
+          } else {
+            if (schedule.daysText) {
+              content += `DIAS: ${schedule.daysText}\n`;
+            }
+            if (schedule.rawHoursText) {
+              content += `HORÁRIO: ${schedule.rawHoursText}\n`;
+            }
           }
-        }
-        
-        if (professional.working_hours) {
-          content += `HORÁRIO: ${professional.working_hours}\n`;
         }
         
         if (professional.observations) {
@@ -1518,7 +1484,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
             </button>
             <button
               onClick={handlePrint}
-              disabled={isLoading || !!termError}
+              disabled={isLoading || (!!termError && !skipTerm)}
               className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Printer className="w-4 h-4" />
@@ -1535,10 +1501,19 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
         {manualPrintRequired && <p role="status" className="m-4 p-4 rounded-lg bg-amber-50 text-amber-900">
           O navegador bloqueou a abertura automática. Clique em Imprimir para abrir a janela.
         </p>}
-        {termError && <div role="alert" className="m-4 p-4 rounded-lg bg-red-50 text-red-800">
+        {skipTerm && <p role="status" className="m-4 p-3 rounded-lg bg-amber-50 text-amber-900 text-sm">
+          Imprimindo apenas o Passo a Passo (sem o Modelo de Termo).
+        </p>}
+        {termError && !skipTerm && <div role="alert" className="m-4 p-4 rounded-lg bg-red-50 text-red-800">
           <p>{termError}</p>
-          <button onClick={() => { autoPrintFiredRef.current = false; void loadAllData(); }} disabled={isLoading}
-            className="mt-2 underline font-medium">Tentar novamente</button>
+          <div className="mt-3 flex flex-wrap items-center gap-4">
+            <button onClick={() => { autoPrintFiredRef.current = false; void loadAllData(); }} disabled={isLoading}
+              className="underline font-medium">Tentar novamente</button>
+            <button type="button" onClick={() => { setSkipTerm(true); setTermError(''); }} disabled={isLoading}
+              className="px-3 py-1.5 rounded bg-red-100 hover:bg-red-200 text-red-900 font-medium text-sm">
+              Imprimir apenas o Passo a Passo (sem termo)
+            </button>
+          </div>
         </div>}
 
           {/* Preview Content */}
@@ -1660,36 +1635,36 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                             </div>
                           )}
                           
-                          {(professional.working_days || professional.working_hours) && (
-                            <div className="mt-3 space-y-1">
-                              {professional.working_days && (
-                                <p className="text-xs">
-                                  <strong>Dias:</strong> {(() => {
-                                    try {
-                                      const days = JSON.parse(professional.working_days);
-                                      const dayLabels: Record<string, string> = {
-                                        'monday': 'Seg',
-                                        'tuesday': 'Ter',
-                                        'wednesday': 'Qua',
-                                        'thursday': 'Qui',
-                                        'friday': 'Sex',
-                                        'saturday': 'Sáb',
-                                        'sunday': 'Dom'
-                                      };
-                                      return days.map((day: string) => dayLabels[day as keyof typeof dayLabels] || day).join(', ');
-                                    } catch {
-                                      return professional.working_days;
-                                    }
-                                  })()}
-                                </p>
-                              )}
-                              {professional.working_hours && (
-                                <p className="text-xs">
-                                  <strong>Horário:</strong> {professional.working_hours}
-                                </p>
-                              )}
-                            </div>
-                          )}
+                          {(() => {
+                            const schedule = formatWorkingSchedule(professional.working_days, professional.working_hours);
+                            if (schedule.summaryLines.length === 0 && !schedule.daysText && !schedule.rawHoursText) {
+                              return null;
+                            }
+                            return (
+                              <div className="mt-3 space-y-1">
+                                {schedule.summaryLines.length > 0 ? (
+                                  schedule.summaryLines.map((line, idx) => (
+                                    <p key={idx} className="text-xs font-semibold">
+                                      {line}
+                                    </p>
+                                  ))
+                                ) : (
+                                  <>
+                                    {schedule.daysText && (
+                                      <p className="text-xs">
+                                        <strong>Dias:</strong> {schedule.daysText}
+                                      </p>
+                                    )}
+                                    {schedule.rawHoursText && (
+                                      <p className="text-xs">
+                                        <strong>Horário:</strong> {schedule.rawHoursText}
+                                      </p>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            );
+                          })()}
                           
                           {professional.observations && (
                             <div className="mt-3">

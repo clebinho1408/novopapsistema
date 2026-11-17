@@ -150,6 +150,16 @@ CREATE TABLE IF NOT EXISTS professional_scheduled_changes (
   applied_at DATETIME
 );
 
+CREATE TABLE IF NOT EXISTS agency_term_templates (
+  agency_id INTEGER PRIMARY KEY REFERENCES agencies(id),
+  enabled INTEGER NOT NULL DEFAULT 0,
+  object_key TEXT NOT NULL,
+  filename TEXT NOT NULL,
+  size INTEGER NOT NULL,
+  file_data TEXT,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Índices
 CREATE INDEX IF NOT EXISTS idx_professional_scheduled_changes_professional ON professional_scheduled_changes(professional_id);
 CREATE INDEX IF NOT EXISTS idx_professional_scheduled_changes_agency ON professional_scheduled_changes(agency_id);

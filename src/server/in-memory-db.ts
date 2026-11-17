@@ -143,6 +143,7 @@ interface AgencyTermTemplateRow {
   object_key: string;
   filename: string;
   size: number;
+  file_data: string | null;
   updated_at: string;
 }
 
@@ -1220,6 +1221,10 @@ class InMemoryD1PreparedStatement implements D1PreparedStatement {
     }
 
     // 14. agency_term_templates queries
+    if (s.startsWith('CREATE TABLE IF NOT EXISTS agency_term_templates') || s.startsWith('ALTER TABLE agency_term_templates')) {
+      return { rows: [], changes: 0 };
+    }
+
     if (s === 'SELECT * FROM agency_term_templates WHERE agency_id = ?') {
       const row = store.agencyTermTemplates.find((t) => t.agency_id === this.num(p[0]));
       return { rows: row ? [{ ...row }] : [], changes: 0 };
@@ -1227,23 +1232,27 @@ class InMemoryD1PreparedStatement implements D1PreparedStatement {
 
     if (s.startsWith('INSERT INTO agency_term_templates (')) {
       const agencyId = this.num(p[0]);
-      const objectKey = String(p[1]);
-      const filename = String(p[2]);
-      const size = this.num(p[3]);
+      const enabled = Boolean(p[1]);
+      const objectKey = String(p[2]);
+      const filename = String(p[3]);
+      const size = this.num(p[4]);
+      const fileData = p.length >= 6 ? ((p[5] as string | null) ?? null) : null;
       const ts = nowIso();
       const existing = store.agencyTermTemplates.find((t) => t.agency_id === agencyId);
       if (existing) {
         existing.object_key = objectKey;
         existing.filename = filename;
         existing.size = size;
+        existing.file_data = fileData;
         existing.updated_at = ts;
       } else {
         store.agencyTermTemplates.push({
           agency_id: agencyId,
-          enabled: false,
+          enabled,
           object_key: objectKey,
           filename,
           size,
+          file_data: fileData,
           updated_at: ts,
         });
       }

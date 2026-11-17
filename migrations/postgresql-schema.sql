@@ -282,12 +282,13 @@ SELECT setval('professionals_id_seq', 28, true);
 -- ✅ PRONTO! Schema PostgreSQL criado com sucesso!
 -- ============================================================================
 
--- PDF padrão: apenas metadados. Os bytes ficam privados no App Storage.
+-- PDF padrão: metadados + fallback base64 em file_data para persistência entre deploys.
 CREATE TABLE IF NOT EXISTS agency_term_templates (
   agency_id INTEGER PRIMARY KEY REFERENCES agencies(id),
   enabled BOOLEAN NOT NULL DEFAULT false,
   object_key TEXT NOT NULL,
   filename TEXT NOT NULL,
   size INTEGER NOT NULL,
+  file_data TEXT,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

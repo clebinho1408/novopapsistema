@@ -4,12 +4,29 @@ import { serviceUsesTermTemplate, type TermTemplateSettings } from '@/shared/ter
 // viewer is involved in printing; the decoded image is part of the same DOM.
 let renderedTerm: { version: string; image: Promise<string> } | undefined;
 
+async function readApiError(response: Response, fallback: string): Promise<string> {
+  try {
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      const data = (await response.json()) as { error?: unknown };
+      if (typeof data?.error === 'string' && data.error.trim().length > 0) {
+        return data.error;
+      }
+    }
+  } catch {
+    // Ignore parse errors and use fallback message
+  }
+  return fallback;
+}
+
 export async function prepareTermTemplate(service?: string): Promise<string | null> {
   if (!serviceUsesTermTemplate(service)) return null;
   const settingsResponse = await fetch('/api/term-template', {
     credentials: 'include', cache: 'no-store', signal: AbortSignal.timeout(15000),
   });
-  if (!settingsResponse.ok) throw new Error('Não foi possível consultar o modelo de termo.');
+  if (!settingsResponse.ok) {
+    throw new Error(await readApiError(settingsResponse, 'Não foi possível consultar o modelo de termo.'));
+  }
   const settings: TermTemplateSettings = await settingsResponse.json();
   if (!settings.enabled) { renderedTerm = undefined; return null; }
   if (!settings.file_url) throw new Error('O termo está ativo, mas não possui PDF. Confira Configurações.');
@@ -28,7 +45,9 @@ async function renderTerm(url: string): Promise<string> {
     import('pdfjs-dist'),
     import('pdfjs-dist/build/pdf.worker.min.mjs?url'),
   ]);
-  if (!response.ok) throw new Error('Não foi possível carregar o PDF do termo.');
+  if (!response.ok) {
+    throw new Error(await readApiError(response, 'Não foi possível carregar o PDF do termo.'));
+  }
   GlobalWorkerOptions.workerSrc = workerUrl;
   const loadingTask = getDocument({
     data: new Uint8Array(await response.arrayBuffer()), isEvalSupported: false,
