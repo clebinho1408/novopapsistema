@@ -140,7 +140,10 @@ CREATE TABLE step_processes (
   status VARCHAR(50) DEFAULT 'draft',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  show_toxicologico_message BOOLEAN DEFAULT FALSE
+  show_toxicologico_message BOOLEAN DEFAULT FALSE,
+  show_toxicologico_habilitacao BOOLEAN DEFAULT FALSE,
+  categoria_atual TEXT,
+  aviso_reinicio BOOLEAN DEFAULT FALSE
 );
 
 -- Selected steps for each process

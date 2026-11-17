@@ -699,6 +699,7 @@ export default function StepProcess() {
   };
 
   const handleSubmit = async () => {
+    if (isSaving) return;
     try {
       if (formData.client_name === REHABILITATION_SERVICE &&
           rehabilitationCategoryAnswer === null) {
@@ -719,30 +720,35 @@ export default function StepProcess() {
       setIsSaving(true);
       console.log('Submitting form data:', formData);
 
-      const response = await fetch('/api/step-processes', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          city_id: parseInt(formData.city_id),
-          client_name: formData.client_name || null,
-          selected_steps: formData.selected_steps,
-          selected_professionals: formData.selected_professionals,
-          selected_fees: (() => {
-            const feeIds = [...formData.selected_fees];
-            return feeIds;
-          })(),
-          show_toxicologico_message: formData.show_toxicologico_message,
-          show_toxicologico_habilitacao: formData.show_toxicologico_habilitacao,
-          categoria_atual: formData.categoria_atual || null,
-          aviso_reinicio: formData.aviso_reinicio
-        })
-      });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 20000);
+      let response: Response;
+      try {
+        response = await fetch('/api/step-processes', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          credentials: 'include',
+          signal: controller.signal,
+          body: JSON.stringify({
+            city_id: parseInt(formData.city_id),
+            client_name: formData.client_name || null,
+            selected_steps: formData.selected_steps,
+            selected_professionals: formData.selected_professionals,
+            selected_fees: [...formData.selected_fees],
+            show_toxicologico_message: formData.show_toxicologico_message,
+            show_toxicologico_habilitacao: formData.show_toxicologico_habilitacao,
+            categoria_atual: formData.categoria_atual || null,
+            aviso_reinicio: formData.aviso_reinicio
+          })
+        });
+      } finally {
+        clearTimeout(timeoutId);
+      }
 
-      const responseData = await response.json();
+      const responseData = await response.json().catch(() => ({} as Record<string, unknown>));
       console.log('Response:', response.status, responseData);
 
       if (response.ok) {
@@ -776,7 +782,15 @@ export default function StepProcess() {
         let selectedFees = fees.filter(fee => allFeeIds.includes(fee.id));
         const printData = {
           client_name: formData.client_name,
-          city: selectedCity!,
+          city: selectedCity || {
+            id: parseInt(formData.city_id, 10) || 0,
+            agency_id: 0,
+            name: '',
+            state: 'SC',
+            is_active: true,
+            created_at: '',
+            updated_at: '',
+          },
           selected_steps: selectedSteps,
           all_steps: processSteps, // Todas as etapas disponíveis
           selected_professionals: selectedProfessionals,
@@ -814,12 +828,20 @@ export default function StepProcess() {
         fetchProcesses();
       } else {
         console.error('Error response:', response.status, responseData);
-        const errorMessage = responseData.error || 'Erro ao salvar processo. Tente novamente.';
+        setIsSaving(false);
+        const errorMessage = (responseData as { error?: string })?.error || 'Erro ao salvar processo. Tente novamente.';
         await showAlert(errorMessage, 'error');
       }
     } catch (error) {
       console.error('Error creating process:', error);
-      await showAlert('Erro de conexão. Verifique sua internet e tente novamente.', 'error');
+      setIsSaving(false);
+      const isAbort = error instanceof DOMException && error.name === 'AbortError';
+      await showAlert(
+        isAbort
+          ? 'O servidor demorou para responder ao salvar o processo. Tente novamente.'
+          : 'Erro de conexão. Verifique sua internet e tente novamente.',
+        'error'
+      );
     } finally {
       setIsSaving(false);
     }
@@ -1686,6 +1708,7 @@ export default function StepProcess() {
         {categoryModal}
         {earModal}
         {rehabilitationModal}
+        {DialogComponent}
       </Layout>
     );
   }

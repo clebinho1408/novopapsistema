@@ -1112,10 +1112,34 @@ async function sendEmailWithHTML(to: string, subject: string, htmlContent: strin
 }
 
 // Step processes endpoints
+let stepProcessesColumnsEnsured = false;
+async function ensureStepProcessesColumns(db: { prepare: (sql: string) => { run: () => Promise<unknown> } }) {
+  if (stepProcessesColumnsEnsured) return;
+  const cols = [
+    { name: 'show_toxicologico_message', pg: 'BOOLEAN DEFAULT FALSE', sqlite: 'BOOLEAN DEFAULT 0' },
+    { name: 'show_toxicologico_habilitacao', pg: 'BOOLEAN DEFAULT FALSE', sqlite: 'BOOLEAN DEFAULT 0' },
+    { name: 'categoria_atual', pg: 'TEXT', sqlite: 'TEXT' },
+    { name: 'aviso_reinicio', pg: 'BOOLEAN DEFAULT FALSE', sqlite: 'BOOLEAN DEFAULT 0' },
+  ];
+  for (const col of cols) {
+    try {
+      await db.prepare(`ALTER TABLE step_processes ADD COLUMN IF NOT EXISTS ${col.name} ${col.pg}`).run();
+    } catch {
+      try {
+        await db.prepare(`ALTER TABLE step_processes ADD COLUMN ${col.name} ${col.sqlite}`).run();
+      } catch {
+        // Column likely already exists
+      }
+    }
+  }
+  stepProcessesColumnsEnsured = true;
+}
+
 app.get("/api/step-processes", systemAuthMiddleware, async (c) => {
   try {
     const user = getUserWithAgency(c);
     if (!user) return c.json({ error: "User not found" }, 404);
+    await ensureStepProcessesColumns(c.env.DB);
 
     const canSeeAgencyProcesses = user.role === 'administrator' || user.role === 'supervisor';
     // Join the names in one query: an IN list of every process exceeds D1's
@@ -1154,16 +1178,21 @@ app.post("/api/step-processes", systemAuthMiddleware, async (c) => {
   try {
     const user = getUserWithAgency(c);
     if (!user) return c.json({ error: "User not found" }, 404);
+    await ensureStepProcessesColumns(c.env.DB);
 
     const body = await c.req.json();
     console.log('Request body:', body);
+
+    const selectedSteps: number[] = Array.isArray(body.selected_steps)
+      ? Array.from(new Set<number>(body.selected_steps.map((id: unknown) => Number(id)).filter((id: number) => Number.isFinite(id))))
+      : [];
 
     // Validate required fields
     if (!body.city_id) {
       return c.json({ error: "Cidade é obrigatória" }, 400);
     }
 
-    if (!body.selected_steps || !Array.isArray(body.selected_steps) || body.selected_steps.length === 0) {
+    if (selectedSteps.length === 0) {
       return c.json({ error: "Pelo menos uma etapa deve ser selecionada" }, 400);
     }
 
@@ -1173,8 +1202,10 @@ app.post("/api/step-processes", systemAuthMiddleware, async (c) => {
       return c.json({ error: "ID da cidade inválido" }, 400);
     }
 
-    // Ensure selected_fees is an array
-    const selectedFees = Array.isArray(body.selected_fees) ? body.selected_fees : [];
+    // Ensure selected_fees is an array of unique numeric IDs
+    const selectedFees: number[] = Array.isArray(body.selected_fees)
+      ? Array.from(new Set<number>(body.selected_fees.map((id: unknown) => Number(id)).filter((id: number) => Number.isFinite(id))))
+      : [];
 
     // Calculate total amount
     let totalAmount = 0;
@@ -1197,7 +1228,7 @@ app.post("/api/step-processes", systemAuthMiddleware, async (c) => {
 
     // Add selected steps - only reference existing professionals, never create new ones
     const newProcessId = result.id as number;
-    for (const stepId of body.selected_steps) {
+    for (const stepId of selectedSteps) {
       const professionalId = body.selected_professionals?.[stepId.toString()];
 
       // Validate that the professional exists and belongs to this agency (if provided)
@@ -1246,7 +1277,7 @@ app.post("/api/step-processes", systemAuthMiddleware, async (c) => {
 
     for (const fee of (allFees as any[]) || []) {
       // Check if there's a professional of this type selected
-      const hasLinkedProfessional = body.selected_steps.some((stepId: number) => {
+      const hasLinkedProfessional = selectedSteps.some((stepId: number) => {
         const professionalId = body.selected_professionals?.[stepId.toString()];
         if (!professionalId) return false;
 
@@ -1288,6 +1319,7 @@ app.post("/api/step-processes", systemAuthMiddleware, async (c) => {
 app.get("/api/step-processes/:id", systemAuthMiddleware, async (c) => {
   const user = getUserWithAgency(c);
   if (!user) return c.json({ error: "User not found" }, 404);
+  await ensureStepProcessesColumns(c.env.DB);
 
   const processId = parseInt(c.req.param("id"));
 
