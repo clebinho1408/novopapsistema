@@ -6,6 +6,10 @@ import {
 } from '@/shared/rehabilitation';
 import { resolvePrintInstructions } from '@/shared/print-instructions';
 import { formatWorkingSchedule } from '@/shared/working-hours';
+import {
+  PROVA_TEORICA_SCHEDULE_TEXT,
+  PROVA_TEORICA_WHATSAPP_URL,
+} from '@/shared/prova-teorica';
 import { prepareTermTemplate, termPrintPage, TERM_PRINT_CSS } from '@/react-app/lib/term-template';
 import { preparePrintWindow, printQrCode } from '@/react-app/lib/print-window';
 
@@ -907,6 +911,17 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                             ` : ''}
                         ` : isNoProfessionalStep ? `
                             <div style="padding: 6px; min-height: 40px;">
+                                ${step.type === 'prova_teorica' ? `
+                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                                  <div style="font-size: 13px; font-weight: bold; color: black; line-height: 1.3; flex: 1;">
+                                    ${PROVA_TEORICA_SCHEDULE_TEXT}
+                                  </div>
+                                  <div style="display: flex; flex-direction: column; align-items: center; flex-shrink: 0;">
+                                    <img src="${printQrCode(PROVA_TEORICA_WHATSAPP_URL)}" alt="QR WhatsApp Catarina do Detran 4836641800" style="width: 54px; height: 54px; display: block;" />
+                                    <span style="font-size: 9px; font-weight: bold; color: black; margin-top: 2px; white-space: nowrap;">WhatsApp Detran</span>
+                                  </div>
+                                </div>
+                                ` : `
                                 ${step.description ? `<div style="font-size: 14px; font-weight: bold; color: black; margin-bottom: 4px; line-height: 1.2;">${step.description}</div>` : ''}
                                 ${step.obs ? `<div style="font-size: 13px; font-weight: bold; color: black;">Obs.: ${step.obs}</div>` : ''}
                                 ${!step.description && !step.obs ? `<div style="font-size: 13px; color: #666; text-align: center;">Etapa selecionada</div>` : ''}
@@ -922,6 +937,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                                   </div>
                                 </div>
                                 ` : ''}
+                                `}
                             </div>
                         ` : (step.type === 'taxa' && hasTaxesSelected) ? `
                             <div class="fee-section">
@@ -1265,15 +1281,19 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
       content += `${'-'.repeat(40)}\n`;
 
       if (isNoProfessionalStep && !professional) {
-        // Etapas sem credenciado - exibir descrição e obs
-        if (step.description) {
-          content += `${step.description}\n`;
-        }
-        if (step.obs) {
-          content += `Obs.: ${step.obs}\n`;
-        }
-        if (!step.description && !step.obs) {
-          content += `Etapa selecionada\n`;
+        if (step.type === 'prova_teorica') {
+          content += `${PROVA_TEORICA_SCHEDULE_TEXT}\nWhatsApp Catarina do Detran: ${PROVA_TEORICA_WHATSAPP_URL}\n`;
+        } else {
+          // Etapas sem credenciado - exibir descrição e obs
+          if (step.description) {
+            content += `${step.description}\n`;
+          }
+          if (step.obs) {
+            content += `Obs.: ${step.obs}\n`;
+          }
+          if (!step.description && !step.obs) {
+            content += `Etapa selecionada\n`;
+          }
         }
       } else if (professional) {
         content += `${professional.name}\n`;
@@ -1699,26 +1719,46 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                         </div>
                       ) : isNoProfessionalStep ? (
                         <div className="space-y-2 p-2 relative">
-                          {step.description && (
-                            <p className="text-xs font-bold text-black">{step.description}</p>
-                          )}
-                          {step.obs && (
-                            <p className="text-xs font-bold text-black">Obs.: {step.obs}</p>
-                          )}
-                          {!step.description && !step.obs && (
-                            <p className="text-xs text-gray-500 text-center">Etapa selecionada</p>
-                          )}
-                          {step.type === 'curso_pratico' && (
-                            <div className="flex gap-3 mt-2 justify-center items-center">
-                              <div className="flex items-center gap-1">
-                                <span className="text-[10px] font-bold text-black leading-tight text-center">Consultar<br/>Instrutor</span>
-                                <img src={printQrCode('https://www.detran.sc.gov.br/instrutores-credenciados/')} alt="QR Consultar Instrutor" style={{ width: 60, height: 60, display: 'block' }} />
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <span className="text-[10px] font-bold text-black leading-tight text-center">Consultar<br/>Autoescola</span>
-                                <img src={printQrCode('https://www.detran.sc.gov.br/centro-de-formacao-de-condutores/')} alt="QR Consultar Autoescola" style={{ width: 60, height: 60, display: 'block' }} />
+                          {step.type === 'prova_teorica' ? (
+                            <div className="flex items-center justify-between gap-2.5">
+                              <p className="text-xs font-bold text-black leading-snug flex-1">
+                                {PROVA_TEORICA_SCHEDULE_TEXT}
+                              </p>
+                              <div className="flex flex-col items-center flex-shrink-0">
+                                <img
+                                  src={printQrCode(PROVA_TEORICA_WHATSAPP_URL)}
+                                  alt="QR WhatsApp Catarina do Detran 4836641800"
+                                  style={{ width: 54, height: 54, display: 'block' }}
+                                />
+                                <span className="text-[9px] font-bold text-black mt-0.5 whitespace-nowrap">
+                                  WhatsApp Detran
+                                </span>
                               </div>
                             </div>
+                          ) : (
+                            <>
+                              {step.description && (
+                                <p className="text-xs font-bold text-black">{step.description}</p>
+                              )}
+                              {step.obs && (
+                                <p className="text-xs font-bold text-black">Obs.: {step.obs}</p>
+                              )}
+                              {!step.description && !step.obs && (
+                                <p className="text-xs text-gray-500 text-center">Etapa selecionada</p>
+                              )}
+                              {step.type === 'curso_pratico' && (
+                                <div className="flex gap-3 mt-2 justify-center items-center">
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-[10px] font-bold text-black leading-tight text-center">Consultar<br/>Instrutor</span>
+                                    <img src={printQrCode('https://www.detran.sc.gov.br/instrutores-credenciados/')} alt="QR Consultar Instrutor" style={{ width: 60, height: 60, display: 'block' }} />
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-[10px] font-bold text-black leading-tight text-center">Consultar<br/>Autoescola</span>
+                                    <img src={printQrCode('https://www.detran.sc.gov.br/centro-de-formacao-de-condutores/')} alt="QR Consultar Autoescola" style={{ width: 60, height: 60, display: 'block' }} />
+                                  </div>
+                                </div>
+                              )}
+                            </>
                           )}
                           {step.type === 'curso_pratico' && (() => {
                             const ladvFee = processData.selected_fees.find(fee => fee.name === 'LADV');
