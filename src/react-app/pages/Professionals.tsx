@@ -4,6 +4,11 @@ import { Users, Plus, Edit, Trash2, Search, Phone, MapPin, Clock, CalendarClock,
 import type { Professional, City, ProfessionalType, AttendanceType } from '@/shared/types';
 import { PROFESSIONAL_TYPE_LABELS } from '@/shared/types';
 import { useDialog } from '@/react-app/components/Dialog';
+import {
+  formatWorkingSchedule,
+  sanitizeWorkingHoursMap,
+  type WorkingHoursMap,
+} from '@/shared/working-hours';
 
 const DAYS = [
   { value: 'monday', label: 'Segunda' },
@@ -39,7 +44,6 @@ export default function Professionals() {
   const [cityFilter, setCityFilter] = useState<string>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProfessional, setEditingProfessional] = useState<Professional | null>(null);
-  type WorkingHoursMap = Record<string, { start: string; end: string }>;
 
   const [formData, setFormData] = useState({
     name: '',
@@ -143,6 +147,24 @@ export default function Professionals() {
       const method = editingProfessional ? 'PATCH' : 'POST';
       const url = editingProfessional ? `/api/professionals/${editingProfessional.id}` : '/api/professionals';
 
+      for (const dayValue of formData.working_days) {
+        const entry = formData.working_hours[dayValue];
+        if (entry) {
+          const hasPartialFirst = Boolean(entry.start) !== Boolean(entry.end);
+          const hasPartialSecond = Boolean(entry.start2?.trim()) !== Boolean(entry.end2?.trim());
+          if (hasPartialFirst || hasPartialSecond) {
+            await showAlert(
+              `Preencha o horário de início e fim completos para ${DAY_LABELS[dayValue] || dayValue}.`,
+              'warning'
+            );
+            setIsLoading(false);
+            return;
+          }
+        }
+      }
+
+      const cleanedHours = sanitizeWorkingHoursMap(formData.working_hours);
+
       const requestData: any = {
         name: formData.name.trim(),
         type: formData.type,
@@ -155,7 +177,7 @@ export default function Professionals() {
       if (formData.address.trim()) requestData.address = formData.address.trim();
       if (formData.observations.trim()) requestData.observations = formData.observations.trim();
       if (formData.working_days.length > 0) requestData.working_days = JSON.stringify(formData.working_days);
-      if (Object.keys(formData.working_hours).length > 0) requestData.working_hours = JSON.stringify(formData.working_hours);
+      if (Object.keys(cleanedHours).length > 0) requestData.working_hours = JSON.stringify(cleanedHours);
 
       const response = await fetch(url, {
         method,
@@ -213,10 +235,26 @@ export default function Professionals() {
     }
     setIsScheduleLoading(true);
     try {
+      if (scheduleForm.change_working_hours) {
+        for (const [dayValue, entry] of Object.entries(scheduleForm.working_hours)) {
+          if (!entry) continue;
+          const hasPartialFirst = Boolean(entry.start) !== Boolean(entry.end);
+          const hasPartialSecond = Boolean(entry.start2?.trim()) !== Boolean(entry.end2?.trim());
+          if (hasPartialFirst || hasPartialSecond) {
+            await showAlert(
+              `Preencha o horário de início e fim completos para ${DAY_LABELS[dayValue] || dayValue}.`,
+              'warning'
+            );
+            setIsScheduleLoading(false);
+            return;
+          }
+        }
+      }
+      const cleanedScheduleHours = sanitizeWorkingHoursMap(scheduleForm.working_hours);
       // Convert local datetime to UTC ISO string to avoid timezone issues
       const payload: any = { scheduled_at: new Date(scheduleForm.scheduled_at).toISOString() };
       if (scheduleForm.change_working_days) payload.working_days = scheduleForm.working_days.length > 0 ? JSON.stringify(scheduleForm.working_days) : '';
-      if (scheduleForm.change_working_hours) payload.working_hours = Object.keys(scheduleForm.working_hours).length > 0 ? JSON.stringify(scheduleForm.working_hours) : '';
+      if (scheduleForm.change_working_hours) payload.working_hours = Object.keys(cleanedScheduleHours).length > 0 ? JSON.stringify(cleanedScheduleHours) : '';
       if (scheduleForm.change_observations) payload.observations = scheduleForm.observations;
 
       const response = await fetch(`/api/professionals/${schedulingProfessional.id}/scheduled-changes`, {
@@ -233,7 +271,7 @@ export default function Professionals() {
         const err = await response.json().catch(() => ({}));
         await showAlert(err.error || 'Erro ao agendar alteração', 'error');
       }
-    } catch (error) {
+    } catch {
       await showAlert('Erro de conexão.', 'error');
     } finally {
       setIsScheduleLoading(false);
@@ -444,23 +482,11 @@ export default function Professionals() {
                               <div className="col-span-2">
                                 <strong>Dias de Funcionamento e Horários:</strong>{' '}
                                 {(() => {
-                                  const DAY_ORDER_LIST = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
-                                  const abbr: Record<string,string> = { monday:'Seg', tuesday:'Ter', wednesday:'Qua', thursday:'Qui', friday:'Sex', saturday:'Sáb', sunday:'Dom' };
-                                  try {
-                                    if (professional.working_hours) {
-                                      const h = JSON.parse(professional.working_hours);
-                                      if (typeof h === 'object' && !Array.isArray(h)) {
-                                        const days = professional.working_days
-                                          ? JSON.parse(professional.working_days).filter((d: string) => h[d])
-                                          : DAY_ORDER_LIST.filter(d => h[d]);
-                                        return days.map((d: string) => `${abbr[d] || d}: ${h[d].start} - ${h[d].end}`).join(' | ');
-                                      }
-                                      return professional.working_hours;
-                                    }
-                                    if (professional.working_days) {
-                                      return JSON.parse(professional.working_days).map((d: string) => DAY_LABELS[d] || d).join(', ');
-                                    }
-                                  } catch { return professional.working_days || professional.working_hours || ''; }
+                                  const schedule = formatWorkingSchedule(professional.working_days, professional.working_hours);
+                                  if (schedule.summaryLines.length > 0) {
+                                    return schedule.summaryLines.join(' ');
+                                  }
+                                  return [schedule.daysText, schedule.rawHoursText].filter(Boolean).join(' — ');
                                 })()}
                               </div>
                             )}
@@ -489,6 +515,9 @@ export default function Professionals() {
                               <CalendarClock className="w-4 h-4" />
                             </button>
                             <button
+                              type="button"
+                              title="Editar credenciado"
+                              aria-label="Editar credenciado"
                               onClick={() => {
                                 setEditingProfessional(professional);
                                 setFormData({
@@ -510,7 +539,13 @@ export default function Professionals() {
                               <Edit className="w-4 h-4" />
                             </button>
                             {userRole === 'administrator' && (
-                              <button onClick={() => handleDelete(professional.id)} className="p-2 text-gray-400 hover:text-red-600">
+                              <button
+                                type="button"
+                                title="Excluir credenciado"
+                                aria-label="Excluir credenciado"
+                                onClick={() => handleDelete(professional.id)}
+                                className="p-2 text-gray-400 hover:text-red-600"
+                              >
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             )}
@@ -575,45 +610,116 @@ export default function Professionals() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Dias de Funcionamento e Horários</label>
                 <div className="space-y-2">
-                  {DAYS.map(day => (
-                    <div key={day.value} className="flex items-center gap-3 flex-wrap">
-                      <label className="flex items-center space-x-2 w-24 shrink-0">
-                        <input
-                          type="checkbox"
-                          checked={formData.working_days.includes(day.value)}
-                          onChange={(e) => {
-                            const checked = e.target.checked;
-                            setFormData(prev => ({
-                              ...prev,
-                              working_days: checked ? [...prev.working_days, day.value] : prev.working_days.filter(d => d !== day.value),
-                              working_hours: checked
-                                ? { ...prev.working_hours, [day.value]: { start: '', end: '' } }
-                                : Object.fromEntries(Object.entries(prev.working_hours).filter(([k]) => k !== day.value))
-                            }));
-                          }}
-                          className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                        />
-                        <span className="text-sm text-gray-700">{day.label}</span>
-                      </label>
-                      {formData.working_days.includes(day.value) && (
-                        <div className="flex items-center gap-2">
+                  {DAYS.map(day => {
+                    const dayHours = formData.working_hours[day.value];
+                    const hasExtraPeriod = dayHours?.start2 !== undefined || dayHours?.end2 !== undefined;
+                    return (
+                      <div key={day.value} className="flex items-center gap-3 flex-wrap">
+                        <label className="flex items-center space-x-2 w-24 shrink-0">
                           <input
-                            type="time"
-                            value={formData.working_hours[day.value]?.start || ''}
-                            onChange={(e) => setFormData(prev => ({ ...prev, working_hours: { ...prev.working_hours, [day.value]: { ...prev.working_hours[day.value], start: e.target.value } } }))}
-                            className="px-2 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                            type="checkbox"
+                            checked={formData.working_days.includes(day.value)}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              setFormData(prev => ({
+                                ...prev,
+                                working_days: checked ? [...prev.working_days, day.value] : prev.working_days.filter(d => d !== day.value),
+                                working_hours: checked
+                                  ? { ...prev.working_hours, [day.value]: { start: '', end: '' } }
+                                  : Object.fromEntries(Object.entries(prev.working_hours).filter(([k]) => k !== day.value))
+                              }));
+                            }}
+                            className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                           />
-                          <span className="text-gray-500 text-sm">às</span>
-                          <input
-                            type="time"
-                            value={formData.working_hours[day.value]?.end || ''}
-                            onChange={(e) => setFormData(prev => ({ ...prev, working_hours: { ...prev.working_hours, [day.value]: { ...prev.working_hours[day.value], end: e.target.value } } }))}
-                            className="px-2 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                          <span className="text-sm text-gray-700">{day.label}</span>
+                        </label>
+                        {formData.working_days.includes(day.value) && (
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <input
+                              type="time"
+                              aria-label={`Início 1º horário ${day.label}`}
+                              value={dayHours?.start || ''}
+                              onChange={(e) => setFormData(prev => ({ ...prev, working_hours: { ...prev.working_hours, [day.value]: { ...prev.working_hours[day.value], start: e.target.value } } }))}
+                              className="px-2 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                            />
+                            <span className="text-gray-500 text-sm">às</span>
+                            <input
+                              type="time"
+                              aria-label={`Fim 1º horário ${day.label}`}
+                              value={dayHours?.end || ''}
+                              onChange={(e) => setFormData(prev => ({ ...prev, working_hours: { ...prev.working_hours, [day.value]: { ...prev.working_hours[day.value], end: e.target.value } } }))}
+                              className="px-2 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                            />
+                            {hasExtraPeriod ? (
+                              <>
+                                <span className="text-gray-400 text-sm font-medium">-</span>
+                                <input
+                                  type="time"
+                                  aria-label={`Início 2º horário ${day.label}`}
+                                  value={dayHours?.start2 || ''}
+                                  onChange={(e) => setFormData(prev => ({
+                                    ...prev,
+                                    working_hours: {
+                                      ...prev.working_hours,
+                                      [day.value]: { ...(prev.working_hours[day.value] || { start: '', end: '' }), start2: e.target.value }
+                                    }
+                                  }))}
+                                  className="px-2 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                                />
+                                <span className="text-gray-500 text-sm">às</span>
+                                <input
+                                  type="time"
+                                  aria-label={`Fim 2º horário ${day.label}`}
+                                  value={dayHours?.end2 || ''}
+                                  onChange={(e) => setFormData(prev => ({
+                                    ...prev,
+                                    working_hours: {
+                                      ...prev.working_hours,
+                                      [day.value]: { ...(prev.working_hours[day.value] || { start: '', end: '' }), end2: e.target.value }
+                                    }
+                                  }))}
+                                  className="px-2 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                                />
+                                <button
+                                  type="button"
+                                  title="Remover 2º horário"
+                                  aria-label={`Remover 2º horário de ${day.label}`}
+                                  onClick={() => setFormData(prev => {
+                                    const current = prev.working_hours[day.value] || { start: '', end: '' };
+                                    return {
+                                      ...prev,
+                                      working_hours: {
+                                        ...prev.working_hours,
+                                        [day.value]: { start: current.start, end: current.end }
+                                      }
+                                    };
+                                  })}
+                                  className="p-1 text-gray-400 hover:text-red-600 rounded"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                type="button"
+                                aria-label={`Adicionar 2º horário de ${day.label}`}
+                                onClick={() => setFormData(prev => ({
+                                  ...prev,
+                                  working_hours: {
+                                    ...prev.working_hours,
+                                    [day.value]: { ...(prev.working_hours[day.value] || { start: '', end: '' }), start2: '', end2: '' }
+                                  }
+                                }))}
+                                className="px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors"
+                              >
+                                + 2º horário
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
               <div>
@@ -681,6 +787,7 @@ export default function Professionals() {
                     <div className="space-y-2 ml-6 mt-2">
                       {DAYS.map(day => {
                         const hrs = scheduleForm.working_hours[day.value];
+                        const hasExtraPeriod = hrs?.start2 !== undefined || hrs?.end2 !== undefined;
                         return (
                           <div key={day.value} className="flex items-center gap-3 flex-wrap">
                             <label className="flex items-center space-x-2 w-24 shrink-0">
@@ -701,9 +808,10 @@ export default function Professionals() {
                               <span className="text-sm text-gray-700">{day.label}</span>
                             </label>
                             {hrs && (
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2 flex-wrap">
                                 <input
                                   type="time"
+                                  aria-label={`Início 1º horário agendado ${day.label}`}
                                   value={hrs.start || ''}
                                   onChange={(e) => setScheduleForm(prev => ({ ...prev, working_hours: { ...prev.working_hours, [day.value]: { ...prev.working_hours[day.value], start: e.target.value } } }))}
                                   className="px-2 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500"
@@ -711,10 +819,64 @@ export default function Professionals() {
                                 <span className="text-gray-500 text-sm">às</span>
                                 <input
                                   type="time"
+                                  aria-label={`Fim 1º horário agendado ${day.label}`}
                                   value={hrs.end || ''}
                                   onChange={(e) => setScheduleForm(prev => ({ ...prev, working_hours: { ...prev.working_hours, [day.value]: { ...prev.working_hours[day.value], end: e.target.value } } }))}
                                   className="px-2 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500"
                                 />
+                                {hasExtraPeriod ? (
+                                  <>
+                                    <span className="text-gray-400 text-sm font-medium">-</span>
+                                    <input
+                                      type="time"
+                                      aria-label={`Início 2º horário agendado ${day.label}`}
+                                      value={hrs.start2 || ''}
+                                      onChange={(e) => setScheduleForm(prev => ({ ...prev, working_hours: { ...prev.working_hours, [day.value]: { ...prev.working_hours[day.value], start2: e.target.value } } }))}
+                                      className="px-2 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500"
+                                    />
+                                    <span className="text-gray-500 text-sm">às</span>
+                                    <input
+                                      type="time"
+                                      aria-label={`Fim 2º horário agendado ${day.label}`}
+                                      value={hrs.end2 || ''}
+                                      onChange={(e) => setScheduleForm(prev => ({ ...prev, working_hours: { ...prev.working_hours, [day.value]: { ...prev.working_hours[day.value], end2: e.target.value } } }))}
+                                      className="px-2 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500"
+                                    />
+                                    <button
+                                      type="button"
+                                      title="Remover 2º horário"
+                                      aria-label={`Remover 2º horário agendado de ${day.label}`}
+                                      onClick={() => setScheduleForm(prev => {
+                                        const current = prev.working_hours[day.value] || { start: '', end: '' };
+                                        return {
+                                          ...prev,
+                                          working_hours: {
+                                            ...prev.working_hours,
+                                            [day.value]: { start: current.start, end: current.end }
+                                          }
+                                        };
+                                      })}
+                                      className="p-1 text-gray-400 hover:text-red-600 rounded"
+                                    >
+                                      <X className="w-4 h-4" />
+                                    </button>
+                                  </>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    aria-label={`Adicionar 2º horário agendado de ${day.label}`}
+                                    onClick={() => setScheduleForm(prev => ({
+                                      ...prev,
+                                      working_hours: {
+                                        ...prev.working_hours,
+                                        [day.value]: { ...(prev.working_hours[day.value] || { start: '', end: '' }), start2: '', end2: '' }
+                                      }
+                                    }))}
+                                    className="px-2 py-1 text-xs font-medium text-purple-600 bg-purple-50 hover:bg-purple-100 rounded-lg border border-purple-200 transition-colors"
+                                  >
+                                    + 2º horário
+                                  </button>
+                                )}
                               </div>
                             )}
                           </div>
@@ -781,7 +943,17 @@ export default function Professionals() {
                                 <div><strong>Dias:</strong> {(() => { try { const d = JSON.parse(change.working_days || '[]'); return d.length > 0 ? d.map((x: string) => DAY_LABELS[x] || x).join(', ') : '(limpar dias)'; } catch { return change.working_days || '(limpar dias)'; } })()}</div>
                               )}
                               {change.working_hours !== null && (
-                                <div><strong>Horário:</strong> {change.working_hours || '(limpar horário)'}</div>
+                                <div>
+                                  <strong>Horário:</strong>{' '}
+                                  {change.working_hours
+                                    ? (() => {
+                                        const formatted = formatWorkingSchedule(change.working_days, change.working_hours);
+                                        return formatted.summaryLines.length > 0
+                                          ? formatted.summaryLines.join(' ')
+                                          : formatted.rawHoursText || change.working_hours;
+                                      })()
+                                    : '(limpar horário)'}
+                                </div>
                               )}
                               {change.observations !== null && (
                                 <div><strong>Obs.:</strong> {change.observations || '(limpar observações)'}</div>

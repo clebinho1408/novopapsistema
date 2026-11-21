@@ -28,10 +28,59 @@ const DAY_FULL: Record<string, string> = {
   sunday: 'Domingo',
 };
 
+export interface DayWorkingHours {
+  start: string;
+  end: string;
+  start2?: string;
+  end2?: string;
+}
+
+export type WorkingHoursMap = Record<string, DayWorkingHours>;
+
 export interface FormattedWorkingSchedule {
   summaryLines: string[];
   daysText: string | null;
   rawHoursText: string | null;
+}
+
+function hasSecondPeriod(entry?: DayWorkingHours): boolean {
+  return Boolean(entry?.start2?.trim() && entry?.end2?.trim());
+}
+
+function formatDayIntervals(entry: DayWorkingHours | undefined, useAs: boolean): string {
+  const sep = useAs ? ' às ' : ' - ';
+  const first = `${entry?.start ?? ''}${sep}${entry?.end ?? ''}`;
+  if (hasSecondPeriod(entry)) {
+    const second = `${entry?.start2?.trim() ?? ''} às ${entry?.end2?.trim() ?? ''}`;
+    return `${first} - ${second}`;
+  }
+  return first;
+}
+
+function sameDaySchedule(a?: DayWorkingHours, b?: DayWorkingHours): boolean {
+  return (
+    (a?.start ?? '') === (b?.start ?? '') &&
+    (a?.end ?? '') === (b?.end ?? '') &&
+    (a?.start2?.trim() ?? '') === (b?.start2?.trim() ?? '') &&
+    (a?.end2?.trim() ?? '') === (b?.end2?.trim() ?? '')
+  );
+}
+
+export function sanitizeWorkingHoursMap(map: WorkingHoursMap): WorkingHoursMap {
+  const cleaned: WorkingHoursMap = {};
+  for (const [day, entry] of Object.entries(map)) {
+    if (!entry) continue;
+    const item: DayWorkingHours = {
+      start: entry.start || '',
+      end: entry.end || '',
+    };
+    if (entry.start2?.trim() || entry.end2?.trim()) {
+      item.start2 = entry.start2?.trim() || '';
+      item.end2 = entry.end2?.trim() || '';
+    }
+    cleaned[day] = item;
+  }
+  return cleaned;
 }
 
 export function formatWorkingDaysList(workingDays?: string | null): string | null {
@@ -61,14 +110,19 @@ export function formatWorkingSchedule(
     try {
       const hoursObj = JSON.parse(workingHours);
       if (hoursObj && typeof hoursObj === 'object' && !Array.isArray(hoursObj)) {
-        const record = hoursObj as Record<string, { start?: string; end?: string } | undefined>;
+        const record = hoursObj as Record<string, DayWorkingHours | undefined>;
         let selectedDays: string[] = [];
 
         if (workingDays) {
           try {
             const parsedDays = JSON.parse(workingDays);
             if (Array.isArray(parsedDays)) {
-              selectedDays = parsedDays.map(String).filter((d) => Boolean(record[d]));
+              const filtered = parsedDays.map(String).filter((d) => Boolean(record[d]));
+              const dayIndex = (day: string) => {
+                const idx = DAY_ORDER.indexOf(day as (typeof DAY_ORDER)[number]);
+                return idx === -1 ? DAY_ORDER.length : idx;
+              };
+              selectedDays = [...new Set(filtered)].sort((a, b) => dayIndex(a) - dayIndex(b));
             }
           } catch {
             selectedDays = [];
@@ -86,13 +140,10 @@ export function formatWorkingSchedule(
 
         if (selectedDays.length > 0) {
           const firstSchedule = record[selectedDays[0]];
+          const anySecondPeriod = selectedDays.some((d) => hasSecondPeriod(record[d]));
           const allSame =
             Boolean(firstSchedule) &&
-            selectedDays.every(
-              (d) =>
-                record[d]?.start === firstSchedule?.start &&
-                record[d]?.end === firstSchedule?.end
-            );
+            selectedDays.every((d) => sameDaySchedule(record[d], firstSchedule));
 
           if (allSame && selectedDays.length > 1) {
             const first = DAY_FULL[selectedDays[0]] || selectedDays[0];
@@ -101,7 +152,7 @@ export function formatWorkingSchedule(
               selectedDays[selectedDays.length - 1];
             return {
               summaryLines: [
-                `(${first} a ${last}: ${firstSchedule?.start ?? ''} - ${firstSchedule?.end ?? ''})`,
+                `(${first} a ${last}: ${formatDayIntervals(firstSchedule, anySecondPeriod)})`,
               ],
               daysText: null,
               rawHoursText: null,
@@ -112,7 +163,7 @@ export function formatWorkingSchedule(
             const d = selectedDays[0];
             return {
               summaryLines: [
-                `(${DAY_FULL[d] || DAY_ABBR[d] || d}: ${firstSchedule?.start ?? ''} - ${firstSchedule?.end ?? ''})`,
+                `(${DAY_FULL[d] || DAY_ABBR[d] || d}: ${formatDayIntervals(firstSchedule, anySecondPeriod)})`,
               ],
               daysText: null,
               rawHoursText: null,
@@ -121,11 +172,12 @@ export function formatWorkingSchedule(
 
           const items = selectedDays.map(
             (d) =>
-              `(${DAY_ABBR[d] || d}: ${record[d]?.start ?? ''} - ${record[d]?.end ?? ''})`
+              `(${DAY_ABBR[d] || d}: ${formatDayIntervals(record[d], anySecondPeriod)})`
           );
+          const chunkSize = anySecondPeriod ? 2 : 3;
           const lines: string[] = [];
-          for (let i = 0; i < items.length; i += 3) {
-            lines.push(items.slice(i, i + 3).join(' - '));
+          for (let i = 0; i < items.length; i += chunkSize) {
+            lines.push(items.slice(i, i + chunkSize).join(' - '));
           }
           return {
             summaryLines: lines,
