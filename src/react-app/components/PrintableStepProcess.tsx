@@ -948,7 +948,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                             ${(() => {
                               const quickNotice = getActiveQuickNotice(professional);
                               return quickNotice
-                                ? `<div class="professional-info professional-quick-notice" style="margin-top: 4px; font-size: 9.5px; line-height: 1.25; color: #111827;"><strong>Aviso:</strong> ${escapeQuickNoticeHtml(quickNotice)}</div>`
+                                ? `<div class="professional-info professional-quick-notice" style="margin-top: 4px; font-size: 11.5px; line-height: 1.3; color: #111827;"><strong>Aviso:</strong> ${escapeQuickNoticeHtml(quickNotice)}</div>`
                                 : '';
                             })()}
                             ${step.type === 'medico' && processData.show_toxicologico_message ? `
@@ -1770,7 +1770,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                             const quickNotice = getActiveQuickNotice(professional);
                             return quickNotice ? (
                               <p
-                                className="text-[11px] leading-snug text-gray-900 mt-1.5"
+                                className="text-[12.5px] leading-snug text-gray-900 mt-1.5"
                                 data-professional-quick-notice="true"
                               >
                                 <strong>Aviso:</strong> {quickNotice}
@@ -1991,7 +1991,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                               const quickNotice = getActiveQuickNotice(professional);
                               return quickNotice ? (
                                 <p
-                                  className="text-[11px] leading-snug text-gray-900 mt-1"
+                                  className="text-[13px] leading-snug text-gray-900 mt-1"
                                   data-professional-quick-notice="true"
                                 >
                                   <strong>Aviso:</strong> {quickNotice}
