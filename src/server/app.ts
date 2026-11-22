@@ -1112,11 +1112,12 @@ async function sendEmailWithHTML(to: string, subject: string, htmlContent: strin
 }
 
 // Step processes endpoints
-type StepProcessBoolCol = 'show_toxicologico_message' | 'show_toxicologico_habilitacao' | 'aviso_reinicio';
+type StepProcessBoolCol = 'show_toxicologico_message' | 'show_toxicologico_habilitacao' | 'aviso_reinicio' | 'include_term';
 const stepProcessBoolColTypes: Record<StepProcessBoolCol, 'boolean' | 'integer'> = {
   show_toxicologico_message: 'boolean',
   show_toxicologico_habilitacao: 'boolean',
   aviso_reinicio: 'boolean',
+  include_term: 'boolean',
 };
 
 function toStepProcessFlag(col: StepProcessBoolCol, value: unknown): boolean | number {
@@ -1137,6 +1138,7 @@ async function ensureStepProcessesColumns(db: {
     { name: 'show_toxicologico_habilitacao', pg: 'BOOLEAN DEFAULT FALSE', sqlite: 'BOOLEAN DEFAULT 0' },
     { name: 'categoria_atual', pg: 'TEXT', sqlite: 'TEXT' },
     { name: 'aviso_reinicio', pg: 'BOOLEAN DEFAULT FALSE', sqlite: 'BOOLEAN DEFAULT 0' },
+    { name: 'include_term', pg: 'BOOLEAN', sqlite: 'BOOLEAN' },
   ];
   for (const col of cols) {
     try {
@@ -1152,7 +1154,7 @@ async function ensureStepProcessesColumns(db: {
 
   try {
     const { results } = await db.prepare(
-      "SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'step_processes' AND column_name IN ('show_toxicologico_message', 'show_toxicologico_habilitacao', 'aviso_reinicio')"
+      "SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'step_processes' AND column_name IN ('show_toxicologico_message', 'show_toxicologico_habilitacao', 'aviso_reinicio', 'include_term')"
     ).all();
     for (const row of results || []) {
       const colName = String(row.column_name || '') as StepProcessBoolCol;
@@ -1262,7 +1264,7 @@ app.post("/api/step-processes", systemAuthMiddleware, async (c) => {
 
     // Create step process (supports both boolean and legacy integer flag columns in Postgres/SQLite)
     const insertProcessSql =
-      "INSERT INTO step_processes (agency_id, user_id, city_id, client_name, total_amount, show_toxicologico_message, show_toxicologico_habilitacao, categoria_atual, aviso_reinicio, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *";
+      "INSERT INTO step_processes (agency_id, user_id, city_id, client_name, total_amount, show_toxicologico_message, show_toxicologico_habilitacao, categoria_atual, aviso_reinicio, include_term, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *";
     const runInsertProcess = () =>
       c.env.DB.prepare(insertProcessSql).bind(
         user.agency_id,
@@ -1274,12 +1276,13 @@ app.post("/api/step-processes", systemAuthMiddleware, async (c) => {
         toStepProcessFlag('show_toxicologico_habilitacao', body.show_toxicologico_habilitacao),
         body.categoria_atual || null,
         toStepProcessFlag('aviso_reinicio', body.aviso_reinicio),
+        typeof body.include_term === 'boolean' ? toStepProcessFlag('include_term', body.include_term) : null,
         'completed'
       ).first();
 
     let result: any;
     let lastInsertErr: unknown = null;
-    for (let attempt = 0; attempt < 4; attempt++) {
+    for (let attempt = 0; attempt < 5; attempt++) {
       try {
         result = await runInsertProcess();
         lastInsertErr = null;
@@ -1297,6 +1300,7 @@ app.post("/api/step-processes", systemAuthMiddleware, async (c) => {
           'show_toxicologico_message',
           'show_toxicologico_habilitacao',
           'aviso_reinicio',
+          'include_term',
         ];
         let matched = false;
         for (const col of boolCols) {
@@ -1515,7 +1519,10 @@ app.get("/api/step-processes/:id", systemAuthMiddleware, async (c) => {
     show_toxicologico_message: Boolean(process.show_toxicologico_message),
     show_toxicologico_habilitacao: Boolean(process.show_toxicologico_habilitacao),
     categoria_atual: (process as any).categoria_atual || null,
-    aviso_reinicio: Boolean((process as any).aviso_reinicio)
+    aviso_reinicio: Boolean((process as any).aviso_reinicio),
+    include_term: process.include_term === null || process.include_term === undefined
+      ? null
+      : Boolean(process.include_term)
   });
 });
 

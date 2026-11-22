@@ -19,8 +19,9 @@ async function readApiError(response: Response, fallback: string): Promise<strin
   return fallback;
 }
 
-export async function prepareTermTemplate(service?: string): Promise<string | null> {
-  if (!serviceUsesTermTemplate(service)) return null;
+export async function prepareTermTemplate(service?: string, explicitInclude?: boolean): Promise<string | null> {
+  if (explicitInclude === false) return null;
+  if (explicitInclude !== true && !serviceUsesTermTemplate(service)) return null;
   const settingsResponse = await fetch('/api/term-template', {
     credentials: 'include', cache: 'no-store', signal: AbortSignal.timeout(15000),
   });

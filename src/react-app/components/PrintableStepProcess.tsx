@@ -10,6 +10,7 @@ import {
   PROVA_TEORICA_SCHEDULE_TEXT,
   PROVA_TEORICA_WHATSAPP_URL,
 } from '@/shared/prova-teorica';
+import { shouldPrintTermTemplate } from '@/shared/term-template';
 import { prepareTermTemplate, termPrintPage, TERM_PRINT_CSS } from '@/react-app/lib/term-template';
 import { preparePrintWindow, printQrCode } from '@/react-app/lib/print-window';
 
@@ -37,13 +38,17 @@ interface PrintableStepProcessProps {
     general_instructions?: string;
     categoria_atual?: string;
     aviso_reinicio?: boolean;
+    include_term?: boolean | null;
   };
 }
 
 export default function PrintableStepProcess({ isOpen, onClose, autoPrint, processData }: PrintableStepProcessProps) {
-  // Termo is a derived, read-only selection: it follows the saved practical exam,
-  // including processes reopened from the list, without introducing a fake DB step.
-  const termSelected = processData.selected_steps.some(step => step.type === 'prova_pratica');
+  const hasProvaPratica = processData.selected_steps.some(step => step.type === 'prova_pratica');
+  const termSelected = shouldPrintTermTemplate({
+    includeTerm: processData.include_term,
+    clientName: processData.client_name,
+    hasProvaPratica,
+  });
   const isAdicaoCategoria = processData.client_name === 'Adição de Categoria A' || processData.client_name === 'Adição de Categoria B';
   const showVehicleNotice = !processData.aviso_reinicio &&
     (processData.all_steps || processData.selected_steps).some(step =>
@@ -89,7 +94,13 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
         checkAgencyLogo(),
         fetchInstructions(),
         fetchCurrentUser(),
-        (termSelected ? prepareTermTemplate(processData.client_name) : Promise.resolve(null)).then(image => {
+        (termSelected
+          ? prepareTermTemplate(
+              processData.client_name,
+              typeof processData.include_term === 'boolean' ? processData.include_term : undefined
+            )
+          : Promise.resolve(null)
+        ).then(image => {
           if (generation === loadGeneration.current) setTermImage(image);
         }).catch((err: unknown) => {
           if (generation === loadGeneration.current) {

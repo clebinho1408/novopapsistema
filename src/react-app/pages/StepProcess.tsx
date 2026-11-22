@@ -7,6 +7,7 @@ import type { City, ProcessStep, Fee, Professional } from '@/shared/types';
 import { useDialog } from '@/react-app/components/Dialog';
 import { REHABILITATION_SERVICE, REHABILITATION_STEP_TYPES, isServiceStepAllowed, orderServiceSteps } from '@/shared/rehabilitation';
 import { resolvePrintInstructions } from '@/shared/print-instructions';
+import { serviceUsesTermTemplate } from '@/shared/term-template';
 
 const TOXICOLOGICO_RELEASE_DATE = new Date('2026-06-01');
 const TOXICOLOGICO_ATIVO = new Date() >= TOXICOLOGICO_RELEASE_DATE;
@@ -51,7 +52,8 @@ export default function StepProcess() {
     show_toxicologico_message: false,
     show_toxicologico_habilitacao: false,
     categoria_atual: '' as string,
-    aviso_reinicio: false
+    aviso_reinicio: false,
+    include_term: false
   });
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showEarModal, setShowEarModal] = useState(false);
@@ -254,7 +256,12 @@ export default function StepProcess() {
         }
       }
       
-      return { ...prev, selected_fees: newSelectedFees, selected_steps: newSelectedSteps };
+      return {
+        ...prev,
+        selected_fees: newSelectedFees,
+        selected_steps: newSelectedSteps,
+        include_term: serviceUsesTermTemplate(serviceName)
+      };
     });
   }, [formData.client_name, fees, processSteps]);
 
@@ -652,7 +659,8 @@ export default function StepProcess() {
       show_toxicologico_message: false,
       show_toxicologico_habilitacao: false,
       categoria_atual: '',
-      aviso_reinicio: false
+      aviso_reinicio: false,
+      include_term: false
     });
     // Reset to first step
     setCurrentStep(1);
@@ -741,7 +749,8 @@ export default function StepProcess() {
             show_toxicologico_message: formData.show_toxicologico_message,
             show_toxicologico_habilitacao: formData.show_toxicologico_habilitacao,
             categoria_atual: formData.categoria_atual || null,
-            aviso_reinicio: formData.aviso_reinicio
+            aviso_reinicio: formData.aviso_reinicio,
+            include_term: formData.include_term
           })
         });
       } finally {
@@ -800,6 +809,7 @@ export default function StepProcess() {
           show_toxicologico_habilitacao: formData.show_toxicologico_habilitacao,
           aviso_reinicio: formData.aviso_reinicio,
           categoria_atual: formData.categoria_atual || undefined,
+          include_term: formData.include_term,
           general_instructions: resolvePrintInstructions(formData.client_name, instructions)
         };
 
@@ -821,7 +831,8 @@ export default function StepProcess() {
           show_toxicologico_message: false,
           show_toxicologico_habilitacao: false,
           categoria_atual: '',
-          aviso_reinicio: false
+          aviso_reinicio: false,
+          include_term: false
         });
         
         // Refresh the process list
@@ -868,6 +879,7 @@ export default function StepProcess() {
           show_toxicologico_habilitacao: data.show_toxicologico_habilitacao || false,
           categoria_atual: data.categoria_atual || undefined,
           aviso_reinicio: data.aviso_reinicio || false,
+          include_term: typeof data.include_term === 'boolean' ? data.include_term : undefined,
           general_instructions: resolvePrintInstructions(process.client_name, instructions)
         };
         setCurrentPrintData(printData);
@@ -906,7 +918,7 @@ export default function StepProcess() {
 
   const handleCategoryModalCancel = () => {
     setShowCategoryModal(false);
-    setFormData(prev => ({ ...prev, client_name: '', categoria_atual: '', show_toxicologico_message: false }));
+    setFormData(prev => ({ ...prev, client_name: '', categoria_atual: '', show_toxicologico_message: false, include_term: false }));
   };
 
   const handleRehabilitationAnswer = (hasHeavyCategory: boolean) => {
@@ -929,7 +941,8 @@ export default function StepProcess() {
       selected_fees: [],
       categoria_atual: '',
       show_toxicologico_message: false,
-      show_toxicologico_habilitacao: false
+      show_toxicologico_habilitacao: false,
+      include_term: false
     }));
   };
 
@@ -1168,6 +1181,7 @@ export default function StepProcess() {
                             categoria_atual: '',
                             show_toxicologico_message: false,
                             aviso_reinicio: false,
+                            include_term: serviceUsesTermTemplate(newService),
                             second_city_id: newService ? '' : prev.second_city_id
                           }));
                         }}
@@ -1242,18 +1256,18 @@ export default function StepProcess() {
                         );
                       })}
 
-                      <label className="flex items-center space-x-3">
+                      <label className="flex items-center space-x-3 cursor-pointer">
                         <input
                           type="checkbox"
-                          checked={processSteps.some(step => step.type === 'prova_pratica' && formData.selected_steps.includes(step.id))}
-                          disabled
+                          checked={formData.include_term}
+                          onChange={(e) => setFormData(prev => ({ ...prev, include_term: e.target.checked }))}
                           aria-describedby="term-step-description"
-                          className="h-4 w-4 text-blue-600 border-gray-300 rounded cursor-not-allowed"
+                          className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                         />
                         <span className="text-gray-900">Termo</span>
                       </label>
                       <p id="term-step-description" className="text-sm text-gray-500">
-                        Selecionado automaticamente com Prova Prática. O modelo será impresso na segunda página quando estiver ativo e disponível para o serviço.
+                        Selecionado automaticamente para os serviços compatíveis e editável a qualquer momento. Quando marcado e ativo em Configurações, o modelo será impresso na segunda página.
                       </p>
 
                       {/* Toxicológico (1ª Habilitação) — nunca para Adição de Categoria ou Reabilitação */}
@@ -1506,6 +1520,14 @@ export default function StepProcess() {
                               </div>
                             );
                           })}
+                          {formData.include_term && (
+                            <div className="bg-gray-50 p-4 rounded-lg">
+                              <h4 className="font-medium text-gray-900">Termo</h4>
+                              <p className="mt-1 text-sm text-gray-600">
+                                Incluído na impressão (segunda página quando ativo em Configurações).
+                              </p>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

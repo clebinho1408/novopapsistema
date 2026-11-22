@@ -13,6 +13,17 @@ export function serviceUsesTermTemplate(service?: string): boolean {
   return TERM_TEMPLATE_SERVICES.some(name => name === service);
 }
 
+export function shouldPrintTermTemplate(params: {
+  includeTerm?: boolean | null;
+  clientName?: string;
+  hasProvaPratica: boolean;
+}): boolean {
+  if (typeof params.includeTerm === 'boolean') {
+    return params.includeTerm;
+  }
+  return params.hasProvaPratica && serviceUsesTermTemplate(params.clientName);
+}
+
 export interface TermTemplateSettings {
   enabled: boolean;
   filename: string | null;

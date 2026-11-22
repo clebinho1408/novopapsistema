@@ -106,6 +106,7 @@ interface StepProcessRow {
   show_toxicologico_habilitacao: boolean;
   categoria_atual: string | null;
   aviso_reinicio: boolean;
+  include_term: boolean | null;
 }
 
 interface ProcessSelectedStepRow {
@@ -1060,7 +1061,8 @@ class InMemoryD1PreparedStatement implements D1PreparedStatement {
         show_toxicologico_habilitacao: Boolean(p[6]),
         categoria_atual: (p[7] as string | null) ?? null,
         aviso_reinicio: Boolean(p[8]),
-        status: String(p[9] || 'completed'),
+        include_term: p[9] === null || p[9] === undefined ? null : Boolean(p[9]),
+        status: String(p[10] || 'completed'),
         created_at: ts,
         updated_at: ts,
       };
