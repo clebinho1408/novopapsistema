@@ -1,6 +1,6 @@
 import Layout from '@/react-app/components/Layout';
 import { useState, useEffect } from 'react';
-import { Users, Plus, Edit, Trash2, Search, Phone, MapPin, Clock, CalendarClock, X, Trash, EyeOff, Eye } from 'lucide-react';
+import { Users, Plus, Edit, Trash2, Search, Phone, MapPin, Clock, CalendarClock, X, Trash, EyeOff, Eye, Megaphone } from 'lucide-react';
 import type { Professional, City, ProfessionalType, AttendanceType } from '@/shared/types';
 import { PROFESSIONAL_TYPE_LABELS } from '@/shared/types';
 import { useDialog } from '@/react-app/components/Dialog';
@@ -9,6 +9,11 @@ import {
   sanitizeWorkingHoursMap,
   type WorkingHoursMap,
 } from '@/shared/working-hours';
+import {
+  QUICK_NOTICE_DURATIONS,
+  getActiveQuickNotice,
+  type QuickNoticeDurationHours,
+} from '@/shared/quick-notice';
 
 const DAYS = [
   { value: 'monday', label: 'Segunda' },
@@ -83,6 +88,13 @@ export default function Professionals() {
   const [hideDurationUnit, setHideDurationUnit] = useState<'hours' | 'days'>('hours');
   const [isHideLoading, setIsHideLoading] = useState(false);
 
+  // Quick notice modal state (2h / 4h / 8h)
+  const [isQuickNoticeModalOpen, setIsQuickNoticeModalOpen] = useState(false);
+  const [noticeProfessional, setNoticeProfessional] = useState<Professional | null>(null);
+  const [quickNoticeMessage, setQuickNoticeMessage] = useState('');
+  const [quickNoticeDuration, setQuickNoticeDuration] = useState<QuickNoticeDurationHours>(2);
+  const [isQuickNoticeLoading, setIsQuickNoticeLoading] = useState(false);
+
   useEffect(() => {
     fetchProfessionals();
     fetchCities();
@@ -106,9 +118,31 @@ export default function Professionals() {
     }
   };
 
+  const upsertProfessionalInState = (saved: Professional) => {
+    const resolvedCityName =
+      saved.city_name ||
+      cities.find((c) => c.id === saved.city_id)?.name ||
+      '';
+    const enriched: Professional = {
+      ...saved,
+      city_name: resolvedCityName,
+    };
+    setProfessionals((prev) => {
+      const exists = prev.some((p) => p.id === enriched.id);
+      const next = exists
+        ? prev.map((p) => (p.id === enriched.id ? { ...p, ...enriched } : p))
+        : [...prev, enriched];
+      return [...next].sort((a, b) => a.name.localeCompare(b.name));
+    });
+  };
+
   const fetchProfessionals = async () => {
     try {
-      const response = await fetch('/api/professionals', { credentials: 'include' });
+      const response = await fetch(`/api/professionals?_t=${Date.now()}`, {
+        credentials: 'include',
+        cache: 'no-store',
+      });
+      if (!response.ok) return;
       const data = await response.json();
       setProfessionals(data);
     } catch (error) {
@@ -187,10 +221,11 @@ export default function Professionals() {
       });
 
       if (response.ok) {
-        await response.json();
-        fetchProfessionals();
+        const saved: Professional = await response.json();
+        upsertProfessionalInState(saved);
         setIsModalOpen(false);
         resetForm();
+        await fetchProfessionals();
       } else {
         const errorData = await response.json().catch(() => ({}));
         await showAlert(errorData.error || `Erro HTTP ${response.status}`, 'error');
@@ -206,7 +241,11 @@ export default function Professionals() {
     if (!await showConfirm('Tem certeza que deseja excluir este credenciado?', 'Excluir Credenciado', 'error')) return;
     try {
       const response = await fetch(`/api/professionals/${id}`, { method: 'DELETE', credentials: 'include' });
-      if (response.ok) { fetchProfessionals(); await showAlert('Credenciado excluído com sucesso!', 'success'); }
+      if (response.ok) {
+        setProfessionals(prev => prev.filter(p => p.id !== id));
+        await fetchProfessionals();
+        await showAlert('Credenciado excluído com sucesso!', 'success');
+      }
       else await showAlert('Erro ao excluir credenciado. Tente novamente.', 'error');
     } catch (error) {
       await showAlert(`Erro ao excluir: ${error instanceof Error ? error.message : 'Erro de conexão'}`, 'error');
@@ -342,7 +381,8 @@ export default function Professionals() {
         }),
       });
       if (response.ok) {
-        const updated = await response.json();
+        const updated: Professional = await response.json();
+        upsertProfessionalInState(updated);
         setHidingProfessional(prev => (prev ? { ...prev, ...updated } : null));
         await fetchProfessionals();
         setIsHideModalOpen(false);
@@ -370,6 +410,8 @@ export default function Professionals() {
         credentials: 'include',
       });
       if (response.ok) {
+        const updated: Professional = await response.json();
+        upsertProfessionalInState(updated);
         await fetchProfessionals();
         setIsHideModalOpen(false);
         await showAlert('Ocultação cancelada! O credenciado já aparece novamente no Passo a Passo.', 'success');
@@ -381,6 +423,77 @@ export default function Professionals() {
       await showAlert('Erro de conexão.', 'error');
     } finally {
       setIsHideLoading(false);
+    }
+  };
+
+  const openQuickNoticeModal = (professional: Professional) => {
+    const activeNotice = getActiveQuickNotice(professional);
+    setNoticeProfessional(professional);
+    setQuickNoticeMessage(activeNotice || '');
+    setQuickNoticeDuration(2);
+    setIsQuickNoticeModalOpen(true);
+  };
+
+  const handleQuickNoticeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!noticeProfessional) return;
+    const trimmed = quickNoticeMessage.trim();
+    if (!trimmed) {
+      await showAlert('Informe a mensagem do aviso rápido.', 'warning');
+      return;
+    }
+
+    setIsQuickNoticeLoading(true);
+    try {
+      const response = await fetch(`/api/professionals/${noticeProfessional.id}/quick-notice`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          message: trimmed,
+          duration_hours: quickNoticeDuration,
+        }),
+      });
+      if (response.ok) {
+        const updated: Professional = await response.json();
+        upsertProfessionalInState(updated);
+        setNoticeProfessional(updated);
+        await fetchProfessionals();
+        setIsQuickNoticeModalOpen(false);
+        await showAlert(`Aviso rápido ativado por ${quickNoticeDuration}h!`, 'success');
+      } else {
+        const err = await response.json().catch(() => ({}));
+        await showAlert(err.error || 'Erro ao salvar aviso rápido.', 'error');
+      }
+    } catch {
+      await showAlert('Erro de conexão.', 'error');
+    } finally {
+      setIsQuickNoticeLoading(false);
+    }
+  };
+
+  const handleClearQuickNotice = async () => {
+    if (!noticeProfessional) return;
+    setIsQuickNoticeLoading(true);
+    try {
+      const response = await fetch(`/api/professionals/${noticeProfessional.id}/quick-notice`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (response.ok) {
+        const updated: Professional = await response.json();
+        upsertProfessionalInState(updated);
+        await fetchProfessionals();
+        setIsQuickNoticeModalOpen(false);
+        await showAlert('Aviso rápido removido.', 'success');
+      } else {
+        const err = await response.json().catch(() => ({}));
+        await showAlert(err.error || 'Erro ao remover aviso rápido.', 'error');
+      }
+    } catch {
+      await showAlert('Erro de conexão.', 'error');
+    } finally {
+      setIsQuickNoticeLoading(false);
     }
   };
 
@@ -461,6 +574,16 @@ export default function Professionals() {
                                     Oculto no Passo a Passo até {formatScheduledAt(professional.hidden_until)}
                                   </span>
                                 )}
+                                {(() => {
+                                  const activeNotice = getActiveQuickNotice(professional);
+                                  if (!activeNotice || !professional.quick_notice_until) return null;
+                                  return (
+                                    <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                                      <Megaphone className="w-3 h-3" />
+                                      Aviso ({formatRemainingTime(professional.quick_notice_until)} restantes): {activeNotice}
+                                    </span>
+                                  );
+                                })()}
                               </div>
                             </div>
                           </div>
@@ -496,6 +619,20 @@ export default function Professionals() {
                         {(userRole === 'administrator' || userRole === 'supervisor') && (
                           <div className="flex space-x-1 ml-4">
                             <button
+                              type="button"
+                              title={getActiveQuickNotice(professional) ? 'Aviso rápido ativo — editar ou remover' : 'Criar aviso rápido para impressão (2h, 4h, 8h)'}
+                              aria-label={getActiveQuickNotice(professional) ? 'Gerenciar aviso rápido' : 'Criar aviso rápido'}
+                              onClick={() => openQuickNoticeModal(professional)}
+                              className={`p-2 rounded-lg transition-colors ${
+                                getActiveQuickNotice(professional)
+                                  ? 'text-blue-600 bg-blue-50 hover:bg-blue-100'
+                                  : 'text-gray-400 hover:text-blue-600'
+                              }`}
+                            >
+                              <Megaphone className="w-4 h-4" />
+                            </button>
+                            <button
+                              type="button"
                               title={isProfessionalHidden(professional) ? 'Oculto no Passo a Passo — gerenciar ou cancelar' : 'Ocultar temporariamente no Passo a Passo'}
                               aria-label={isProfessionalHidden(professional) ? 'Gerenciar ocultação no Passo a Passo' : 'Ocultar temporariamente no Passo a Passo'}
                               onClick={() => openHideModal(professional)}
@@ -508,7 +645,9 @@ export default function Professionals() {
                               <EyeOff className="w-4 h-4" />
                             </button>
                             <button
+                              type="button"
                               title="Agendar alteração"
+                              aria-label="Agendar alteração"
                               onClick={() => openScheduleModal(professional)}
                               className="p-2 text-gray-400 hover:text-purple-600"
                             >
@@ -1114,6 +1253,119 @@ export default function Professionals() {
                   >
                     <EyeOff className="w-4 h-4" />
                     <span>{isHideLoading ? 'Salvando...' : isProfessionalHidden(hidingProfessional) ? 'Atualizar Período' : 'Ocultar Credenciado'}</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Notice Modal (2h / 4h / 8h) */}
+      {isQuickNoticeModalOpen && noticeProfessional && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg w-full max-w-md mx-4 overflow-hidden shadow-xl">
+            <div className="flex items-center justify-between px-6 py-4 border-b">
+              <div className="flex items-center space-x-2">
+                <Megaphone className="w-5 h-5 text-blue-600" />
+                <h2 className="text-lg font-semibold text-gray-900">Aviso Rápido na Impressão</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsQuickNoticeModalOpen(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="px-6 py-4 space-y-4">
+              <p className="text-sm text-gray-600">
+                Credenciado: <strong>{noticeProfessional.name}</strong>
+              </p>
+
+              {getActiveQuickNotice(noticeProfessional) && noticeProfessional.quick_notice_until && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-2">
+                  <div className="text-sm text-blue-900">
+                    <p className="font-medium">Aviso ativo: {getActiveQuickNotice(noticeProfessional)}</p>
+                    <p className="text-xs text-blue-800 mt-0.5">
+                      Expira em <strong>{formatScheduledAt(noticeProfessional.quick_notice_until)}</strong> ({formatRemainingTime(noticeProfessional.quick_notice_until)} restantes)
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleClearQuickNotice}
+                    disabled={isQuickNoticeLoading}
+                    className="w-full py-2 px-3 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 disabled:opacity-50"
+                  >
+                    {isQuickNoticeLoading ? 'Removendo...' : 'Remover Aviso'}
+                  </button>
+                </div>
+              )}
+
+              <form onSubmit={handleQuickNoticeSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Texto do aviso rápido *
+                  </label>
+                  <textarea
+                    value={quickNoticeMessage}
+                    onChange={(e) => setQuickNoticeMessage(e.target.value)}
+                    placeholder="Ex: Hoje 22/11 fechamos mais cedo"
+                    maxLength={240}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Sai em texto pequeno dentro do bloco deste credenciado na impressão do Passo a Passo.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Duração do aviso *
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {QUICK_NOTICE_DURATIONS.map((hours) => (
+                      <button
+                        key={hours}
+                        type="button"
+                        onClick={() => setQuickNoticeDuration(hours)}
+                        className={`py-2 px-3 rounded-lg border text-sm font-medium transition-colors ${
+                          quickNoticeDuration === hours
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        {hours} horas
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded-lg p-3">
+                  Ficará visível na impressão até:{' '}
+                  <strong>
+                    {formatScheduledAt(new Date(Date.now() + quickNoticeDuration * 3600_000).toISOString())}
+                  </strong>
+                </div>
+
+                <div className="flex justify-end space-x-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsQuickNoticeModalOpen(false)}
+                    className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    Fechar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isQuickNoticeLoading}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center space-x-2"
+                  >
+                    <Megaphone className="w-4 h-4" />
+                    <span>{isQuickNoticeLoading ? 'Salvando...' : 'Ativar Aviso'}</span>
                   </button>
                 </div>
               </form>

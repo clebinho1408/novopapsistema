@@ -1,10 +1,15 @@
-import { useState, useEffect, useRef, lazy } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, lazy } from 'react';
 import type { ProcessStep, Professional, Fee, City } from '@/shared/types';
 import {
   REHABILITATION_SERVICE, REHABILITATION_VEHICLE_NOTICE,
   isServiceStepAllowed, shouldShowRehabilitationVehicleNotice, orderServiceSteps
 } from '@/shared/rehabilitation';
-import { resolvePrintInstructions } from '@/shared/print-instructions';
+import {
+  resolveInstructionCandidates,
+  resolvePrintInstructions,
+  type InstructionCandidates,
+} from '@/shared/print-instructions';
+import { escapeQuickNoticeHtml, getActiveQuickNotice } from '@/shared/quick-notice';
 import { formatWorkingSchedule } from '@/shared/working-hours';
 import {
   PROVA_TEORICA_SCHEDULE_TEXT,
@@ -56,6 +61,12 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
         processData.selected_steps.some(selected => selected.id === step.id)));
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [generalInstructions, setGeneralInstructions] = useState<string>('');
+  const [instructionCandidates, setInstructionCandidates] = useState<InstructionCandidates>({
+    spacious: '',
+    compact: '',
+    hasAlternative: false,
+  });
+  const [previewUseCompact, setPreviewUseCompact] = useState(false);
   const [emailModal, setEmailModal] = useState({ isOpen: false, email: '' });
   const [currentUserName, setCurrentUserName] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
@@ -65,16 +76,31 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
   const [manualPrintRequired, setManualPrintRequired] = useState(false);
   const loadGeneration = useRef(0);
   const autoPrintFiredRef = useRef(false);
+  const previewSheetRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isOpen) {
       autoPrintFiredRef.current = false;
       setManualPrintRequired(false);
       setSkipTerm(false);
+      setPreviewUseCompact(false);
       loadAllData();
     }
     return () => { loadGeneration.current++; };
   }, [isOpen, processData.client_name, termSelected]);
+
+  useLayoutEffect(() => {
+    if (!isOpen || isLoading || autoPrint || !instructionCandidates.hasAlternative || previewUseCompact) {
+      return;
+    }
+    const sheet = previewSheetRef.current;
+    if (!sheet) return;
+    const width = sheet.clientWidth || 794;
+    const onePageHeightBudget = Math.round(width * 1.414);
+    if (sheet.scrollHeight > onePageHeightBudget) {
+      setPreviewUseCompact(true);
+    }
+  }, [isOpen, isLoading, autoPrint, instructionCandidates, previewUseCompact, processData]);
 
   // Auto-print: dispara impressão assim que os dados carregam
   useEffect(() => {
@@ -135,9 +161,15 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
 
   const fetchInstructions = async () => {
     try {
-      const response = await fetch('/api/instructions', { credentials: 'include' });
+      const response = await fetch(`/api/instructions?_t=${Date.now()}`, {
+        credentials: 'include',
+        cache: 'no-store',
+      });
       const data = await response.json();
-      const resolved = resolvePrintInstructions(processData.client_name, data);
+      const candidates = resolveInstructionCandidates(processData.client_name, data);
+      setInstructionCandidates(candidates);
+      setPreviewUseCompact(false);
+      const resolved = candidates.spacious || resolvePrintInstructions(processData.client_name, data);
       setGeneralInstructions(resolved);
     } catch (error) {
       console.error('Error fetching instructions:', error);
@@ -913,6 +945,12 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                               return workingInfo;
                             })()}
                             ${professional.observations ? `<div class="professional-info" style="margin-top: 6px;">${professional.observations}</div>` : ''}
+                            ${(() => {
+                              const quickNotice = getActiveQuickNotice(professional);
+                              return quickNotice
+                                ? `<div class="professional-info professional-quick-notice" style="margin-top: 4px; font-size: 9.5px; line-height: 1.25; color: #111827;"><strong>Aviso:</strong> ${escapeQuickNoticeHtml(quickNotice)}</div>`
+                                : '';
+                            })()}
                             ${step.type === 'medico' && processData.show_toxicologico_message ? `
                               <div style="margin-top: 6px; text-align: center;">
                                 <div style="font-size: 11px; font-weight: bold; color: black;">
@@ -1105,76 +1143,92 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
         </div>
 
         <!-- General Instructions -->
-        ${generalInstructions ? `
-        <div class="instructions">
+        ${(() => {
+          const primaryHtml = instructionCandidates.spacious || generalInstructions;
+          const compactHtml = instructionCandidates.hasAlternative ? instructionCandidates.compact : '';
+          if (!primaryHtml) return '';
+          return `
+        <div class="instructions" data-selected-instruction="spacious">
             <div class="instructions-content">
-                ${generalInstructions}
+                <div id="instruction-primary">${primaryHtml}</div>
+                ${compactHtml ? `<div id="instruction-compact" style="display: none;">${compactHtml}</div>` : ''}
             </div>
         </div>
-        ` : ''}
+        `;
+        })()}
 
     </div>
     ${termPrintPage(skipTerm ? null : termImage)}
     <style>${TERM_PRINT_CSS}</style>
     <script>
-        // Auto-adjust font size to fit content in one page
+        // Smart space-based instruction selection + auto-adjust font size to fit content in one page
         window.addEventListener('DOMContentLoaded', function() {
             const container = document.querySelector('.container');
+            const instructionsSection = document.querySelector('.instructions');
             const instructions = document.querySelector('.instructions-content');
+            const primaryEl = document.getElementById('instruction-primary');
+            const compactEl = document.getElementById('instruction-compact');
             
             if (!container || !instructions) {
                 if (container) container.setAttribute('data-adjusted', 'true');
                 return;
             }
 
-            // Reset all paragraph/list margins immediately on load
-            instructions.querySelectorAll('p, li, ul, ol, br, span').forEach(function(el) {
-                el.style.setProperty('margin', '0', 'important');
-                el.style.setProperty('padding', '0', 'important');
-                el.style.setProperty('line-height', '1.1', 'important');
-            });
+            function resetInstructionMargins() {
+                instructions.querySelectorAll('p, li, ul, ol, br, span').forEach(function(el) {
+                    el.style.setProperty('margin', '0', 'important');
+                    el.style.setProperty('padding', '0', 'important');
+                    el.style.setProperty('line-height', '1.1', 'important');
+                });
+            }
+
+            resetInstructionMargins();
             
             // Maximum height in pixels (287mm = ~1084px at 96dpi)
             const maxHeight = 1084;
-            let fontSize = 14; // Start with default size
-            let attempts = 0;
-            const maxAttempts = 50; // Increased attempts
-            
-            function adjustFontSize() {
-                const currentHeight = container.offsetHeight;
-                
-                if (currentHeight > maxHeight && fontSize > 5 && attempts < maxAttempts) {
-                    fontSize -= 0.3; // Smaller steps for finer control
+            const minComfortablePrimaryFont = 10.5;
+            let fontSize = 13.5;
+
+            function shrinkToFit(minFont, stopWhenCompactBlockSmall) {
+                let attempts = 0;
+                const maxAttempts = 50;
+                instructions.style.setProperty('font-size', fontSize + 'px', 'important');
+                instructions.style.setProperty('line-height', '1.1', 'important');
+                resetInstructionMargins();
+                while (container.offsetHeight > maxHeight && fontSize > minFont && attempts < maxAttempts) {
+                    if (stopWhenCompactBlockSmall && instructions.offsetHeight <= 36 && fontSize <= 10.5) {
+                        break;
+                    }
+                    fontSize = Math.max(minFont, Number((fontSize - 0.3).toFixed(2)));
                     instructions.style.setProperty('font-size', fontSize + 'px', 'important');
                     instructions.style.setProperty('line-height', '1.1', 'important');
-                    // Reset margins on all child elements
-                    instructions.querySelectorAll('p, li, ul, ol, br').forEach(function(el) {
-                        el.style.setProperty('margin', '0', 'important');
-                        el.style.setProperty('padding', '0', 'important');
-                        el.style.setProperty('line-height', '1.1', 'important');
-                    });
+                    resetInstructionMargins();
                     attempts++;
-                    
-                    // Reading layout applies the size immediately, including
-                    // in background popups where animation frames are throttled.
-                    adjustFontSize();
-                } else {
-                    // Check if we succeeded or exhausted attempts
-                    if (currentHeight <= maxHeight) {
-                        // Success!
-                        container.setAttribute('data-adjusted', 'true');
-                    } else if (fontSize <= 5) {
-                        // Try one last time with tighter line-height
-                        instructions.style.setProperty('line-height', '1.0', 'important');
-                        container.setAttribute('data-adjusted', 'true');
-                    } else {
-                        // Mark as complete regardless of fit
-                        container.setAttribute('data-adjusted', 'true');
-                    }
                 }
             }
-            
-            adjustFontSize();
+
+            if (primaryEl && compactEl) {
+                shrinkToFit(minComfortablePrimaryFont, false);
+                if (container.offsetHeight > maxHeight) {
+                    // Not enough space for the fuller instruction at a comfortable size: switch to compact
+                    primaryEl.style.display = 'none';
+                    compactEl.style.display = 'block';
+                    if (instructionsSection) {
+                        instructionsSection.setAttribute('data-selected-instruction', 'compact');
+                    }
+                    fontSize = 12;
+                    shrinkToFit(8.5, true);
+                } else if (instructionsSection) {
+                    instructionsSection.setAttribute('data-selected-instruction', 'spacious');
+                }
+            } else {
+                shrinkToFit(7, true);
+            }
+
+            if (container.offsetHeight > maxHeight && fontSize <= 8.5 && instructions.offsetHeight > 45) {
+                instructions.style.setProperty('line-height', '1.0', 'important');
+            }
+            container.setAttribute('data-adjusted', 'true');
         });
 
         // Ocultar ponto e vírgula apenas na impressão
@@ -1343,6 +1397,13 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
         
         if (professional.observations) {
           content += `OBSERVAÇÕES: ${professional.observations}\n`;
+        }
+
+        {
+          const quickNotice = getActiveQuickNotice(professional);
+          if (quickNotice) {
+            content += `AVISO: ${quickNotice}\n`;
+          }
         }
         
         // Taxa vinculada
@@ -1549,7 +1610,7 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
 
           {/* Preview Content */}
         <div className="p-8">
-          <div className="max-w-none">
+          <div ref={previewSheetRef} className="max-w-none">
             {/* Header */}
             <div className="flex items-center mb-8 pb-4 border-b-2 border-black">
               <div className="flex items-center space-x-4">
@@ -1704,6 +1765,18 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                               </p>
                             </div>
                           )}
+
+                          {(() => {
+                            const quickNotice = getActiveQuickNotice(professional);
+                            return quickNotice ? (
+                              <p
+                                className="text-[11px] leading-snug text-gray-900 mt-1.5"
+                                data-professional-quick-notice="true"
+                              >
+                                <strong>Aviso:</strong> {quickNotice}
+                              </p>
+                            ) : null;
+                          })()}
                           
                           {(() => {
                             // Buscar taxa vinculada a este tipo de profissional
@@ -1914,6 +1987,17 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
                                 <span className="font-bold">OBS:</span> {professional.observations}
                               </div>
                             )}
+                            {(() => {
+                              const quickNotice = getActiveQuickNotice(professional);
+                              return quickNotice ? (
+                                <p
+                                  className="text-[11px] leading-snug text-gray-900 mt-1"
+                                  data-professional-quick-notice="true"
+                                >
+                                  <strong>Aviso:</strong> {quickNotice}
+                                </p>
+                              ) : null;
+                            })()}
                           </div>
                         ) : (
                           <div className="flex items-center justify-center h-12">
@@ -1944,15 +2028,23 @@ export default function PrintableStepProcess({ isOpen, onClose, autoPrint, proce
             </div>
 
             {/* General Instructions */}
-            {generalInstructions && (
-              <div className="border-t-2 border-black pt-6">
-                <div className="leading-[1.2]" style={{ fontSize: 'clamp(10px, 1.5vw, 15px)' }}>
-                  <div dangerouslySetInnerHTML={{ 
-                    __html: generalInstructions
-                  }} />
+            {(() => {
+              const previewHtml =
+                previewUseCompact && instructionCandidates.compact
+                  ? instructionCandidates.compact
+                  : instructionCandidates.spacious || generalInstructions;
+              if (!previewHtml) return null;
+              return (
+                <div
+                  className="border-t-2 border-black pt-6"
+                  data-selected-instruction={previewUseCompact ? 'compact' : 'spacious'}
+                >
+                  <div className="leading-[1.2]" style={{ fontSize: 'clamp(10px, 1.5vw, 15px)' }}>
+                    <div dangerouslySetInnerHTML={{ __html: previewHtml }} />
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Footer */}
             <div className="mt-8 pt-4 border-t border-black text-center">

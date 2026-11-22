@@ -7,10 +7,24 @@ export const TERM_TEMPLATE_SERVICES = [
   'Adição de Categoria B',
 ] as const;
 
+export const HIDE_TERM_SERVICES = [
+  'Alteração de Dados',
+  'Renovação',
+  'Transferência + Renovação',
+  'Transferência + Alteração de Dados',
+  'Transferência + Definitiva',
+  'Estrangeiro',
+] as const;
+
 export const TERM_TEMPLATE_MAX_BYTES = 5 * 1024 * 1024;
 
 export function serviceUsesTermTemplate(service?: string): boolean {
   return TERM_TEMPLATE_SERVICES.some(name => name === service);
+}
+
+export function shouldHideTermStep(service?: string): boolean {
+  if (!service) return false;
+  return HIDE_TERM_SERVICES.some(name => name === service);
 }
 
 export function shouldPrintTermTemplate(params: {

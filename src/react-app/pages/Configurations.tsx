@@ -423,7 +423,10 @@ function InstructionsConfiguration() {
   const fetchInstructions = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/instructions', { credentials: 'include' });
+      const response = await fetch(`/api/instructions?_t=${Date.now()}`, {
+        credentials: 'include',
+        cache: 'no-store',
+      });
       const data = await response.json();
       setGeneralInstructions(data.general_instructions || '');
       setInstructionsPrimeiraHabilitacao(data.instructions_primeira_habilitacao || '');
@@ -479,35 +482,37 @@ function InstructionsConfiguration() {
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
       <div className="px-6 py-4 border-b border-gray-200">
         <h2 className="text-lg font-medium text-gray-900">Instruções</h2>
-        <p className="text-sm text-gray-600">Configure instruções e orientações para os processos</p>
+        <p className="text-sm text-gray-600">
+          As duas instruções são usadas de forma inteligente na impressão do Passo a Passo: quando houver espaço na folha, o sistema imprime a mais completa; quando o espaço for menor, alterna automaticamente para a mais compacta.
+        </p>
       </div>
       <div className="p-6">
         <div className="space-y-8">
           <div>
             <h3 className="text-sm font-semibold text-gray-700 mb-2">
-              Instruções — Outros Serviços
+              Instrução 1 — Completa / Padrão
             </h3>
             <p className="text-xs text-gray-500 mb-3">
-              Exibidas na impressão dos demais serviços ou quando nenhum serviço estiver selecionado.
+              Opção padrão para impressões com mais espaço disponível (ou quando usada sozinha).
             </p>
             <RichTextEditor
               value={generalInstructions}
               onChange={setGeneralInstructions}
-              placeholder="Digite as instruções para outros serviços..."
+              placeholder="Digite a instrução completa ou padrão..."
               height={350}
             />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-gray-700 mb-2">
-              Instruções — 1º Habilitação / Prova Prática
+              Instrução 2 — Compacta / Alternativa
             </h3>
             <p className="text-xs text-gray-500 mb-3">
-              Exibidas na impressão somente para: 1º Habilitação, Reinicio (1º Habilitação), Reabilitação, Adição de Categoria A e Adição de Categoria B.
+              Alternativa selecionada automaticamente quando houver pouco espaço na página (ou vice-versa conforme o tamanho de cada texto).
             </p>
             <RichTextEditor
               value={instructionsPrimeiraHabilitacao}
               onChange={setInstructionsPrimeiraHabilitacao}
-              placeholder="Digite as instruções para 1º Habilitação / Prova Prática..."
+              placeholder="Digite a instrução alternativa/compacta..."
               height={350}
             />
           </div>

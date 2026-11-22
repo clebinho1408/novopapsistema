@@ -1,8 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  HIDE_TERM_SERVICES,
   TERM_TEMPLATE_SERVICES,
   serviceUsesTermTemplate,
+  shouldHideTermStep,
   shouldPrintTermTemplate,
 } from './term-template';
 
@@ -18,11 +20,30 @@ test('auto-selects Termo only for the six configured services', () => {
   assert.deepEqual([...TERM_TEMPLATE_SERVICES], expected);
   for (const service of expected) {
     assert.equal(serviceUsesTermTemplate(service), true);
+    assert.equal(shouldHideTermStep(service), false);
   }
   assert.equal(serviceUsesTermTemplate('Renovação'), false);
   assert.equal(serviceUsesTermTemplate('Alteração de Dados'), false);
   assert.equal(serviceUsesTermTemplate(''), false);
   assert.equal(serviceUsesTermTemplate(undefined), false);
+});
+
+test('hides Termo only for the six non-term services and keeps it visible when empty', () => {
+  const expectedHidden = [
+    'Alteração de Dados',
+    'Renovação',
+    'Transferência + Renovação',
+    'Transferência + Alteração de Dados',
+    'Transferência + Definitiva',
+    'Estrangeiro',
+  ];
+  assert.deepEqual([...HIDE_TERM_SERVICES], expectedHidden);
+  for (const service of expectedHidden) {
+    assert.equal(shouldHideTermStep(service), true);
+    assert.equal(serviceUsesTermTemplate(service), false);
+  }
+  assert.equal(shouldHideTermStep(''), false);
+  assert.equal(shouldHideTermStep(undefined), false);
 });
 
 test('explicit includeTerm overrides Prova Prática and service restrictions', () => {

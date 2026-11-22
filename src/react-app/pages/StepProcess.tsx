@@ -7,7 +7,7 @@ import type { City, ProcessStep, Fee, Professional } from '@/shared/types';
 import { useDialog } from '@/react-app/components/Dialog';
 import { REHABILITATION_SERVICE, REHABILITATION_STEP_TYPES, isServiceStepAllowed, orderServiceSteps } from '@/shared/rehabilitation';
 import { resolvePrintInstructions } from '@/shared/print-instructions';
-import { serviceUsesTermTemplate } from '@/shared/term-template';
+import { serviceUsesTermTemplate, shouldHideTermStep } from '@/shared/term-template';
 
 const TOXICOLOGICO_RELEASE_DATE = new Date('2026-06-01');
 const TOXICOLOGICO_ATIVO = new Date() >= TOXICOLOGICO_RELEASE_DATE;
@@ -15,6 +15,7 @@ const TOXICOLOGICO_ATIVO = new Date() >= TOXICOLOGICO_RELEASE_DATE;
 export default function StepProcess() {
   const [currentStep, setCurrentStep] = useState(1);
   const saveButtonRef = useRef<HTMLButtonElement>(null);
+  const step2BottomRef = useRef<HTMLDivElement>(null);
   const { showAlert, DialogComponent } = useDialog();
   const [cities, setCities] = useState<City[]>([]);
   const [processSteps, setProcessSteps] = useState<ProcessStep[]>([]);
@@ -76,13 +77,23 @@ export default function StepProcess() {
     if (!showForm) return;
     const interval = setInterval(() => {
       setNowTick(Date.now());
-      fetch('/api/professionals', { credentials: 'include' })
+      fetch(`/api/professionals?_t=${Date.now()}`, { credentials: 'include', cache: 'no-store' })
         .then(res => res.ok ? res.json() : null)
         .then(data => { if (data) setProfessionals(data); })
         .catch(() => {});
     }, 15000);
     return () => clearInterval(interval);
   }, [showForm]);
+
+  // Scroll automático para baixo em "Selecione as Etapas Necessárias" quando qualquer serviço estiver selecionado
+  useEffect(() => {
+    if (showForm && currentStep === 2 && formData.client_name) {
+      const timer = setTimeout(() => {
+        step2BottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [showForm, currentStep, formData.client_name]);
 
   // Scroll automático para o botão Salvar e Imprimir ao entrar no passo 4 (Resumo)
   useEffect(() => {
@@ -359,7 +370,7 @@ export default function StepProcess() {
 
   const openNewProcessForm = () => {
     setNowTick(Date.now());
-    fetch('/api/professionals', { credentials: 'include' })
+    fetch(`/api/professionals?_t=${Date.now()}`, { credentials: 'include', cache: 'no-store' })
       .then(res => res.ok ? res.json() : null)
       .then(data => { if (data) setProfessionals(data); })
       .catch(() => {});
@@ -372,8 +383,8 @@ export default function StepProcess() {
         fetch('/api/cities', { credentials: 'include' }),
         fetch('/api/process-steps?active_only=true', { credentials: 'include' }),
         fetch(`/api/fees?t=${Date.now()}`, { credentials: 'include', cache: 'no-cache' }),
-        fetch('/api/professionals', { credentials: 'include' }),
-        fetch('/api/instructions', { credentials: 'include' })
+        fetch(`/api/professionals?_t=${Date.now()}`, { credentials: 'include', cache: 'no-store' }),
+        fetch(`/api/instructions?_t=${Date.now()}`, { credentials: 'include', cache: 'no-store' })
       ]);
 
       const [citiesData, stepsData, feesData, profData, instructionsData] = await Promise.all([
@@ -1256,19 +1267,23 @@ export default function StepProcess() {
                         );
                       })}
 
-                      <label className="flex items-center space-x-3 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={formData.include_term}
-                          onChange={(e) => setFormData(prev => ({ ...prev, include_term: e.target.checked }))}
-                          aria-describedby="term-step-description"
-                          className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                        />
-                        <span className="text-gray-900">Termo</span>
-                      </label>
-                      <p id="term-step-description" className="text-sm text-gray-500">
-                        Selecionado automaticamente para os serviços compatíveis e editável a qualquer momento. Quando marcado e ativo em Configurações, o modelo será impresso na segunda página.
-                      </p>
+                      {!shouldHideTermStep(formData.client_name) && (
+                        <>
+                          <label className="flex items-center space-x-3 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={formData.include_term}
+                              onChange={(e) => setFormData(prev => ({ ...prev, include_term: e.target.checked }))}
+                              aria-describedby="term-step-description"
+                              className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            />
+                            <span className="text-gray-900">Termo</span>
+                          </label>
+                          <p id="term-step-description" className="text-sm text-gray-500">
+                            Selecionado automaticamente para os serviços compatíveis e editável a qualquer momento. Quando marcado e ativo em Configurações, o modelo será impresso na segunda página.
+                          </p>
+                        </>
+                      )}
 
                       {/* Toxicológico (1ª Habilitação) — nunca para Adição de Categoria ou Reabilitação */}
                       {TOXICOLOGICO_ATIVO && formData.client_name !== REHABILITATION_SERVICE && !(formData.client_name === 'Adição de Categoria A' || formData.client_name === 'Adição de Categoria B') && (() => {
@@ -1535,7 +1550,7 @@ export default function StepProcess() {
                 )}
 
                 {/* Navigation buttons */}
-                <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
+                <div ref={step2BottomRef} className="flex justify-between mt-8 pt-6 border-t border-gray-200">
                   <div>
                     {currentStep > 1 && (
                       <button

@@ -6,6 +6,12 @@ import bcrypt from "bcryptjs";
 import { termTemplateRoutes } from './term-template';
 import { isServiceStepAllowed } from "../shared/rehabilitation";
 import {
+  computeQuickNoticeUntil,
+  escapeQuickNoticeHtml,
+  getActiveQuickNotice,
+  isValidQuickNoticeDuration,
+} from "../shared/quick-notice";
+import {
   CreateCityRequestSchema,
   CreateProfessionalRequestSchema,
 } from "../shared/types";
@@ -569,11 +575,43 @@ async function ensureHiddenUntilColumn(db: { prepare: (sql: string) => { run: ()
   }
 }
 
+let quickNoticeColumnsEnsured = false;
+async function ensureQuickNoticeColumns(db: { prepare: (sql: string) => { run: () => Promise<unknown> } }) {
+  if (quickNoticeColumnsEnsured) return;
+  try {
+    await db.prepare("ALTER TABLE professionals ADD COLUMN IF NOT EXISTS quick_notice TEXT").run();
+    await db.prepare("ALTER TABLE professionals ADD COLUMN IF NOT EXISTS quick_notice_until TIMESTAMPTZ").run();
+    quickNoticeColumnsEnsured = true;
+  } catch {
+    try {
+      await db.prepare("ALTER TABLE professionals ADD COLUMN quick_notice TEXT").run();
+    } catch {
+      // ignore if already exists
+    }
+    try {
+      await db.prepare("ALTER TABLE professionals ADD COLUMN quick_notice_until DATETIME").run();
+    } catch {
+      // ignore if already exists
+    }
+    quickNoticeColumnsEnsured = true;
+  }
+}
+
+async function fetchProfessionalWithCity(db: any, id: number, agencyId: number) {
+  return db.prepare(`
+    SELECT p.*, c.name as city_name
+    FROM professionals p
+    JOIN cities c ON p.city_id = c.id
+    WHERE p.id = ? AND p.agency_id = ?
+  `).bind(id, agencyId).first();
+}
+
 app.get("/api/professionals", systemAuthMiddleware, async (c) => {
   const user = getUserWithAgency(c);
   if (!user) return c.json({ error: "User not found" }, 404);
 
   await ensureHiddenUntilColumn(c.env.DB);
+  await ensureQuickNoticeColumns(c.env.DB);
 
   // Auto-apply any scheduled changes that are due
   try {
@@ -619,13 +657,21 @@ app.get("/api/professionals", systemAuthMiddleware, async (c) => {
     // Silently continue if table doesn't exist yet
   }
 
-  // Auto-clear expired temporary hide periods
+  // Auto-clear expired temporary hide periods and expired quick notices
+  const nowIso = new Date().toISOString();
   try {
     await c.env.DB.prepare(
       "UPDATE professionals SET hidden_until = NULL, updated_at = CURRENT_TIMESTAMP WHERE agency_id = ? AND hidden_until IS NOT NULL AND hidden_until <= ?"
-    ).bind(user.agency_id, new Date().toISOString()).run();
+    ).bind(user.agency_id, nowIso).run();
   } catch {
     // Silently continue if hidden_until column doesn't exist yet
+  }
+  try {
+    await c.env.DB.prepare(
+      "UPDATE professionals SET quick_notice = NULL, quick_notice_until = NULL, updated_at = CURRENT_TIMESTAMP WHERE agency_id = ? AND quick_notice_until IS NOT NULL AND quick_notice_until <= ?"
+    ).bind(user.agency_id, nowIso).run();
+  } catch {
+    // Silently continue if quick_notice columns don't exist yet
   }
 
   const { results } = await c.env.DB.prepare(`
@@ -642,6 +688,7 @@ app.get("/api/professionals", systemAuthMiddleware, async (c) => {
     ? (results || []).filter((p: any) => !p.hidden_until || new Date(p.hidden_until).getTime() <= nowMs)
     : (results || []);
 
+  c.header('Cache-Control', 'no-store');
   return c.json(filtered);
 });
 
@@ -651,6 +698,8 @@ app.post("/api/professionals", systemAuthMiddleware, async (c) => {
   if (user.role !== 'administrator' && user.role !== 'supervisor') return c.json({ error: "Acesso negado" }, 403);
 
   try {
+    await ensureHiddenUntilColumn(c.env.DB);
+    await ensureQuickNoticeColumns(c.env.DB);
     const body = await c.req.json();
 
     const validation = CreateProfessionalRequestSchema.safeParse(body);
@@ -686,8 +735,8 @@ app.post("/api/professionals", systemAuthMiddleware, async (c) => {
       return c.json({ error: "Falha ao criar credenciado" }, 500);
     }
 
-    console.log('Professional created successfully:', result);
-    return c.json(result);
+    const enriched = await fetchProfessionalWithCity(c.env.DB, Number((result as any).id), Number(user.agency_id));
+    return c.json(enriched || result);
   } catch (error) {
     console.error('Error creating professional:', error);
     return c.json({ error: "Erro interno do servidor" }, 500);
@@ -744,8 +793,8 @@ app.patch("/api/professionals/:id", systemAuthMiddleware, async (c) => {
       return c.json({ error: "Credenciado não encontrado" }, 404);
     }
 
-    console.log('Professional updated successfully:', result);
-    return c.json(result);
+    const enriched = await fetchProfessionalWithCity(c.env.DB, Number((result as any).id), Number(user.agency_id));
+    return c.json(enriched || result);
   } catch (error) {
     console.error('Error updating professional:', error);
     console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
@@ -804,7 +853,8 @@ app.patch("/api/professionals/:id/hide", systemAuthMiddleware, async (c) => {
       return c.json({ error: "Credenciado não encontrado" }, 404);
     }
 
-    return c.json(result);
+    const enriched = await fetchProfessionalWithCity(c.env.DB, professionalId, Number(user.agency_id));
+    return c.json(enriched || result);
   } catch (error) {
     console.error('Error updating professional visibility:', error);
     return c.json({ error: "Erro ao configurar período de ocultação" }, 500);
@@ -831,10 +881,83 @@ app.delete("/api/professionals/:id/hide", systemAuthMiddleware, async (c) => {
       return c.json({ error: "Credenciado não encontrado" }, 404);
     }
 
-    return c.json(result);
+    const enriched = await fetchProfessionalWithCity(c.env.DB, professionalId, Number(user.agency_id));
+    return c.json(enriched || result);
   } catch (error) {
     console.error('Error canceling professional hide period:', error);
     return c.json({ error: "Erro ao cancelar período de ocultação" }, 500);
+  }
+});
+
+// Temporary quick notice (2h, 4h, 8h) for printed step cards
+app.patch("/api/professionals/:id/quick-notice", systemAuthMiddleware, async (c) => {
+  const user = getUserWithAgency(c);
+  if (!user) return c.json({ error: "User not found" }, 404);
+  if (user.role !== 'administrator' && user.role !== 'supervisor') return c.json({ error: "Acesso negado" }, 403);
+
+  const professionalId = parseInt(c.req.param("id"), 10);
+  if (isNaN(professionalId)) {
+    return c.json({ error: "ID do credenciado inválido" }, 400);
+  }
+
+  try {
+    await ensureQuickNoticeColumns(c.env.DB);
+    const body = await c.req.json();
+    const rawMessage = typeof body.message === 'string' ? body.message.trim() : '';
+    const durationHours = Number(body.duration_hours);
+
+    if (!rawMessage) {
+      return c.json({ error: "Informe o texto do aviso rápido" }, 400);
+    }
+    if (rawMessage.length > 240) {
+      return c.json({ error: "O aviso rápido deve ter no máximo 240 caracteres" }, 400);
+    }
+    if (!isValidQuickNoticeDuration(durationHours)) {
+      return c.json({ error: "Duração inválida. Escolha 2h, 4h ou 8h" }, 400);
+    }
+
+    const quickNoticeUntil = computeQuickNoticeUntil(durationHours);
+    const result = await c.env.DB.prepare(
+      "UPDATE professionals SET quick_notice = ?, quick_notice_until = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND agency_id = ? RETURNING *"
+    ).bind(rawMessage, quickNoticeUntil, professionalId, user.agency_id).first();
+
+    if (!result) {
+      return c.json({ error: "Credenciado não encontrado" }, 404);
+    }
+
+    const enriched = await fetchProfessionalWithCity(c.env.DB, professionalId, Number(user.agency_id));
+    return c.json(enriched || result);
+  } catch (error) {
+    console.error('Error setting quick notice:', error);
+    return c.json({ error: "Erro ao salvar aviso rápido" }, 500);
+  }
+});
+
+app.delete("/api/professionals/:id/quick-notice", systemAuthMiddleware, async (c) => {
+  const user = getUserWithAgency(c);
+  if (!user) return c.json({ error: "User not found" }, 404);
+  if (user.role !== 'administrator' && user.role !== 'supervisor') return c.json({ error: "Acesso negado" }, 403);
+
+  const professionalId = parseInt(c.req.param("id"), 10);
+  if (isNaN(professionalId)) {
+    return c.json({ error: "ID do credenciado inválido" }, 400);
+  }
+
+  try {
+    await ensureQuickNoticeColumns(c.env.DB);
+    const result = await c.env.DB.prepare(
+      "UPDATE professionals SET quick_notice = NULL, quick_notice_until = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND agency_id = ? RETURNING *"
+    ).bind(professionalId, user.agency_id).first();
+
+    if (!result) {
+      return c.json({ error: "Credenciado não encontrado" }, 404);
+    }
+
+    const enriched = await fetchProfessionalWithCity(c.env.DB, professionalId, Number(user.agency_id));
+    return c.json(enriched || result);
+  } catch (error) {
+    console.error('Error clearing quick notice:', error);
+    return c.json({ error: "Erro ao remover aviso rápido" }, 500);
   }
 });
 
@@ -1412,6 +1535,7 @@ app.get("/api/step-processes/:id", systemAuthMiddleware, async (c) => {
   const user = getUserWithAgency(c);
   if (!user) return c.json({ error: "User not found" }, 404);
   await ensureStepProcessesColumns(c.env.DB);
+  await ensureQuickNoticeColumns(c.env.DB);
 
   const processId = parseInt(c.req.param("id"));
 
@@ -1431,7 +1555,7 @@ app.get("/api/step-processes/:id", systemAuthMiddleware, async (c) => {
 
   // Get selected steps with details
   const { results: selectedSteps } = await c.env.DB.prepare(`
-    SELECT pss.*, ps.name, ps.type, p.name as professional_name, p.phone, p.email, p.address, p.observations, p.attendance_type, p.working_days, p.working_hours, c.name as city_name
+    SELECT pss.*, ps.name, ps.type, p.name as professional_name, p.phone, p.email, p.address, p.observations, p.attendance_type, p.working_days, p.working_hours, p.quick_notice, p.quick_notice_until, c.name as city_name
     FROM process_selected_steps pss
     JOIN process_steps ps ON pss.step_id = ps.id
     LEFT JOIN professionals p ON pss.professional_id = p.id
@@ -1473,6 +1597,8 @@ app.get("/api/step-processes/:id", systemAuthMiddleware, async (c) => {
         attendance_type: ss.attendance_type,
         working_days: ss.working_days,
         working_hours: ss.working_hours,
+        quick_notice: ss.quick_notice || null,
+        quick_notice_until: ss.quick_notice_until || null,
         city_name: ss.city_name
       };
     }
@@ -1807,6 +1933,10 @@ function generateEmailHTML(processData: any, logoUrl: string | null, generalInst
                               ${professional.address || professional.city_name ? `<div class="professional-info">${professional.address ? `${professional.address}${professional.city_name ? ` - ${professional.city_name}` : ''}` : professional.city_name || ''}</div>` : ''}
                               ${professional.phone ? `<div class="professional-info">${professional.phone} - Somente mensagem WhatsApp</div>` : ''}
                               ${professional.email ? `<div class="professional-info"><strong>Email:</strong> ${professional.email}</div>` : ''}
+                              ${(() => {
+                                const quickNotice = getActiveQuickNotice(professional);
+                                return quickNotice ? `<div class="professional-info" style="font-size: 9.5px; margin-top: 3px;"><strong>Aviso:</strong> ${escapeQuickNoticeHtml(quickNotice)}</div>` : '';
+                              })()}
                               ${step.type === 'medico' && processData.show_toxicologico_message ? `
                                 <div style="margin-top: 12px; text-align: center;">
                                   <div style="font-size: 12px; font-weight: bold; color: black;">LEVAR O TOXICOLÓGICO</div>
@@ -2054,8 +2184,9 @@ app.get("/api/instructions", systemAuthMiddleware, async (c) => {
     "SELECT * FROM agency_instructions WHERE agency_id = ?"
   ).bind(user.agency_id).first();
 
+  c.header('Cache-Control', 'no-store');
   if (!instructions) {
-    return c.json({ general_instructions: '', required_documents: '' });
+    return c.json({ general_instructions: '', instructions_primeira_habilitacao: '', required_documents: '' });
   }
 
   return c.json(instructions);

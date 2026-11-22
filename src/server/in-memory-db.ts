@@ -64,6 +64,8 @@ interface ProfessionalRow {
   working_days: string | null;
   working_hours: string | null;
   hidden_until: string | null;
+  quick_notice: string | null;
+  quick_notice_until: string | null;
 }
 
 interface ProcessStepRow {
@@ -360,6 +362,8 @@ class MemoryStore {
         working_days: null,
         working_hours: null,
         hidden_until: null,
+        quick_notice: null,
+        quick_notice_until: null,
       });
     });
   }
@@ -719,6 +723,15 @@ class InMemoryD1PreparedStatement implements D1PreparedStatement {
     }
 
     // 8. professionals queries
+    if (s.startsWith('SELECT p.*, c.name as city_name FROM professionals p JOIN cities c ON p.city_id = c.id WHERE p.id = ? AND p.agency_id = ?')) {
+      const prof = store.professionals.find(
+        (pr) => pr.id === this.num(p[0]) && pr.agency_id === this.num(p[1])
+      );
+      if (!prof) return { rows: [], changes: 0 };
+      const city = store.cities.find((c) => c.id === prof.city_id);
+      return { rows: [{ ...prof, city_name: city?.name ?? '' }], changes: 0 };
+    }
+
     if (s.startsWith('SELECT p.*, c.name as city_name FROM professionals p JOIN cities c')) {
       const agencyId = this.num(p[0]);
       const rows = store.professionals
@@ -755,6 +768,8 @@ class InMemoryD1PreparedStatement implements D1PreparedStatement {
         working_days: (p[9] as string | null) ?? null,
         working_hours: (p[10] as string | null) ?? null,
         hidden_until: null,
+        quick_notice: null,
+        quick_notice_until: null,
         is_active: true,
         created_at: ts,
         updated_at: ts,
@@ -781,6 +796,21 @@ class InMemoryD1PreparedStatement implements D1PreparedStatement {
       return { rows: [], changes };
     }
 
+    if (s === 'UPDATE professionals SET quick_notice = NULL, quick_notice_until = NULL, updated_at = CURRENT_TIMESTAMP WHERE agency_id = ? AND quick_notice_until IS NOT NULL AND quick_notice_until <= ?') {
+      const agencyId = this.num(p[0]);
+      const cutoff = new Date(String(p[1])).getTime();
+      let changes = 0;
+      for (const prof of store.professionals) {
+        if (prof.agency_id === agencyId && prof.quick_notice_until && new Date(prof.quick_notice_until).getTime() <= cutoff) {
+          prof.quick_notice = null;
+          prof.quick_notice_until = null;
+          prof.updated_at = nowIso();
+          changes++;
+        }
+      }
+      return { rows: [], changes };
+    }
+
     if (s === 'UPDATE professionals SET hidden_until = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND agency_id = ? RETURNING *') {
       const prof = store.professionals.find(
         (pr) => pr.id === this.num(p[0]) && pr.agency_id === this.num(p[1])
@@ -797,6 +827,28 @@ class InMemoryD1PreparedStatement implements D1PreparedStatement {
       );
       if (!prof) return { rows: [], changes: 0 };
       prof.hidden_until = (p[0] as string | null) ?? null;
+      prof.updated_at = nowIso();
+      return { rows: [{ ...prof }], changes: 1 };
+    }
+
+    if (s === 'UPDATE professionals SET quick_notice = ?, quick_notice_until = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND agency_id = ? RETURNING *') {
+      const prof = store.professionals.find(
+        (pr) => pr.id === this.num(p[2]) && pr.agency_id === this.num(p[3])
+      );
+      if (!prof) return { rows: [], changes: 0 };
+      prof.quick_notice = (p[0] as string | null) ?? null;
+      prof.quick_notice_until = (p[1] as string | null) ?? null;
+      prof.updated_at = nowIso();
+      return { rows: [{ ...prof }], changes: 1 };
+    }
+
+    if (s === 'UPDATE professionals SET quick_notice = NULL, quick_notice_until = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND agency_id = ? RETURNING *') {
+      const prof = store.professionals.find(
+        (pr) => pr.id === this.num(p[0]) && pr.agency_id === this.num(p[1])
+      );
+      if (!prof) return { rows: [], changes: 0 };
+      prof.quick_notice = null;
+      prof.quick_notice_until = null;
       prof.updated_at = nowIso();
       return { rows: [{ ...prof }], changes: 1 };
     }
@@ -1151,6 +1203,8 @@ class InMemoryD1PreparedStatement implements D1PreparedStatement {
             attendance_type: prof?.attendance_type ?? null,
             working_days: prof?.working_days ?? null,
             working_hours: prof?.working_hours ?? null,
+            quick_notice: prof?.quick_notice ?? null,
+            quick_notice_until: prof?.quick_notice_until ?? null,
             city_name: city?.name ?? null,
           };
         })
