@@ -51,7 +51,7 @@ test('formats uniform Monday-Friday schedule with two periods into single range 
   ]);
 });
 
-test('formats varying JSON hours into grouped abbreviation lines of up to 3 days', () => {
+test('groups repeated days together and keeps remaining days separate', () => {
   const days = JSON.stringify(['monday', 'tuesday', 'wednesday', 'thursday']);
   const hours = JSON.stringify({
     monday: { start: '08:00', end: '12:00' },
@@ -62,9 +62,35 @@ test('formats varying JSON hours into grouped abbreviation lines of up to 3 days
 
   const formatted = formatWorkingSchedule(days, hours);
   assert.deepEqual(formatted.summaryLines, [
-    '(Seg: 08:00 - 12:00) - (Ter: 08:00 - 12:00) - (Qua: 13:00 - 17:00)',
-    '(Qui: 09:00 - 18:00)',
+    '(Seg, Ter: 08:00 às 12:00) - (Qua: 13:00 às 17:00) - (Qui: 09:00 às 18:00)',
   ]);
+});
+
+test('groups Seg, Ter, Qua when repeated and formats two-period and non-contiguous days cleanly', () => {
+  const days = JSON.stringify(['monday', 'tuesday', 'wednesday', 'thursday', 'friday']);
+  const hours = JSON.stringify({
+    monday: { start: '08:00', end: '12:00', start2: '13:00', end2: '18:00' },
+    tuesday: { start: '08:00', end: '12:00', start2: '13:00', end2: '18:00' },
+    wednesday: { start: '08:00', end: '12:00', start2: '13:00', end2: '18:00' },
+    thursday: { start: '08:00', end: '12:00' },
+    friday: { start: '13:00', end: '17:00' },
+  });
+
+  const formatted = formatWorkingSchedule(days, hours);
+  assert.deepEqual(formatted.summaryLines, [
+    '(Seg, Ter, Qua: 08:00 às 12:00 - 13:00 às 18:00) - (Qui: 08:00 às 12:00)',
+    '(Sex: 13:00 às 17:00)',
+  ]);
+
+  const nonContiguous = formatWorkingSchedule(
+    JSON.stringify(['monday', 'wednesday', 'friday']),
+    JSON.stringify({
+      monday: { start: '08:00', end: '12:00' },
+      wednesday: { start: '08:00', end: '12:00' },
+      friday: { start: '08:00', end: '12:00' },
+    })
+  );
+  assert.deepEqual(nonContiguous.summaryLines, ['(Seg, Qua, Sex: 08:00 às 12:00)']);
 });
 
 test('sanitizeWorkingHoursMap drops empty second periods cleanly', () => {

@@ -607,7 +607,7 @@ export default function Professionals() {
                                 {(() => {
                                   const schedule = formatWorkingSchedule(professional.working_days, professional.working_hours);
                                   if (schedule.summaryLines.length > 0) {
-                                    return schedule.summaryLines.join(' ');
+                                    return schedule.summaryLines.join(' - ');
                                   }
                                   return [schedule.daysText, schedule.rawHoursText].filter(Boolean).join(' — ');
                                 })()}

@@ -66,6 +66,25 @@ function sameDaySchedule(a?: DayWorkingHours, b?: DayWorkingHours): boolean {
   );
 }
 
+function scheduleKey(entry?: DayWorkingHours): string {
+  return [
+    (entry?.start ?? '').trim(),
+    (entry?.end ?? '').trim(),
+    (entry?.start2 ?? '').trim(),
+    (entry?.end2 ?? '').trim(),
+  ].join('|');
+}
+
+function areContiguousDays(days: string[]): boolean {
+  if (days.length < 2) return false;
+  const indices = days.map((d) => DAY_ORDER.indexOf(d as (typeof DAY_ORDER)[number]));
+  if (indices.some((idx) => idx === -1)) return false;
+  for (let i = 1; i < indices.length; i++) {
+    if (indices[i] !== indices[i - 1] + 1) return false;
+  }
+  return true;
+}
+
 export function sanitizeWorkingHoursMap(map: WorkingHoursMap): WorkingHoursMap {
   const cleaned: WorkingHoursMap = {};
   for (const [day, entry] of Object.entries(map)) {
@@ -146,13 +165,23 @@ export function formatWorkingSchedule(
             selectedDays.every((d) => sameDaySchedule(record[d], firstSchedule));
 
           if (allSame && selectedDays.length > 1) {
-            const first = DAY_FULL[selectedDays[0]] || selectedDays[0];
-            const last =
-              DAY_FULL[selectedDays[selectedDays.length - 1]] ||
-              selectedDays[selectedDays.length - 1];
+            if (areContiguousDays(selectedDays)) {
+              const first = DAY_FULL[selectedDays[0]] || selectedDays[0];
+              const last =
+                DAY_FULL[selectedDays[selectedDays.length - 1]] ||
+                selectedDays[selectedDays.length - 1];
+              return {
+                summaryLines: [
+                  `(${first} a ${last}: ${formatDayIntervals(firstSchedule, anySecondPeriod)})`,
+                ],
+                daysText: null,
+                rawHoursText: null,
+              };
+            }
+            const dayLabels = selectedDays.map((d) => DAY_ABBR[d] || d).join(', ');
             return {
               summaryLines: [
-                `(${first} a ${last}: ${formatDayIntervals(firstSchedule, anySecondPeriod)})`,
+                `(${dayLabels}: ${formatDayIntervals(firstSchedule, true)})`,
               ],
               daysText: null,
               rawHoursText: null,
@@ -170,10 +199,28 @@ export function formatWorkingSchedule(
             };
           }
 
-          const items = selectedDays.map(
-            (d) =>
-              `(${DAY_ABBR[d] || d}: ${formatDayIntervals(record[d], anySecondPeriod)})`
-          );
+          const groups: Array<{ days: string[]; entry: DayWorkingHours | undefined }> = [];
+          const groupIndexByKey = new Map<string, number>();
+
+          for (const day of selectedDays) {
+            const entry = record[day];
+            const key = scheduleKey(entry);
+            const existingIdx = groupIndexByKey.get(key);
+            if (existingIdx !== undefined) {
+              groups[existingIdx].days.push(day);
+            } else {
+              groupIndexByKey.set(key, groups.length);
+              groups.push({ days: [day], entry });
+            }
+          }
+
+          const hasRepeatedGroup = groups.some((g) => g.days.length > 1);
+          const useAs = anySecondPeriod || hasRepeatedGroup;
+          const items = groups.map((group) => {
+            const dayLabels = group.days.map((d) => DAY_ABBR[d] || d).join(', ');
+            return `(${dayLabels}: ${formatDayIntervals(group.entry, useAs)})`;
+          });
+
           const chunkSize = anySecondPeriod ? 2 : 3;
           const lines: string[] = [];
           for (let i = 0; i < items.length; i += chunkSize) {
