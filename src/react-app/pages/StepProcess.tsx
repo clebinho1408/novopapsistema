@@ -8,6 +8,12 @@ import { useDialog } from '@/react-app/components/Dialog';
 import { REHABILITATION_SERVICE, REHABILITATION_STEP_TYPES, isServiceStepAllowed, orderServiceSteps } from '@/shared/rehabilitation';
 import { resolvePrintInstructions } from '@/shared/print-instructions';
 import { serviceUsesTermTemplate, shouldHideTermStep } from '@/shared/term-template';
+import {
+  findLadvFee,
+  getGroupedStepTypesForService,
+  isLadvFeeName,
+  shouldAutoSelectLadv,
+} from '@/shared/service-fees';
 
 const TOXICOLOGICO_RELEASE_DATE = new Date('2026-06-01');
 const TOXICOLOGICO_ATIVO = new Date() >= TOXICOLOGICO_RELEASE_DATE;
@@ -258,12 +264,18 @@ export default function StepProcess() {
         // Regra para 1º Habilitação e Reinício: garantir taxas do conjunto completo de etapas
         if (serviceName === '1º Habilitação' || serviceName === 'Reinicio (1º Habilitação)') {
           const ptFee = fees.find(f => f.name === 'Prova Teórica');
-          const ladvFee = fees.find(f => f.name === 'LADV');
           const ppFee = fees.find(f => f.name === 'Prova Prática');
-          
+
           if (ptFee && !newSelectedFees.includes(ptFee.id)) newSelectedFees.push(ptFee.id);
-          if (ladvFee && !newSelectedFees.includes(ladvFee.id)) newSelectedFees.push(ladvFee.id);
           if (ppFee && !newSelectedFees.includes(ppFee.id)) newSelectedFees.push(ppFee.id);
+        }
+
+        // Selecionar taxa LADV automaticamente para 1º Habilitação, Reinício e Adição de Categoria A / B
+        if (shouldAutoSelectLadv(serviceName)) {
+          const ladvFee = findLadvFee(fees);
+          if (ladvFee && !newSelectedFees.includes(ladvFee.id)) {
+            newSelectedFees.push(ladvFee.id);
+          }
         }
       }
       
@@ -424,11 +436,9 @@ export default function StepProcess() {
 
   const handleStepToggle = (stepId: number) => {
     const step = processSteps.find(s => s.id === stepId);
-    
-    // Grupo de etapas que devem ser marcadas/desmarcadas juntas (apenas quando serviço está selecionado)
-    const groupedTypes = ['prova_teorica', 'curso_pratico', 'prova_pratica'];
-    
+
     setFormData(prev => {
+      const groupedTypes = getGroupedStepTypesForService(prev.client_name);
       const hasServiceSelected = !!prev.client_name;
       const isGroupedStep = hasServiceSelected && prev.client_name !== REHABILITATION_SERVICE &&
         step && groupedTypes.includes(step.type);
@@ -448,14 +458,16 @@ export default function StepProcess() {
           
           // Remover todas as taxas vinculadas ao grupo
           const provaTeoricoFee = fees.find(f => f.name === 'Prova Teórica');
-          const ladvFee = fees.find(f => f.name === 'LADV');
+          const ladvFee = findLadvFee(fees);
           const provaPraticaFee = fees.find(f => f.name === 'Prova Prática');
-          if (provaTeoricoFee) newFees = newFees.filter(id => id !== provaTeoricoFee.id);
+          if (groupedTypes.includes('prova_teorica') && provaTeoricoFee) {
+            newFees = newFees.filter(id => id !== provaTeoricoFee.id);
+          }
           if (ladvFee) newFees = newFees.filter(id => id !== ladvFee.id);
           if (provaPraticaFee) newFees = newFees.filter(id => id !== provaPraticaFee.id);
         } else {
-          if (step?.type === 'prova_pratica' && !hasServiceSelected) {
-            const ladvFee = fees.find(f => f.name === 'LADV');
+          if ((step?.type === 'prova_pratica' || step?.type === 'curso_pratico') && !hasServiceSelected) {
+            const ladvFee = findLadvFee(fees);
             if (ladvFee) newFees = newFees.filter(id => id !== ladvFee.id);
           }
           if (step?.type === 'taxa') {
@@ -492,13 +504,15 @@ export default function StepProcess() {
         
         // Auto-selecionar todas as taxas vinculadas ao grupo
         const provaTeoricoFee = fees.find(f => f.name === 'Prova Teórica');
-        const ladvFee = fees.find(f => f.name === 'LADV');
+        const ladvFee = findLadvFee(fees);
         const provaPraticaFee = fees.find(f => f.name === 'Prova Prática');
-        if (provaTeoricoFee && !newFees.includes(provaTeoricoFee.id)) newFees.push(provaTeoricoFee.id);
+        if (groupedTypes.includes('prova_teorica') && provaTeoricoFee && !newFees.includes(provaTeoricoFee.id)) {
+          newFees.push(provaTeoricoFee.id);
+        }
         if (ladvFee && !newFees.includes(ladvFee.id)) newFees.push(ladvFee.id);
         if (provaPraticaFee && !newFees.includes(provaPraticaFee.id)) newFees.push(provaPraticaFee.id);
-      } else if (step?.type === 'prova_pratica' && !hasServiceSelected) {
-        const ladvFee = fees.find(f => f.name === 'LADV');
+      } else if ((step?.type === 'prova_pratica' || step?.type === 'curso_pratico') && !hasServiceSelected) {
+        const ladvFee = findLadvFee(fees);
         if (ladvFee && !newFees.includes(ladvFee.id)) newFees.push(ladvFee.id);
       } else if (step?.type === 'taxa') {
         const emissaoCNHFee = fees.find(f => f.name === 'Emissão da CNH');
@@ -1407,16 +1421,18 @@ export default function StepProcess() {
                               
                               // Verificar se as etapas correspondentes estão selecionadas para as taxas específicas
                               const isProvaTeoricoFee = fee.name === 'Prova Teórica';
-                              const isLadvFee = fee.name === 'LADV';
+                              const isLadvFee = isLadvFeeName(fee.name);
                               const isProvaPraticaFee = fee.name === 'Prova Prática';
                               
                               const hasProvaTeoricoStep = currentStepTypes.includes('prova_teorica');
+                              const hasCursoPraticoStep = currentStepTypes.includes('curso_pratico');
                               const hasProvaPraticaStep = currentStepTypes.includes('prova_pratica');
                               
+                              const isAutoLadvVisible = isLadvFee && isTaxaStepSelected && hasCursoPraticoStep && formData.selected_fees.includes(fee.id);
                               // Desabilitar taxas se as etapas correspondentes não estiverem selecionadas
                               const isSpecificFeeDisabled = 
                                 (isProvaTeoricoFee && !hasProvaTeoricoStep) ||
-                                isLadvFee ||
+                                (isLadvFee && !isAutoLadvVisible) ||
                                 (isProvaPraticaFee && !hasProvaPraticaStep);
                               
                               const isFeeDisabled = !isTaxaStepSelected || isProvaFee || isSpecificFeeDisabled;
@@ -1430,12 +1446,12 @@ export default function StepProcess() {
                                       type="checkbox"
                                       checked={formData.selected_fees.includes(fee.id)}
                                       onChange={() => handleFeeToggle(fee.id)}
-                                      disabled={isFeeDisabled}
+                                      disabled={isFeeDisabled || isLadvFee}
                                       className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 disabled:cursor-not-allowed"
                                     />
                                     <span className="text-gray-900">
                                       {fee.name}
-                                      {isProvaFee && (
+                                      {(isProvaFee || isLadvFee) && (
                                         <span className="ml-2 text-xs text-gray-500">(automática)</span>
                                       )}
                                     </span>
