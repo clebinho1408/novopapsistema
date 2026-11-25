@@ -7,6 +7,7 @@ import {
   isAdicaoCategoriaServiceName,
   isLadvFeeName,
   shouldAutoSelectLadv,
+  shouldHideLadvInFeeSelection,
 } from './service-fees';
 
 test('auto-selects LADV for 1º Habilitação, Reinício, and Adição de Categoria A/B', () => {
@@ -51,3 +52,12 @@ test('groups only curso_pratico and prova_pratica for Adição de Categoria A an
     'prova_pratica',
   ]);
 });
+
+test('hides automatic LADV in fee selection only for Adição de Categoria A and B', () => {
+  assert.equal(shouldHideLadvInFeeSelection('Adição de Categoria A'), true);
+  assert.equal(shouldHideLadvInFeeSelection('Adição de Categoria B'), true);
+  assert.equal(shouldHideLadvInFeeSelection('1º Habilitação'), false);
+  assert.equal(shouldHideLadvInFeeSelection('Reinicio (1º Habilitação)'), false);
+  assert.equal(shouldHideLadvInFeeSelection(''), false);
+});
+

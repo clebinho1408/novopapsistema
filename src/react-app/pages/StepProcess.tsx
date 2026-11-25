@@ -13,6 +13,7 @@ import {
   getGroupedStepTypesForService,
   isLadvFeeName,
   shouldAutoSelectLadv,
+  shouldHideLadvInFeeSelection,
 } from '@/shared/service-fees';
 
 const TOXICOLOGICO_RELEASE_DATE = new Date('2026-06-01');
@@ -1428,7 +1429,7 @@ export default function StepProcess() {
                               const hasCursoPraticoStep = currentStepTypes.includes('curso_pratico');
                               const hasProvaPraticaStep = currentStepTypes.includes('prova_pratica');
                               
-                              const isAutoLadvVisible = isLadvFee && isTaxaStepSelected && hasCursoPraticoStep && formData.selected_fees.includes(fee.id);
+                              const isAutoLadvVisible = isLadvFee && isTaxaStepSelected && hasCursoPraticoStep && formData.selected_fees.includes(fee.id) && !shouldHideLadvInFeeSelection(formData.client_name);
                               // Desabilitar taxas se as etapas correspondentes não estiverem selecionadas
                               const isSpecificFeeDisabled = 
                                 (isProvaTeoricoFee && !hasProvaTeoricoStep) ||

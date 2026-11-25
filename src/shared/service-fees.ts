@@ -40,3 +40,8 @@ export function formatCursoPraticoLadvBadge(amount: string | number): string {
   const safeValue = Number.isFinite(numeric) ? numeric : 0;
   return `TAXA LADV: R$ ${safeValue.toFixed(2)}`;
 }
+
+export function shouldHideLadvInFeeSelection(serviceName?: string | null): boolean {
+  return isAdicaoCategoriaServiceName(serviceName);
+}
+
